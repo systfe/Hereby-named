@@ -65,28 +65,32 @@ final class MapController {
         if (book.region(selected).filter(r -> r.layer() == layer).isEmpty()) {
             selected = book.regions().stream().filter(r -> r.layer() == layer).reduce((a,b) -> b).map(RegionBook.Region::id).orElse("");
         }
-        button(4,48,100,visibilityText(), b -> cycleVisibility());
-        button(4,72,100,editing() ? "退出区域编辑模式" : "切换区域编辑模式", b -> {
+        icon(0,40,visibilityIcon(),visibilityText(),visibility==1,b -> cycleVisibility());
+        icon(0,60,0,editing() ? "退出区域编辑模式" : "切换区域编辑模式",editing(), b -> {
             if (editing()) { job = null; pressed = -1; data.exit(); } else data.enter(dimension);
             build();
         });
         toolbarBottom = 48;
         if (editing()) {
-            int[] cursor = {110, 52};
-            flow(cursor, "区域 ▾ " + book.region(selected).map(RegionBook.Region::name).orElse("先新建"), 118, b -> {
+            int[] cursor = {Math.max(24,(map.width-299)/2), 48};
+            RegionBook.Region current = book.region(selected).orElse(null);
+            select(cursor, current == null ? "新增选区…" : current.name(), 96,
+                    "区域选择 · Tab 切换"+(current == null ? "" : " · "+current.name()), current == null ? 0x888888 : current.color(), b -> {
                 List<RegionBook.Region> regions = currentRegions();
                 openPopup(b, regions.stream().map(RegionBook.Region::name).toList(), i -> { selected = regions.get(i).id(); remembered.put(layer,selected); build(); });
             });
-            flow(cursor,"新增选区",60,b -> client.setScreen(new RegionDialog(map,null,(name,color) -> edit(RegionEdit.Action.CREATE,name,color,Set.of()))));
-            flow(cursor,"改名/颜色",64,b -> book.region(selected).ifPresent(r -> client.setScreen(new RegionDialog(map,r,(name,color) -> edit(RegionEdit.Action.RENAME,name,color,Set.of())))));
-            flow(cursor,"删除选区",60,b -> book.region(selected).ifPresent(r -> client.setScreen(new DeleteDialog(map,"删除区域“"+r.name()+"”？",() -> edit(RegionEdit.Action.DELETE_REGION,"",0,Set.of())))));
-            flow(cursor,"图层 ▾ "+layer,65,b -> chooseLayer(b,false));
-            flow(cursor,"新增图层",60,b -> edit(RegionEdit.Action.ADD_LAYER,"",0,Set.of()));
-            flow(cursor,"删除图层",60,b -> {
+            tool(cursor,5,"新增选区",false,b -> client.setScreen(new RegionDialog(map,null,(name,color) -> edit(RegionEdit.Action.CREATE,name,color,Set.of()))));
+            tool(cursor,6,"修改区域名称与颜色",false,b -> book.region(selected).ifPresent(r -> client.setScreen(new RegionDialog(map,r,(name,color) -> edit(RegionEdit.Action.RENAME,name,color,Set.of()))))).active=current!=null;
+            tool(cursor,7,"删除选区",false,b -> book.region(selected).ifPresent(r -> client.setScreen(new DeleteDialog(map,"删除区域“"+r.name()+"”？",() -> edit(RegionEdit.Action.DELETE_REGION,"",0,Set.of()))))).active=current!=null;
+            cursor[0]+=6;
+            select(cursor,"层 "+layer,44,"图层选择 · 当前图层 "+layer,0xaaaaaa,b -> chooseLayer(b,false));
+            tool(cursor,8,"新增图层",false,b -> edit(RegionEdit.Action.ADD_LAYER,"",0,Set.of()));
+            tool(cursor,9,"删除当前图层及其区域",false,b -> {
                 long count = book.regions().stream().filter(r -> r.layer() == layer).count();
                 client.setScreen(new DeleteDialog(map,"删除图层 "+layer+" 及其 "+count+" 个区域？",() -> edit(RegionEdit.Action.DELETE_LAYER,"",0,Set.of())));
             });
-            flow(cursor,visibilityText(),100,b -> cycleVisibility());
+            tool(cursor,visibilityIcon(),visibilityText(),visibility==1,b -> cycleVisibility());
+            tool(cursor,10,"左键单击选择；左键拖动地图；右键移除；Shift 拖动矩形；Ctrl 原地长按选择连续群系；Tab 切换区域；Ctrl+Z 撤销；Ctrl+Y 重做；Esc 取消选择",false,b -> {});
             toolbarBottom = cursor[1]+23;
         }
         generation = data.generation; rebuildOverlay();
@@ -96,7 +100,7 @@ final class MapController {
         visibility = (visibility+1)%3;
         if (visibility == 1 && !editing()) {
             List<Integer> layers = book().state().layers().stream().sorted().toList();
-            popup = new Popup(4,70,layers.stream().map(i -> "图层 "+i).toList(),i -> { displayLayer = layers.get(i); build(); });
+            popup = new Popup(22,40,layers.stream().map(i -> "图层 "+i).toList(),i -> { displayLayer = layers.get(i); build(); });
             rebuildOverlay();
         } else build();
     }
@@ -110,16 +114,24 @@ final class MapController {
     }
     private void openPopup(ButtonWidget source, List<String> names, IntConsumer select) {
         if (names.isEmpty()) { data.message("此图层尚无区域，请先新建"); return; }
-        popup = new Popup(source.getX(),source.getY()+22,names,select);
+        popup = new Popup(source.getX(),source.getY()+21,names,select);
     }
-    private void flow(int[] cursor, String text, int width, ButtonWidget.PressAction action) {
-        if (cursor[0]+width > map.width-26 && cursor[0]>110) { cursor[0]=110; cursor[1]+=23; }
-        button(cursor[0],cursor[1],width,text,action); cursor[0]+=width+3;
+    private int visibilityIcon() { return 2+visibility; }
+    private void place(int[] cursor,int width) {
+        if(cursor[0]+width>map.width-24 && cursor[0]>24) { cursor[0]=24; cursor[1]+=22; }
     }
-    private void button(int x,int y,int width,String text,ButtonWidget.PressAction action) {
-        ButtonWidget button = ButtonWidget.builder(Text.literal(text),action).dimensions(x,y,width,20).build();
-        controls.add(button); Screens.getButtons(map).add(button);
+    private ButtonWidget tool(int[] cursor,int icon,String hint,boolean selected,ButtonWidget.PressAction action) {
+        place(cursor,20);
+        ButtonWidget button=icon(cursor[0],cursor[1],icon,hint,selected,action); cursor[0]+=21; return button;
     }
+    private void select(int[] cursor,String value,int width,String hint,int color,ButtonWidget.PressAction action) {
+        place(cursor,width);
+        add(MapTools.selector(cursor[0],cursor[1],width,value,hint,color,() -> popup==null,action)); cursor[0]+=width+3;
+    }
+    private ButtonWidget icon(int x,int y,int icon,String hint,boolean selected,ButtonWidget.PressAction action) {
+        ButtonWidget button=MapTools.icon(x,y,icon,hint,selected,() -> popup==null,action); add(button); return button;
+    }
+    private void add(ButtonWidget button) { controls.add(button); Screens.getButtons(map).add(button); }
     private List<RegionBook.Region> currentRegions() { return book().regions().stream().filter(r -> r.layer()==layer).toList(); }
     private void edit(RegionEdit.Action action, String name, int color, Set<ChunkCell> cells) {
         if (job != null || data.busy()) return;
@@ -215,8 +227,8 @@ final class MapController {
             context.drawCenteredTextWithShadow(client.textRenderer,name,map.width/2,y,0xffffff);
         }
         for(ClickableWidget control:controls) control.render(context,mouseX,mouseY,0);
-        if (editing()) {
-            String status=job!=null?"正在选择 "+job.size()+" 个区块 · Esc 取消":data.busy()?"正在同步…":"左键单击选择 · 拖动地图 · Shift 矩形 · Ctrl 长按群系 · Ctrl+Z 撤销";
+        if (editing() && (job!=null || data.busy())) {
+            String status=job!=null?"正在选择 "+job.size()+" 个区块 · Esc 取消":"正在同步…";
             context.drawCenteredTextWithShadow(client.textRenderer,status,map.width/2,map.height-23,0xffffff);
         }
         if(popup!=null) popup.render(context,mouseX,mouseY);
@@ -241,33 +253,34 @@ final class MapController {
         context.disableScissor();
     }
     private final class Popup {
-        final int x,y,rows;
+        final int x,y,rows,width;
         final List<String> names;
         final IntConsumer selected;
         int offset;
         Popup(int x,int y,List<String> names,IntConsumer selected) {
-            this.x=Math.min(x,Math.max(0,map.width-180)); this.y=y; this.names=names; this.selected=selected;
-            rows=Math.max(1,Math.min(9,(map.height-y-34)/20));
+            width=Math.min(Math.max(96,names.stream().mapToInt(client.textRenderer::getWidth).max().orElse(60)+16),Math.min(160,map.width-28));
+            this.x=Math.min(x,Math.max(0,map.width-width-4)); this.y=y; this.names=names; this.selected=selected;
+            rows=Math.max(1,Math.min(names.size(),Math.min(9,(map.height-y-34)/16)));
         }
         void click(double mx,double my,int button) {
             Popup current=this;
-            if(button==0 && mx>=x && mx<x+180 && my>=y && my<y+rows*20) {
-                int index=offset+(int)(my-y)/20;
+            if(button==0 && mx>=x && mx<x+width && my>=y && my<y+rows*16) {
+                int index=offset+(int)(my-y)/16;
                 if(index<names.size()) { popup=null; selected.accept(index); return; }
             }
-            if(button==0 && mx>=x && mx<x+180 && my>=y+rows*20 && my<y+rows*20+20 && names.size()>rows) {
+            if(button==0 && mx>=x && mx<x+width && my>=y+rows*16 && my<y+rows*16+16 && names.size()>rows) {
                 offset=Math.floorMod(offset+rows,names.size()); return;
             }
             if(popup==current) popup=null;
         }
         void render(DrawContext context,int mx,int my) {
-            context.fill(x-1,y-1,x+181,y+rows*20+21,0xee171c25);
+            context.fill(x-1,y-1,x+width+1,y+rows*16+(names.size()>rows?17:1),0xcc000000);
             for(int i=0;i<rows && i+offset<names.size();i++) {
-                boolean hover=mx>=x&&mx<x+180&&my>=y+i*20&&my<y+(i+1)*20;
-                context.fill(x,y+i*20,x+180,y+(i+1)*20,hover?0xff475466:0xff29313d);
-                context.drawTextWithShadow(client.textRenderer,client.textRenderer.trimToWidth(names.get(i+offset),170),x+4,y+i*20+6,0xffffff);
+                boolean hover=mx>=x&&mx<x+width&&my>=y+i*16&&my<y+(i+1)*16;
+                context.fill(x,y+i*16,x+width,y+(i+1)*16,hover?0x66555555:0x66000000);
+                context.drawTextWithShadow(client.textRenderer,client.textRenderer.trimToWidth(names.get(i+offset),width-8),x+4,y+i*16+4,0xffffff);
             }
-            if(names.size()>rows) context.drawTextWithShadow(client.textRenderer,"下一页 ▾",x+4,y+rows*20+6,0xffffff);
+            if(names.size()>rows) context.drawTextWithShadow(client.textRenderer,"下一页 ▾",x+4,y+rows*16+4,0xffffff);
         }
     }
 }
