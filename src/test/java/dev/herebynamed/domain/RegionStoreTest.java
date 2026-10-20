@@ -29,4 +29,17 @@ class RegionStoreTest {
         Files.write(data, new byte[]{1, 2, 3});
         assertThrows(java.io.IOException.class, () -> store.load("minecraft:overworld"));
     }
+    @Test void longCustomDimensionFitsWindowsFileNameLimit() throws Exception {
+        RegionStore store = new RegionStore(directory);
+        String dimension = "custom:" + "a".repeat(240);
+        RegionBook book = new RegionBook();
+        book.createRegion(1, "高原", 0x123456);
+        store.save(dimension, book);
+        store.save(dimension, book); // Backup and temporary names must also fit.
+        assertEquals(book.state(), store.load(dimension).state());
+        assertTrue(store.load(dimension + "b").regions().isEmpty());
+        try (var files = Files.list(directory)) {
+            assertTrue(files.allMatch(file -> file.getFileName().toString().length() <= 255));
+        }
+    }
 }

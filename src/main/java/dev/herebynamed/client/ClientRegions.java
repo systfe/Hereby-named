@@ -21,14 +21,14 @@ public final class ClientRegions {
     private Wire.Assembler assembler = new Wire.Assembler();
     private String editing;
     private String acquiring;
-    private String pendingDimension;
+    private final PendingRequest pending = new PendingRequest();
     private long pendingSince;
     public long generation;
 
     public boolean shared() { return client.getNetworkHandler() != null && ClientPlayNetworking.canSend(Wire.CHANNEL); }
     public void reset() {
         shared.clear(); local.clear(); failed.clear(); requested.clear(); store = null;
-        editing = acquiring = pendingDimension = null; pendingSince = 0; generation++; assembler = new Wire.Assembler();
+        editing = acquiring = null; pending.cancel(); pendingSince = 0; generation++; assembler = new Wire.Assembler();
     }
     public void receive(Wire.Fragment fragment) {
         try {
@@ -36,12 +36,13 @@ public final class ClientRegions {
             if (bytes.isEmpty()) return;
             Snapshot snapshot = Snapshot.decode(bytes.get());
             shared.put(snapshot.dimension(), snapshot);
-            if (snapshot.dimension().equals(pendingDimension)) { pendingSince = 0; pendingDimension = null; }
+            Optional<PendingRequest.Request> completed = pending.complete(snapshot.responseTo(), snapshot.dimension());
+            if (completed.isPresent()) pendingSince = 0;
             generation++;
             if (!snapshot.message().isBlank()) message(snapshot.message());
-            if (snapshot.dimension().equals(acquiring)) {
+            if (completed.isPresent() && completed.get().acquisition()) {
                 acquiring = null;
-                if (mine(snapshot.holder())) editing = snapshot.dimension();
+                if (mine(snapshot.holder()) && snapshot.authorized()) editing = snapshot.dimension();
             }
             if (snapshot.dimension().equals(editing) && (!mine(snapshot.holder()) || !snapshot.authorized())) editing = null;
         } catch (Exception ex) { HerebyNamed.LOG.error("Cannot decode region snapshot", ex); message("区域同步失败，请重新打开地图"); }
@@ -77,7 +78,10 @@ public final class ClientRegions {
     public boolean editing(String dimension) { return dimension.equals(editing); }
     public boolean busy() {
         if (pendingSince != 0 && System.nanoTime() - pendingSince > 10_000_000_000L) {
-            pendingSince = 0; acquiring = pendingDimension = null;
+            pending.cancel(); pendingSince = 0;
+            String canceled = acquiring; acquiring = null;
+            // Release follows ACQUIRE on the ordered connection, including when its ACK arrives late.
+            if (canceled != null) send(new RegionEdit(canceled, 0, RegionEdit.Action.RELEASE, 0, "", "", 0, Set.of()));
             if (editing != null) request(editing);
             message("同步超时，请重试");
         }
@@ -86,12 +90,12 @@ public final class ClientRegions {
     public void enter(String dimension) {
         if (busy()) return;
         if (!shared()) { book(dimension); if (!failed.contains(dimension)) { editing = dimension; generation++; } return; }
-        acquiring = pendingDimension = dimension; pendingSince = System.nanoTime();
+        acquiring = dimension; pendingSince = System.nanoTime();
         send(new RegionEdit(dimension, 0, RegionEdit.Action.ACQUIRE, 0, "", "", 0, Set.of()));
     }
     public void exit() {
         String dim = editing != null ? editing : acquiring;
-        editing = acquiring = pendingDimension = null; pendingSince = 0;
+        editing = acquiring = null; pending.cancel(); pendingSince = 0;
         if (dim != null) {
             if (shared()) send(new RegionEdit(dim, 0, RegionEdit.Action.RELEASE, 0, "", "", 0, Set.of()));
             else { RegionBook book = local.get(dim); if (book != null) book.clearHistory(); }
@@ -102,14 +106,20 @@ public final class ClientRegions {
         if (!editing(dimension) || busy()) return;
         Snapshot snapshot = shared.get(dimension);
         RegionEdit edit = new RegionEdit(dimension, snapshot == null ? 0 : snapshot.revision(), action, layer, region, name, color, cells);
-        if (shared()) { pendingDimension = dimension; pendingSince = System.nanoTime(); send(edit); return; }
+        if (shared()) { pendingSince = System.nanoTime(); send(edit); return; }
         RegionBook book = book(dimension); RegionBook.State before = book.state();
         try { edit.apply(book); store().save(dimension, book); generation++; }
         catch (Exception ex) { book.replace(before); HerebyNamed.LOG.error("Local region edit failed", ex); message(Objects.toString(ex.getMessage(), "保存失败")); }
     }
     private void send(RegionEdit edit) {
+        boolean tracked = edit.action() != RegionEdit.Action.READ && edit.action() != RegionEdit.Action.RELEASE;
+        long id = tracked ? pending.begin(edit.dimension(), edit.action() == RegionEdit.Action.ACQUIRE) : pending.nextId();
+        edit = new RegionEdit(edit.dimension(), edit.revision(), id, edit.action(), edit.layer(), edit.region(), edit.name(), edit.color(), edit.cells());
         try { Wire.send(edit.encode(), packet -> ClientPlayNetworking.send(Wire.CHANNEL, packet)); }
-        catch (IOException | RuntimeException ex) { pendingSince = 0; acquiring = null; message("无法发送区域请求"); HerebyNamed.LOG.error("Region send failed", ex); }
+        catch (IOException | RuntimeException ex) {
+            if (tracked) { pending.cancel(); pendingSince = 0; acquiring = null; }
+            message("无法发送区域请求"); HerebyNamed.LOG.error("Region send failed", ex);
+        }
     }
     public void message(String text) { if (client.player != null) client.player.sendMessage(Text.literal("此地名曰：" + text), false); }
 }

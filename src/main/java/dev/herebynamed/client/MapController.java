@@ -141,7 +141,10 @@ final class MapController {
         if (popup != null) { popup.click(x,y,button); return false; }
         if (!editing() || onControl(x,y) || button>1) return true;
         if (job != null || data.busy()) return false;
-        if (selected.isEmpty()) { data.message("请先新增选区"); return false; }
+        if (selected.isEmpty()) {
+            if (button == 0 && !Screen.hasShiftDown() && !Screen.hasControlDown()) return true;
+            data.message("请先新增选区"); return false;
+        }
         pressed=button; downX=x; downY=y; downAt=System.nanoTime(); start=cellAt(x,y); triggered=false;
         gesture = Screen.hasControlDown()?2:Screen.hasShiftDown()?1:0;
         return gesture==0 && button==0;

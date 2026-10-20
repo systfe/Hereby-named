@@ -5,6 +5,9 @@ import java.nio.channels.FileChannel;
 import java.nio.file.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.HexFormat;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 public final class RegionStore {
     private final Path directory;
@@ -12,6 +15,10 @@ public final class RegionStore {
     private Path path(String dimension) {
         if (dimension.length() > 256) throw new IllegalArgumentException("维度名称过长");
         String name = Base64.getUrlEncoder().withoutPadding().encodeToString(dimension.getBytes(StandardCharsets.UTF_8));
+        if (name.length() > 200) {
+            try { name = "sha256-" + HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(dimension.getBytes(StandardCharsets.UTF_8))); }
+            catch (NoSuchAlgorithmException ex) { throw new IllegalStateException("SHA-256 unavailable", ex); }
+        }
         return directory.resolve(name + ".dat");
     }
     public RegionBook load(String dimension) throws IOException {

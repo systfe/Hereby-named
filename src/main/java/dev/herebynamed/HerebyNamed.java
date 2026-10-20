@@ -75,16 +75,18 @@ public final class HerebyNamed implements ModInitializer {
         if (player.isDisconnected()) return;
         ServerData d = data(server);
         String dimension = null;
+        long requestId = 0;
         try {
             Optional<byte[]> bytes = d.assemblers.computeIfAbsent(player.getUuid(), id -> new Wire.Assembler()).accept(fragment);
             if (bytes.isEmpty()) return;
             RegionEdit edit = RegionEdit.decode(bytes.get());
+            requestId = edit.requestId();
             if (!validDimension(server, edit.dimension())) return;
             dimension = edit.dimension();
             if (edit.action() == RegionEdit.Action.READ) {
                 long now = System.nanoTime(), last = d.readAt.getOrDefault(player.getUuid(), 0L);
                 if (now - last < 100_000_000L) return;
-                d.readAt.put(player.getUuid(), now); send(server, player, edit.dimension(), ""); return;
+                d.readAt.put(player.getUuid(), now); send(server, player, edit.dimension(), "", requestId); return;
             }
             RegionBook book = d.book(edit.dimension());
             if (edit.action() == RegionEdit.Action.RELEASE) {
@@ -97,23 +99,23 @@ public final class HerebyNamed implements ModInitializer {
             if (edit.action() == RegionEdit.Action.ACQUIRE) {
                 boolean already = d.authority.canEdit(edit.dimension(), player.getUuid(), authorized);
                 if (!d.authority.acquire(edit.dimension(), player.getUuid(), authorized)) {
-                    send(server, player, edit.dimension(), authorized ? "该维度正由其他玩家编辑" : "需要 OP 或编辑授权"); return;
+                    send(server, player, edit.dimension(), authorized ? "该维度正由其他玩家编辑" : "需要 OP 或编辑授权", requestId); return;
                 }
-                if (!already) book.clearHistory(); broadcast(server, edit.dimension()); return;
+                if (!already) book.clearHistory(); broadcast(server, edit.dimension(), player.getUuid(), requestId); return;
             }
             if (!d.authority.canEdit(edit.dimension(), player.getUuid(), authorized)) {
-                send(server, player, edit.dimension(), "当前没有此维度的编辑权"); return;
+                send(server, player, edit.dimension(), "当前没有此维度的编辑权", requestId); return;
             }
             if (edit.revision() != d.revisions.getOrDefault(edit.dimension(), 0L)) {
-                send(server, player, edit.dimension(), "数据已更新，请重试本次操作"); return;
+                send(server, player, edit.dimension(), "数据已更新，请重试本次操作", requestId); return;
             }
             RegionBook.State before = book.state();
             try { edit.apply(book); d.store.save(edit.dimension(), book); }
             catch (IOException ex) { book.replace(before); throw ex; }
-            d.revisions.merge(edit.dimension(), 1L, Long::sum); broadcast(server, edit.dimension());
+            d.revisions.merge(edit.dimension(), 1L, Long::sum); broadcast(server, edit.dimension(), player.getUuid(), requestId);
         } catch (Exception ex) {
             LOG.warn("Region operation failed for {}", player.getUuid(), ex);
-            if (dimension != null) send(server, player, dimension, Objects.toString(ex.getMessage(), "操作失败"));
+            if (dimension != null) send(server, player, dimension, Objects.toString(ex.getMessage(), "操作失败"), requestId);
             else player.sendMessage(Text.literal("此地名曰：无效区域请求"), false);
         }
     }
@@ -125,13 +127,20 @@ public final class HerebyNamed implements ModInitializer {
                 || (player.getServer().isSingleplayer() && player.getServer().isHost(player.getGameProfile()));
     }
     private static void broadcast(MinecraftServer server, String dimension) {
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) send(server, player, dimension, "");
+        broadcast(server, dimension, null, 0);
+    }
+    private static void broadcast(MinecraftServer server, String dimension, UUID requester, long requestId) {
+        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList())
+            send(server, player, dimension, "", player.getUuid().equals(requester) ? requestId : 0);
     }
     private static void send(MinecraftServer server, ServerPlayerEntity player, String dimension, String message) {
+        send(server, player, dimension, message, 0);
+    }
+    private static void send(MinecraftServer server, ServerPlayerEntity player, String dimension, String message, long responseTo) {
         if (!ServerPlayNetworking.canSend(player, Wire.CHANNEL)) return;
         ServerData d = data(server);
         try {
-            Snapshot snapshot = new Snapshot(dimension, d.revisions.getOrDefault(dimension, 0L),
+            Snapshot snapshot = new Snapshot(dimension, d.revisions.getOrDefault(dimension, 0L), responseTo,
                     d.authority.holder(dimension), authorized(d, player), message, d.book(dimension));
             Wire.send(snapshot.encode(), packet -> ServerPlayNetworking.send(player, Wire.CHANNEL, packet));
         } catch (IOException ex) {
