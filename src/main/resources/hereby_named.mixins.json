@@ -1,0 +1,7 @@
+{
+  "required": true,
+  "package": "dev.herebynamed.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "client": ["GuiMapAccessor"],
+  "injectors": {"defaultRequire": 1}
+}

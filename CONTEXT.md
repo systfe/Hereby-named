@@ -1,4 +1,4 @@
-# 名曰（So Named）词汇表
+# 此地名曰（Hereby Named）词汇表
 
 Xaero's World Map 中对地区命名、分层组织和显示名称的领域语言。
 
