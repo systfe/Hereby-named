@@ -23,7 +23,7 @@ final class MapController {
     private final Map<Integer,String> remembered = new HashMap<>();
     private final TreeMap<Integer,TreeMap<Integer,RegionBook.Region>> overlay = new TreeMap<>();
     private String dimension = "", selected = "";
-    private int layer = 1, visibility, displayLayer = 1, toolbarBottom = 48;
+    private int layer = 1, visibility, displayLayer = 1;
     private long generation = -1;
     private SelectionJob job;
     private int pressed = -1, gesture;
@@ -70,7 +70,6 @@ final class MapController {
             if (editing()) { job = null; pressed = -1; data.exit(); } else data.enter(dimension);
             build();
         });
-        toolbarBottom = 48;
         if (editing()) {
             int[] cursor = {Math.max(24,(map.width-299)/2), 48};
             RegionBook.Region current = book.region(selected).orElse(null);
@@ -91,7 +90,6 @@ final class MapController {
             });
             tool(cursor,visibilityIcon(),visibilityText(),visibility==1,b -> cycleVisibility());
             tool(cursor,10,"左键单击选择；左键拖动地图；右键移除；Shift 拖动矩形；Ctrl 原地长按选择连续群系；Tab 切换区域；Ctrl+Z 撤销；Ctrl+Y 重做；Esc 取消选择",false,b -> {});
-            toolbarBottom = cursor[1]+23;
         }
         generation = data.generation; rebuildOverlay();
     }
@@ -238,7 +236,8 @@ final class MapController {
         if (overlay.isEmpty() || view.hereby$scale()<=0) return;
         double scale=view.hereby$scale()/client.getWindow().getScaleFactor();
         ChunkCell min=cellAt(0,0), max=cellAt(map.width,map.height);
-        context.enableScissor(0,toolbarBottom,map.width,map.height-30);
+        // Clip to the map viewport, never to the space between UI labels/toolbars.
+        context.enableScissor(0,0,map.width,map.height);
         for(var column:overlay.subMap(min.x(),true,max.x(),true).entrySet()) {
             for(var entry:column.getValue().subMap(min.z(),true,max.z(),true).entrySet()) {
                 ChunkCell c=new ChunkCell(column.getKey(),entry.getKey());
