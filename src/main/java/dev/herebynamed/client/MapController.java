@@ -65,8 +65,8 @@ final class MapController {
         if (book.region(selected).filter(r -> r.layer() == layer).isEmpty()) {
             selected = book.regions().stream().filter(r -> r.layer() == layer).reduce((a,b) -> b).map(RegionBook.Region::id).orElse("");
         }
-        icon(0,40,visibilityIcon(),visibilityText(),visibility==1,b -> cycleVisibility());
-        icon(0,60,0,editing() ? "退出区域编辑模式" : "切换区域编辑模式",editing(), b -> {
+        icon(0,40,visibilityIcon(),visibilityText(),b -> cycleVisibility());
+        icon(0,60,0,editing() ? "退出区域编辑模式" : "切换区域编辑模式", b -> {
             if (editing()) { job = null; pressed = -1; data.exit(); } else data.enter(dimension);
             build();
         });
@@ -78,18 +78,18 @@ final class MapController {
                 List<RegionBook.Region> regions = currentRegions();
                 openPopup(b, regions.stream().map(RegionBook.Region::name).toList(), i -> { selected = regions.get(i).id(); remembered.put(layer,selected); build(); });
             });
-            tool(cursor,5,"新增选区",false,b -> client.setScreen(new RegionDialog(map,null,(name,color) -> edit(RegionEdit.Action.CREATE,name,color,Set.of()))));
-            tool(cursor,6,"修改区域名称与颜色",false,b -> book.region(selected).ifPresent(r -> client.setScreen(new RegionDialog(map,r,(name,color) -> edit(RegionEdit.Action.RENAME,name,color,Set.of()))))).active=current!=null;
-            tool(cursor,7,"删除选区",false,b -> book.region(selected).ifPresent(r -> client.setScreen(new DeleteDialog(map,"删除区域“"+r.name()+"”？",() -> edit(RegionEdit.Action.DELETE_REGION,"",0,Set.of()))))).active=current!=null;
+            tool(cursor,5,"新增选区",b -> client.setScreen(new RegionDialog(map,null,(name,color) -> edit(RegionEdit.Action.CREATE,name,color,Set.of()))));
+            tool(cursor,6,"修改区域名称与颜色",b -> book.region(selected).ifPresent(r -> client.setScreen(new RegionDialog(map,r,(name,color) -> edit(RegionEdit.Action.RENAME,name,color,Set.of()))))).active=current!=null;
+            tool(cursor,7,"删除选区",b -> book.region(selected).ifPresent(r -> client.setScreen(new DeleteDialog(map,"删除区域“"+r.name()+"”？",() -> edit(RegionEdit.Action.DELETE_REGION,"",0,Set.of()))))).active=current!=null;
             cursor[0]+=6;
             select(cursor,"层 "+layer,44,"图层选择 · 当前图层 "+layer,0xaaaaaa,b -> chooseLayer(b,false));
-            tool(cursor,8,"新增图层",false,b -> edit(RegionEdit.Action.ADD_LAYER,"",0,Set.of()));
-            tool(cursor,9,"删除当前图层及其区域",false,b -> {
+            tool(cursor,8,"新增图层",b -> edit(RegionEdit.Action.ADD_LAYER,"",0,Set.of()));
+            tool(cursor,9,"删除当前图层及其区域",b -> {
                 long count = book.regions().stream().filter(r -> r.layer() == layer).count();
                 client.setScreen(new DeleteDialog(map,"删除图层 "+layer+" 及其 "+count+" 个区域？",() -> edit(RegionEdit.Action.DELETE_LAYER,"",0,Set.of())));
             });
-            tool(cursor,visibilityIcon(),visibilityText(),visibility==1,b -> cycleVisibility());
-            tool(cursor,10,"左键单击选择；左键拖动地图；右键移除；Shift 拖动矩形；Ctrl 原地长按选择连续群系；Tab 切换区域；Ctrl+Z 撤销；Ctrl+Y 重做；Esc 取消选择",false,b -> {});
+            tool(cursor,visibilityIcon(),visibilityText(),b -> cycleVisibility());
+            tool(cursor,10,"左键单击选择；左键拖动地图；右键移除；Shift 拖动矩形；Ctrl 原地长按选择连续群系；Tab 切换区域；Ctrl+Z 撤销；Ctrl+Y 重做；Esc 取消选择",b -> {});
         }
         generation = data.generation; rebuildOverlay();
     }
@@ -118,16 +118,16 @@ final class MapController {
     private void place(int[] cursor,int width) {
         if(cursor[0]+width>map.width-24 && cursor[0]>24) { cursor[0]=24; cursor[1]+=22; }
     }
-    private ButtonWidget tool(int[] cursor,int icon,String hint,boolean selected,ButtonWidget.PressAction action) {
+    private ButtonWidget tool(int[] cursor,int icon,String hint,ButtonWidget.PressAction action) {
         place(cursor,20);
-        ButtonWidget button=icon(cursor[0],cursor[1],icon,hint,selected,action); cursor[0]+=21; return button;
+        ButtonWidget button=icon(cursor[0],cursor[1],icon,hint,action); cursor[0]+=21; return button;
     }
     private void select(int[] cursor,String value,int width,String hint,int color,ButtonWidget.PressAction action) {
         place(cursor,width);
         add(MapTools.selector(cursor[0],cursor[1],width,value,hint,color,() -> popup==null,action)); cursor[0]+=width+3;
     }
-    private ButtonWidget icon(int x,int y,int icon,String hint,boolean selected,ButtonWidget.PressAction action) {
-        ButtonWidget button=MapTools.icon(x,y,icon,hint,selected,() -> popup==null,action); add(button); return button;
+    private ButtonWidget icon(int x,int y,int icon,String hint,ButtonWidget.PressAction action) {
+        ButtonWidget button=MapTools.icon(x,y,icon,hint,() -> popup==null,action); add(button); return button;
     }
     private void add(ButtonWidget button) { controls.add(button); Screens.getButtons(map).add(button); }
     private List<RegionBook.Region> currentRegions() { return book().regions().stream().filter(r -> r.layer()==layer).toList(); }

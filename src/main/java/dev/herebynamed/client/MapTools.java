@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 /** Uses Xaero's own transparent icon buttons and tooltip handling. */
 final class MapTools {
     private static final Identifier ICONS = Identifier.tryParse("hereby_named:textures/gui/map_tools.png");
-    static ButtonWidget icon(int x, int y, int icon, String hint, boolean selected, BooleanSupplier showHint, ButtonWidget.PressAction action) {
+    static ButtonWidget icon(int x, int y, int icon, String hint, BooleanSupplier showHint, ButtonWidget.PressAction action) {
         return new GuiTexturedButton(x, y, 20, 20, icon * 16, 0, 16, 16, ICONS, action,
                 new Tooltip(Text.literal(hint)).withWidth(220)) {
             @Override public Supplier<Tooltip> getXaero_tooltip() { return showHint.getAsBoolean()?super.getXaero_tooltip():null; }
