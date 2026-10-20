@@ -35,7 +35,9 @@ final class RegionColorPicker extends ClickableWidget {
             hue=(component/6+1)%1;
         }
     }
-    @Override protected void renderButton(DrawContext context,int mouseX,int mouseY,float delta) {
+    // Widget render entrypoint was renamed in 1.20.2. Both delegate to the same drawing code.
+    protected void renderWidget(DrawContext context,int mouseX,int mouseY,float delta) { renderButton(context,mouseX,mouseY,delta); }
+    protected void renderButton(DrawContext context,int mouseX,int mouseY,float delta) {
         int x=getX(),y=getY(),sw=squareWidth();
         for(int col=0;col<sw;col++) {
             int top=0xff000000|MathHelper.hsvToRgb(hue,col/(float)(sw-1),1);

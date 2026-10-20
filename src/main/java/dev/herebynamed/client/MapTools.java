@@ -13,21 +13,18 @@ import java.util.function.Supplier;
 
 /** Uses Xaero's own transparent icon buttons and tooltip handling. */
 final class MapTools {
-    private static final Identifier ICONS = new Identifier("hereby_named", "textures/gui/map_tools.png");
+    private static final Identifier ICONS = Identifier.tryParse("hereby_named:textures/gui/map_tools.png");
     static ButtonWidget icon(int x, int y, int icon, String hint, boolean selected, BooleanSupplier showHint, ButtonWidget.PressAction action) {
         return new GuiTexturedButton(x, y, 20, 20, icon * 16, 0, 16, 16, ICONS, action,
                 new Tooltip(Text.literal(hint)).withWidth(220)) {
             @Override public Supplier<Tooltip> getXaero_tooltip() { return showHint.getAsBoolean()?super.getXaero_tooltip():null; }
-            @Override public void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {
-                if (selected) context.fill(getX()+2, getY()+2, getX()+18, getY()+18, 0x5544bbdd);
-                super.renderButton(context, mouseX, mouseY, delta);
-            }
         };
     }
     static ButtonWidget selector(int x, int y, int width, String value, String hint, int color, BooleanSupplier showHint, ButtonWidget.PressAction action) {
         return new TooltipButton(x, y, width, 20, Text.literal(value), action, new Tooltip(Text.literal(hint))) {
             @Override public Supplier<Tooltip> getXaero_tooltip() { return showHint.getAsBoolean()?super.getXaero_tooltip():null; }
-            @Override public void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {
+            public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) { renderButton(context,mouseX,mouseY,delta); }
+            public void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {
                 int top = getY()+2;
                 context.fill(getX(), top, getX()+getWidth(), top+16, isHovered()?0x66444444:0x66000000);
                 context.fill(getX()+3, top+5, getX()+5, top+11, 0xff000000|color);

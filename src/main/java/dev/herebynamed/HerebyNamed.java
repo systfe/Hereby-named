@@ -27,12 +27,7 @@ public final class HerebyNamed implements ModInitializer {
         return SERVERS.computeIfAbsent(server, s -> new ServerData(s.getSavePath(WorldSavePath.ROOT).resolve("hereby-named")));
     }
     @Override public void onInitialize() {
-        ServerPlayNetworking.registerGlobalReceiver(Wire.CHANNEL, (server, player, handler, buf, response) -> {
-            try {
-                Wire.Fragment fragment = Wire.Fragment.read(buf);
-                server.execute(() -> receive(server, player, fragment));
-            } catch (RuntimeException ex) { LOG.warn("Rejected invalid region packet from {}", player.getUuid()); }
-        });
+        ServerTransport.initialize(HerebyNamed::receive);
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
                 send(server, handler.player, handler.player.getWorld().getRegistryKey().getValue().toString(), ""));
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
@@ -137,12 +132,12 @@ public final class HerebyNamed implements ModInitializer {
         send(server, player, dimension, message, 0);
     }
     private static void send(MinecraftServer server, ServerPlayerEntity player, String dimension, String message, long responseTo) {
-        if (!ServerPlayNetworking.canSend(player, Wire.CHANNEL)) return;
+        if (!ServerTransport.canSend(player)) return;
         ServerData d = data(server);
         try {
             Snapshot snapshot = new Snapshot(dimension, d.revisions.getOrDefault(dimension, 0L), responseTo,
                     d.authority.holder(dimension), authorized(d, player), message, d.book(dimension));
-            Wire.send(snapshot.encode(), packet -> ServerPlayNetworking.send(player, Wire.CHANNEL, packet));
+            Wire.send(snapshot.encode(), packet -> ServerTransport.send(player, packet));
         } catch (IOException ex) {
             LOG.error("Cannot load/sync named regions", ex);
             player.sendMessage(Text.literal("此地名曰：区域存档读取或同步失败，已保留原文件"), false);

@@ -6,11 +6,16 @@
 
 ## 安装
 
-将 `build/libs/hereby-named-0.1.0+1.20.1.jar` 放入客户端 `mods`，与 Fabric API、Xaero's World Map 一同使用。支持的首个版本组合为 Minecraft 1.20.1、Java 17、Fabric Loader 0.17.2、Fabric API 0.92.6+1.20.1、Xaero World Map 1.47.0。
+选择对应 Minecraft 版本的 jar 放入客户端 `mods`，与 Fabric API、Xaero's World Map 一同使用；同一实例只保留一个此地名曰 jar。
+
+| Minecraft | 安装包 | 最低 Java | 构建及兼容目标 |
+| --- | --- | --- | --- |
+| 1.20.1 | `build/1.20.1/libs/hereby-named-0.2.0+1.20.1.jar` | 17 | Fabric Loader 0.17.2、Fabric API 0.92.6+1.20.1、Xaero World Map 1.47.0、Traveler's Titles 4.0.2 |
+| 1.21.1 | `build/1.21.1/libs/hereby-named-0.2.0+1.21.1.jar` | 21 | Fabric Loader 0.19.3、Fabric API 0.116.13+1.21.1、Xaero World Map 1.44.2、Traveler's Titles 5.1.3 |
 
 多人共享时，服务器也安装此地名曰与 Fabric API；服务器无需安装 Xaero World Map、Traveler's Titles 或任何客户端模组。未装服务器端时自动使用本地命名。其他玩家也需安装客户端才会看到命名。
 
-Traveler's Titles 1.20-Fabric-4.0.2 为可选兼容，并使用它自己的正常依赖。没有它时使用内置区域标题。Minecraft 1.20、1.21.1 及其他 Xaero 版本尚未声明兼容，不应直接使用此 jar。
+Traveler's Titles 为可选兼容，并使用它自己的正常依赖。没有它时使用内置区域标题。Minecraft 1.20 及其他 Xaero 版本尚未声明兼容。部分整合包中的其他模组可能要求更高 Java 版本；云游四海当前的优化模组要求 Java 25。
 
 ## 操作
 
@@ -38,14 +43,21 @@ OP 或控制台使用 `/herebynamed grant 在线玩家名` 授权，`/herebyname
 
 ## 构建与测试
 
-使用 JDK 17：
+工程位于 `C:/Users/Lenovo/Desktop/desktop/工程/编程学习/mod/hereby-named`。两版共用领域逻辑、界面与存档格式；`src/platform/版本/java` 隔离 Fabric 网络与 HUD API 差异。构建 1.21.1 使用 JDK 21；同一个 JDK 21 也可构建以 Java 17 为目标的 1.20.1 版本。
 
 ```powershell
 ./scripts/prepare-dependencies.ps1 -MapJar '完整路径/xaeroworldmap-fabric-1.20.1-1.47.0.jar'
 ./gradlew.bat build
+
+./scripts/prepare-dependencies.ps1 -MinecraftVersion 1.21.1 -MapJar '完整路径/xaeroworldmap-fabric-1.21.1-1.44.2.jar'
+./gradlew.bat -Pminecraft_version=1.21.1 build
 ```
 
-工程紧邻当前实例 `mods` 时，准备脚本可省略参数。Xaero 与嵌入的 XaeroLib 只作编译依赖，不随本项目再分发。Gradle Wrapper 下载 Gradle 8.12.1，首次构建还需下载 Fabric/Minecraft 依赖。
+准备脚本也接受 `-InstancePath 实例目录`，自动从其 `mods` 寻找对应版本。Xaero 与嵌入的 XaeroLib 只作编译依赖，不随本项目再分发。Gradle Wrapper 下载 Gradle 8.12.1，首次构建还需下载 Fabric/Minecraft 依赖。
+
+0.2.0 使用 `regions_v2` 通信通道；多人共享需要服务器和客户端一同更新。已有区域文件格式保持兼容。
+
+`scripts/smoke-client.ps1 -InstancePath 实例目录 -WorldPath 原存档目录 -JavaHome Java目录` 会将模组、配置与存档复制到工程的 `.tools/smoke-版本` 下，离线启动隔离客户端；原存档只读。云游四海测试需指定其 Java 25 运行时。
 
 测试覆盖区域覆盖／撤销、图层编号、首尾名称、群系连通和异步等待、标题排队、权限与维度锁、存档及网络分片。运行单个测试示例：`./gradlew.bat test --tests dev.herebynamed.domain.RegionBookTest`。
 

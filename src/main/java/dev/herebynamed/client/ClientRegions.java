@@ -25,7 +25,7 @@ public final class ClientRegions {
     private long pendingSince;
     public long generation;
 
-    public boolean shared() { return client.getNetworkHandler() != null && ClientPlayNetworking.canSend(Wire.CHANNEL); }
+    public boolean shared() { return client.getNetworkHandler() != null && ClientTransport.canSend(); }
     public void reset() {
         shared.clear(); local.clear(); failed.clear(); requested.clear(); store = null;
         editing = acquiring = null; pending.cancel(); pendingSince = 0; generation++; assembler = new Wire.Assembler();
@@ -115,7 +115,7 @@ public final class ClientRegions {
         boolean tracked = edit.action() != RegionEdit.Action.READ && edit.action() != RegionEdit.Action.RELEASE;
         long id = tracked ? pending.begin(edit.dimension(), edit.action() == RegionEdit.Action.ACQUIRE) : pending.nextId();
         edit = new RegionEdit(edit.dimension(), edit.revision(), id, edit.action(), edit.layer(), edit.region(), edit.name(), edit.color(), edit.cells());
-        try { Wire.send(edit.encode(), packet -> ClientPlayNetworking.send(Wire.CHANNEL, packet)); }
+        try { Wire.send(edit.encode(), ClientTransport::send); }
         catch (IOException | RuntimeException ex) {
             if (tracked) { pending.cancel(); pendingSince = 0; acquiring = null; }
             message("无法发送区域请求"); HerebyNamed.LOG.error("Region send failed", ex);
