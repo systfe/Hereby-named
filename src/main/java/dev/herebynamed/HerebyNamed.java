@@ -46,27 +46,7 @@ public final class HerebyNamed implements ModInitializer {
             ServerData d=SERVERS.get(server);if(d!=null) { d.writes.close();d.stopping=true; }
         });
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> SERVERS.remove(server));
-        ServerTickEvents.END_SERVER_TICK.register(server -> {
-            ServerData d=SERVERS.get(server);if(d==null || d.stopping) return;
-            for(var entry:List.copyOf(d.incoming.entrySet())) {
-                if(!AutoWork.hasCapacity()) break;
-                var queue=entry.getValue();if(queue.isEmpty()) { d.incoming.remove(entry.getKey());continue; }
-                Incoming incoming=queue.peekFirst();
-                var decoding=AutoWork.submit(() -> RegionEdit.decode(incoming.bytes()));
-                if(AutoWork.rejected(decoding)) break;
-                queue.removeFirst();
-                decoding.whenComplete((edit,error) -> server.execute(() -> {
-                    if(SERVERS.get(server)!=d || d.stopping || incoming.player().isDisconnected()) return;
-                    if(error!=null) { LOG.warn("Invalid region request",error);return; }
-                    handle(server,incoming.player(),edit);
-                }));
-            }
-            for(int count=0;count<4 && !d.outgoing.isEmpty() && AutoWork.hasCapacity();count++) {
-                var entry=d.outgoing.entrySet().iterator().next();
-                Outgoing outgoing=entry.getValue();d.outgoing.remove(entry.getKey());
-                encode(server,d,outgoing);
-            }
-        });
+        ServerTickEvents.END_SERVER_TICK.register(server -> pump(server,SERVERS.get(server)));
         CommandRegistrationCallback.EVENT.register((dispatcher, registry, environment) -> dispatcher.register(
                 CommandManager.literal("herebynamed").requires(source -> source.hasPermissionLevel(2))
                     .then(CommandManager.literal("grant").then(CommandManager.argument("player", StringArgumentType.word())
@@ -102,7 +82,44 @@ public final class HerebyNamed implements ModInitializer {
             if(bytes.isEmpty()) return;
             var queue=d.incoming.computeIfAbsent(player.getUuid(),id -> new ArrayDeque<>());
             if(queue.size()<4) queue.addLast(new Incoming(player,bytes.get()));
+            pump(server,d);
         } catch(Exception ex) { LOG.warn("Invalid region fragment",ex); }
+    }
+    /** Network work must progress even when the integrated world is paused by a map screen. */
+    private static void pump(MinecraftServer server,ServerData d) {
+        if(d==null || d.stopping || d.pumping) return;
+        d.pumping=true;
+        try {
+            for(var entry:List.copyOf(d.incoming.entrySet())) {
+                if(!AutoWork.hasCapacity()) break;
+                var queue=entry.getValue();if(queue.isEmpty()) { d.incoming.remove(entry.getKey());continue; }
+                Incoming incoming=queue.peekFirst();
+                var decoding=AutoWork.submit(() -> RegionEdit.decode(incoming.bytes()));
+                if(AutoWork.rejected(decoding)) break;
+                queue.removeFirst();
+                decoding.whenComplete((edit,error) -> server.execute(() -> {
+                    if(SERVERS.get(server)!=d || d.stopping) return;
+                    if(!incoming.player().isDisconnected()) {
+                        if(error!=null) LOG.warn("Invalid region request",error);
+                        else handle(server,incoming.player(),edit);
+                    }
+                    pump(server,d);
+                }));
+            }
+            for(int count=0;count<4 && !d.outgoing.isEmpty() && AutoWork.hasCapacity();count++) {
+                var entry=d.outgoing.entrySet().iterator().next();
+                Outgoing outgoing=entry.getValue();d.outgoing.remove(entry.getKey());
+                encode(server,d,outgoing);
+            }
+        } finally { d.pumping=false; }
+        if(!d.retryScheduled && (!d.outgoing.isEmpty() || d.incoming.values().stream().anyMatch(q -> !q.isEmpty()))) {
+            d.retryScheduled=true;
+            java.util.concurrent.CompletableFuture.delayedExecutor(50,java.util.concurrent.TimeUnit.MILLISECONDS).execute(() ->
+                server.execute(() -> {
+                    if(SERVERS.get(server)!=d || d.stopping) return;
+                    d.retryScheduled=false;pump(server,d);
+                }));
+        }
     }
     private static void handle(MinecraftServer server,ServerPlayerEntity player,RegionEdit edit) {
         if(player.isDisconnected()) return;
@@ -199,6 +216,7 @@ public final class HerebyNamed implements ModInitializer {
         try {
             if(d.stopping || player.isDisconnected()) return;
             d.outgoing.put(new Delivery(player.getUuid(),dimension,responseTo),new Outgoing(player,dimension,message,responseTo));
+            pump(server,d);
         } catch (RuntimeException ex) { LOG.error("Cannot queue named regions",ex); }
     }
     private record Delivery(UUID player,String dimension,long responseTo) { }
@@ -242,7 +260,7 @@ public final class HerebyNamed implements ModInitializer {
         final AutoWork.Session writes=new AutoWork.Session();
         final Map<Delivery,Outgoing> outgoing=new LinkedHashMap<>();
         final Map<UUID,ArrayDeque<Incoming>> incoming=new LinkedHashMap<>();
-        boolean stopping;
+        boolean stopping,pumping,retryScheduled;
         ServerData(Path root) {
             this.root = root; store = new RegionStore(root.resolve("regions"));
             Path file = root.resolve("editors.txt");

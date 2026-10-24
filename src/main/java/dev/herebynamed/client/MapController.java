@@ -193,6 +193,7 @@ final class MapController {
         catch (IllegalArgumentException ex) { data.message(ex.getMessage()); }
     }
     void tick() {
+        data.busy();
         if (!dimension.equals(dimension()) || generation!=data.generation) build();
         if(visibility!=2) overlay.tick();
         if (!editing()) { job=null; pressed=-1; return; }
