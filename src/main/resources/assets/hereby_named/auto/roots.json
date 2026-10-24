@@ -1,19 +1,5 @@
 [
   {
-    "text": "艾尔",
-    "kinds": [
-      "ALL"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "洛恩",
-    "kinds": [
-      "ALL"
-    ],
-    "climate": "ANY"
-  },
-  {
     "text": "瑟兰",
     "kinds": [
       "ALL"
@@ -28,62 +14,6 @@
     "climate": "ANY"
   },
   {
-    "text": "埃文",
-    "kinds": [
-      "ALL"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "洛瑟",
-    "kinds": [
-      "ALL"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "维兰",
-    "kinds": [
-      "ALL"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "塞琳",
-    "kinds": [
-      "ALL"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "维尔",
-    "kinds": [
-      "ALL"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "艾瑟",
-    "kinds": [
-      "ALL"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "欧瑞",
-    "kinds": [
-      "ALL"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "卡尔",
-    "kinds": [
-      "ALL"
-    ],
-    "climate": "ANY"
-  },
-  {
     "text": "诺兰",
     "kinds": [
       "ALL"
@@ -91,77 +21,126 @@
     "climate": "ANY"
   },
   {
-    "text": "希尔",
+    "text": "洛维尔",
     "kinds": [
       "ALL"
     ],
     "climate": "ANY"
   },
   {
-    "text": "洛瑞",
+    "text": "阿尔维",
     "kinds": [
       "ALL"
     ],
     "climate": "ANY"
   },
   {
-    "text": "塞尔",
+    "text": "奥斯通古",
     "kinds": [
       "ALL"
     ],
     "climate": "ANY"
   },
   {
-    "text": "岚歌",
+    "text": "维斯",
     "kinds": [
       "ALL"
     ],
     "climate": "ANY"
   },
   {
-    "text": "星辉",
+    "text": "卡尔都",
     "kinds": [
       "ALL"
     ],
     "climate": "ANY"
   },
   {
-    "text": "银露",
+    "text": "亚速",
     "kinds": [
       "ALL"
     ],
     "climate": "ANY"
   },
   {
-    "text": "晨曦",
+    "text": "风信",
     "kinds": [
       "ALL"
     ],
     "climate": "ANY"
   },
   {
-    "text": "月影",
+    "text": "丹罗",
     "kinds": [
       "ALL"
     ],
     "climate": "ANY"
   },
   {
-    "text": "风语",
+    "text": "淮聚",
     "kinds": [
       "ALL"
     ],
     "climate": "ANY"
   },
   {
-    "text": "琉光",
+    "text": "北邙",
     "kinds": [
       "ALL"
     ],
     "climate": "ANY"
   },
   {
-    "text": "清辉",
+    "text": "阿斯迦",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "诺维",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "洛希",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "萨隆",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "伊兰",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "奥瑟",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "塞维",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "璃歌",
     "kinds": [
       "ALL"
     ],
@@ -170,45 +149,78 @@
   {
     "text": "银霜",
     "kinds": [
-      "MOUNTAIN",
-      "FOREST",
-      "PLAIN",
-      "LAKE",
-      "FROZEN_OCEAN"
+      "ALL"
     ],
     "climate": "COLD"
   },
   {
-    "text": "寒鸦",
+    "text": "北基朗",
     "kinds": [
-      "MOUNTAIN",
-      "FOREST",
-      "PLAIN",
-      "LAKE",
-      "FROZEN_OCEAN"
+      "ALL"
     ],
     "climate": "COLD"
   },
   {
-    "text": "雪羽",
+    "text": "霜暮",
     "kinds": [
-      "MOUNTAIN",
-      "FOREST",
-      "PLAIN",
-      "LAKE",
-      "FROZEN_OCEAN"
+      "ALL"
     ],
     "climate": "COLD"
   },
   {
-    "text": "冰镜",
+    "text": "白岚",
     "kinds": [
-      "MOUNTAIN",
-      "FOREST",
-      "PLAIN",
-      "LAKE",
-      "FROZEN_OCEAN"
+      "ALL"
     ],
     "climate": "COLD"
+  },
+  {
+    "text": "北冕",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "寒星",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "赤霞",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "HOT"
+  },
+  {
+    "text": "赤岚",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "HOT"
+  },
+  {
+    "text": "南瑟",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "HOT"
+  },
+  {
+    "text": "阿兹",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "HOT"
+  },
+  {
+    "text": "丹霞",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "HOT"
   }
 ]

@@ -5,6 +5,46 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class AutomaticOwnershipTest {
+    @Test void growingMountainCanBeRenamedOnlyOnceEvenAfterSaving() throws Exception {
+        RegionBook book=new RegionBook();
+        Set<ChunkCell> peak=rectangle(30,30), ridge=rectangle(100,30), range=rectangle(200,30);
+        book.automate("MOUNTAIN:TEMPERATE","赤霞峰",1,peak);
+        var config=new dev.herebynamed.auto.AutoConfig();
+        var candidate=new dev.herebynamed.auto.TerrainAnalysis.Candidate(dev.herebynamed.auto.TerrainKind.MOUNTAIN,ridge,0.7f,1600);
+        String name=dev.herebynamed.auto.AutoNames.choose(candidate,book,config).orElseThrow();
+        assertEquals("赤霞岭",name);
+        book.automate("MOUNTAIN:TEMPERATE",name,1,ridge);
+        assertEquals("赤霞岭",book.regions().get(0).name());
+        assertTrue(book.regions().get(0).automatic().formerNames().contains("赤霞峰"));
+        book=BookCodec.decode(BookCodec.encode(book));
+        var expanded=new dev.herebynamed.auto.TerrainAnalysis.Candidate(dev.herebynamed.auto.TerrainKind.MOUNTAIN,range,0.7f,3200);
+        assertEquals("赤霞岭",dev.herebynamed.auto.AutoNames.choose(expanded,book,config).orElseThrow());
+        book.automate("MOUNTAIN:COLD","赤霞山脉",1,range);
+        assertEquals("赤霞岭",book.regions().get(0).name());
+        book.renameRegion(book.regions().get(0).id(),"自定山名",2);
+        book.automate("MOUNTAIN:TEMPERATE","别的山脉",1,range);
+        assertEquals("自定山名",book.regions().get(0).name());
+    }
+    private static Set<ChunkCell> rectangle(int width,int height) {
+        Set<ChunkCell> cells=new HashSet<>();
+        for(int x=0;x<width;x++) for(int z=0;z<height;z++) cells.add(new ChunkCell(x,z));
+        return cells;
+    }
+    @Test void hbn2AutomaticMountainLoadsWithItsNameAndCanStillUpgradeOnce() throws Exception {
+        java.io.ByteArrayOutputStream bytes=new java.io.ByteArrayOutputStream();
+        try(var out=new java.io.DataOutputStream(new java.util.zip.GZIPOutputStream(bytes))) {
+            out.writeInt(0x48424e32);out.writeInt(2);out.writeInt(2);out.writeInt(1);out.writeInt(2);out.writeInt(1);
+            out.writeUTF("old");out.writeInt(1);out.writeUTF("赤霞峰");out.writeInt(1);out.writeBoolean(true);
+            out.writeUTF("MOUNTAIN:TEMPERATE");out.writeLong(1);out.writeInt(0);
+            out.writeInt(1);out.writeInt(0);out.writeInt(0);out.writeInt(0);
+        }
+        RegionBook book=BookCodec.decode(bytes.toByteArray());
+        assertEquals("赤霞峰",book.regions().get(0).name());
+        assertFalse(book.regions().get(0).automatic().mountainRenamed());
+        book.automate("MOUNTAIN:TEMPERATE","赤霞山脉",1,rectangle(200,30));
+        assertTrue(book.regions().get(0).automatic().mountainRenamed());
+        assertEquals(book.state(),BookCodec.decode(BookCodec.encode(book)).state());
+    }
     @Test void automaticUpdatesProtectManualCellsAndManualEditsTakeOverTheWholeRegion() throws Exception {
         RegionBook book=new RegionBook();
         ChunkCell a=new ChunkCell(0,0),b=new ChunkCell(1,0),c=new ChunkCell(2,0);

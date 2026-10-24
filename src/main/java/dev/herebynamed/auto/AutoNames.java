@@ -11,8 +11,22 @@ public final class AutoNames {
                 .sorted(Comparator.comparingLong(r -> r.automatic().order())).toList();
         if(!existing.isEmpty()) {
             var oldest=existing.get(0);
+            if(candidate.kind()==TerrainKind.MOUNTAIN && oldest.automatic().classification().startsWith("MOUNTAIN")) {
+                String group=mountainGroup(candidate,config);
+                boolean exhausted=existing.stream().anyMatch(r -> r.automatic().mountainRenamed());
+                if(exhausted || group.isEmpty() || candidate.cells().size()<=oldest.cells().size()
+                        || !oldest.name().matches(".+[山峰]")) return Optional.of(oldest.name());
+                String adjusted=stem(oldest.name())+group;
+                if(book.regions().stream().noneMatch(r -> !r.id().equals(oldest.id()) && r.name().equals(adjusted))) return Optional.of(adjusted);
+                for(var root:config.roots) if(root.fits(candidate.kind(),candidate.temperature())) {
+                    String alternate=root.text()+group;
+                    if(valid(alternate) && book.regions().stream().noneMatch(r -> r.name().equals(alternate))) return Optional.of(alternate);
+                }
+                // A used replacement must not prevent the existing region from expanding.
+                return Optional.of(oldest.name());
+            }
             if(oldest.automatic().classification().equals(key(candidate))) return Optional.of(oldest.name());
-            String adjusted=stem(oldest.name())+suffix(candidate);
+            String adjusted=stem(oldest.name())+suffix(candidate,config);
             if(book.regions().stream().noneMatch(r -> !r.id().equals(oldest.id()) && r.name().equals(adjusted))) return Optional.of(adjusted);
         }
         Set<String> used=new HashSet<>(); for(var r:book.regions()) used.add(r.name());
@@ -23,13 +37,14 @@ public final class AutoNames {
         if(!options.isEmpty()) Collections.rotate(options,Math.floorMod(seed,options.size()));
         for(String option:options) if(valid(option) && !used.contains(option)) return Optional.of(option);
         List<String> generated=new ArrayList<>();
-        for(String root:roots) generated.add(root+suffix(candidate));
+        String ending=suffix(candidate,config);
+        for(String root:roots) generated.add(root+ending);
         if(!generated.isEmpty()) Collections.rotate(generated,Math.floorMod(seed,generated.size()));
         for(String option:generated) if(valid(option) && !used.contains(option)) return Optional.of(option);
         options.addAll(generated);
         // Pair whitelist roots only. Bound the search even for very large user lists.
         for(int i=0;i<Math.min(roots.size(),128);i++) for(int j=0;j<Math.min(roots.size(),128);j++) if(i!=j) {
-            String option=roots.get(i)+roots.get(j)+suffix(candidate);
+            String option=roots.get(i)+roots.get(j)+ending;
             if(valid(option) && !used.contains(option)) return Optional.of(option);
         }
         for(String option:options) {
@@ -53,20 +68,24 @@ public final class AutoNames {
         double x=0,z=0;for(ChunkCell c:cells) { x+=c.x();z+=c.z(); }return new double[]{x/cells.size(),z/cells.size()};
     }
     private static String stem(String name) {
-        for(String suffix:List.of("山脉","山岭","森林","草甸","草原","荒原","沙漠","荒漠","冻洋","内海","大洋","群山","山","岭","峰","洋","海","湖","林"))
+        for(String suffix:List.of("山脉","山岭","之森","之林","森林","草甸","草原","荒原","平原","冰原","高原","沙漠","荒漠","冻洋","内海","大洋","群山","山","岭","峰","峦","洋","海","湖","林","森"))
             if(name.endsWith(suffix) && name.length()>suffix.length()) return name.substring(0,name.length()-suffix.length());
         return name;
     }
-    private static String suffix(TerrainAnalysis.Candidate c) {
+    private static String suffix(TerrainAnalysis.Candidate c,AutoConfig config) {
         return switch(c.kind()) {
-            case MOUNTAIN -> {
-                int minX=Integer.MAX_VALUE,maxX=Integer.MIN_VALUE,minZ=minX,maxZ=maxX;
-                for(ChunkCell p:c.cells()) { minX=Math.min(minX,p.x());maxX=Math.max(maxX,p.x());minZ=Math.min(minZ,p.z());maxZ=Math.max(maxZ,p.z()); }
-                yield Math.max(maxX-minX+1,maxZ-minZ+1)>1.8*Math.min(maxX-minX+1,maxZ-minZ+1)?"山脉":"山";
-            }
-            case OCEAN -> "洋"; case FROZEN_OCEAN -> "冻洋"; case PLAIN -> "原野";
-            case FOREST -> "森林";case LAKE -> "湖";case FLOWER -> "花甸";case DESERT -> "沙漠";
+            case MOUNTAIN -> { String group=mountainGroup(c,config);yield group.isEmpty()?"山":group; }
+            case OCEAN -> "洋"; case FROZEN_OCEAN -> "冻洋"; case PLAIN -> c.temperature()<=0.15f?"冰原":"平原";
+            case FOREST -> List.of("之森","之林","森","林").get(Math.floorMod(c.cells().stream().mapToInt(ChunkCell::hashCode).sum(),4));
+            case LAKE -> "湖";case FLOWER -> "花甸";case DESERT -> "沙漠";
             default -> "";
         };
+    }
+    private static String mountainGroup(TerrainAnalysis.Candidate c,AutoConfig config) {
+        int minX=Integer.MAX_VALUE,maxX=Integer.MIN_VALUE,minZ=minX,maxZ=maxX;
+        for(ChunkCell p:c.cells()) { minX=Math.min(minX,p.x());maxX=Math.max(maxX,p.x());minZ=Math.min(minZ,p.z());maxZ=Math.max(maxZ,p.z()); }
+        long width=(long)maxX-minX+1,height=(long)maxZ-minZ+1;
+        if(Math.max(width,height)*100>config.mountainRidgeRatioPercent*Math.min(width,height)) return c.span()>=config.mountainRangeSpan?"山脉":"岭";
+        return c.span()>=config.mountainRangeSpan || c.cells().size()>=config.mountainMassifChunks?"峦":"";
     }
 }

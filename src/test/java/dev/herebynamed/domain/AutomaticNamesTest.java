@@ -9,6 +9,36 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class AutomaticNamesTest {
     @TempDir Path directory;
+    @Test void rootGeneratedForestsUseForestOrWoodlandStyleNames() {
+        AutoConfig config=new AutoConfig();
+        config.roots=List.of(new AutoConfig.Name("瑟兰",List.of("FOREST"),"ANY"));
+        for(int x=0;x<8;x++) {
+            var candidate=new TerrainAnalysis.Candidate(TerrainKind.FOREST,Set.of(new ChunkCell(x,0)),0.7f,1024);
+            assertTrue(AutoNames.choose(candidate,new RegionBook(),config).orElseThrow().matches("瑟兰(之森|之林|森|林)"));
+        }
+    }
+    @Test void mountainExpansionCanChangeItsStemWhenTheGroupedNameIsAlreadyUsed() {
+        AutoConfig config=new AutoConfig();config.roots=List.of(new AutoConfig.Name("瑟兰",List.of("MOUNTAIN"),"ANY"));
+        RegionBook book=new RegionBook();book.automate("MOUNTAIN:TEMPERATE","赤霞峰",1,Set.of(new ChunkCell(0,0)));
+        book.createRegion(2,"赤霞岭",2);
+        Set<ChunkCell> cells=new HashSet<>();for(int x=0;x<100;x++) cells.add(new ChunkCell(x,0));
+        var candidate=new TerrainAnalysis.Candidate(TerrainKind.MOUNTAIN,cells,0.7f,1600);
+        assertEquals("瑟兰岭",AutoNames.choose(candidate,book,config).orElseThrow());
+    }
+    @Test void settingsDraftSavesNamesRootsAndThresholdsWithoutMutatingOriginal() throws Exception {
+        AutoConfig original=AutoConfig.load(directory),draft=original.copy();
+        draft.thresholds.forest=new AutoConfig.Threshold(7,1800,0);
+        draft.names=new ArrayList<>(List.of(new AutoConfig.Name("风信洋",List.of("OCEAN"),"ANY")));
+        draft.roots=new ArrayList<>(List.of(new AutoConfig.Name("瑟兰",List.of("FOREST"),"TEMPERATE")));
+        draft.saveAll(directory);
+        assertEquals(5,original.thresholds.forest.minimumBiomes());
+        AutoConfig loaded=AutoConfig.load(directory);
+        assertEquals(draft.thresholds.forest,loaded.thresholds.forest);
+        assertEquals(draft.names,loaded.names);assertEquals(draft.roots,loaded.roots);
+        draft.names.add(new AutoConfig.Name("无效2",List.of("ALL"),"ANY"));
+        assertThrows(IllegalArgumentException.class,() -> draft.saveAll(directory));
+        assertEquals(loaded.names,AutoConfig.load(directory).names);
+    }
     @Test void existingPartialConfigurationGainsEditableDefaultsWithoutLosingCustomValues() throws Exception {
         java.nio.file.Files.writeString(directory.resolve("automatic.json"),
                 "{\"enabled\":false,\"unlockSpan\":3000,\"thresholds\":{\"forest\":{\"minimumBiomes\":7}}}");

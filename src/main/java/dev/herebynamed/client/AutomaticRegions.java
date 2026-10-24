@@ -39,13 +39,25 @@ public final class AutomaticRegions {
     private String mapIdentity="",status="正在读取自动区域设置";
     private int sampleCount,unnamed;
     private boolean unlocked,forceAnalysis;
+    private boolean savingSettings;
 
     public String status() { return status; }
     public int sampleCount() { return sampleCount; }
     public int unnamedCount() { return unnamed; }
     public boolean enabled() { return config!=null && config.enabled; }
     public Path configDirectory() { return configDirectory; }
-    public boolean ready() { return config!=null && loadingConfig==null; }
+    public boolean ready() { return config!=null && loadingConfig==null && !savingSettings; }
+    public AutoConfig settingsDraft() { return config.copy(); }
+    public void saveSettings(AutoConfig draft,java.util.function.Consumer<String> completed) {
+        if(!ready()) { completed.accept("设置正在读取或保存，请稍后重试");return; }
+        try { draft.validate(); } catch(IllegalArgumentException ex) { completed.accept(ex.getMessage());return; }
+        AutoConfig saved=draft.copy();savingSettings=true;
+        AutoWork.submit(() -> { saved.saveAll(configDirectory);return saved; }).whenComplete((value,error) -> client.execute(() -> {
+            savingSettings=false;
+            if(error!=null) { HerebyNamed.LOG.error("Cannot save automatic settings",error);completed.accept("保存失败，设置未应用；请查看日志");return; }
+            reset();config=value;forceAnalysis=true;status="设置已保存，等待主世界地表";completed.accept("");
+        }));
+    }
     public void reset() {
         if(worker!=null) worker.active=false;
         epoch++;worker=null;work=null;processor=null;knowledge=null;discovery=null;scanning=lastPlayer=null;
@@ -57,13 +69,11 @@ public final class AutomaticRegions {
     }
     public void toggle() {
         if(!ready()) return;
-        config.enabled=!config.enabled;
-        AutoConfig current=config;
-        AutoWork.submit(() -> { current.save(configDirectory);return true; }).whenComplete((saved,error) -> {
-            if(error!=null) HerebyNamed.LOG.error("Cannot save automatic settings",error);
+        AutoConfig draft=config.copy();draft.enabled=!draft.enabled;
+        saveSettings(draft,message -> {
+            if(!message.isEmpty()) { status=message;regions.message(message); }
+            else if(!draft.enabled) status="自动创建已关闭；已有区域保留";
         });
-        if(!config.enabled) { proposals.clear();status="自动创建已关闭；已有区域保留"; }
-        else { forceAnalysis=true;nextWork=0; }
     }
     public void reanalyze() {
         proposals.clear();forceAnalysis=true;nextWork=0;scanAgain=0;discovery=null;scanning=null;
@@ -177,7 +187,8 @@ public final class AutomaticRegions {
             if(!state.active) break;
             Optional<String> name=AutoNames.choose(candidate,book,config);
             if(name.isEmpty()) { unnamed++;continue; }
-            int color=book.regions().stream().filter(r -> r.automatic()!=null && r.name().equals(name.get()) && r.automatic().classification().equals(AutoNames.key(candidate)))
+            int color=book.regions().stream().filter(r -> r.layer()==1 && r.automatic()!=null && !Collections.disjoint(r.cells(),candidate.cells()))
+                    .sorted(Comparator.comparingLong(r -> r.automatic().order()))
                     .map(RegionBook.Region::color).findFirst().orElseGet(() -> candidate.kind().variedColor(name.get().hashCode()));
             if(book.automate(AutoNames.key(candidate),name.get(),color,candidate.cells())) {
                 edits.add(new RegionEdit(DIMENSION,0,RegionEdit.Action.AUTO_APPLY,1,AutoNames.key(candidate),name.get(),color,candidate.cells()));

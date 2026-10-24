@@ -4,7 +4,8 @@ import java.util.*;
 
 /** A dimension's named regions. All changes pass through this transactional boundary. */
 public final class RegionBook {
-    public record Automatic(String classification, long order, List<String> formerNames) {
+    public record Automatic(String classification, long order, List<String> formerNames, boolean mountainRenamed) {
+        public Automatic(String classification,long order,List<String> formerNames) { this(classification,order,formerNames,false); }
         public Automatic { formerNames=List.copyOf(formerNames); }
     }
     public record Region(String id, int layer, String name, int color, Set<ChunkCell> cells, Automatic automatic) {
@@ -138,10 +139,15 @@ public final class RegionBook {
         Region first=overlapping.isEmpty()?null:overlapping.get(0);
         Set<String> merged=new HashSet<>(); List<String> former=new ArrayList<>();
         for(Region r:overlapping) { merged.add(r.id());cells.addAll(r.cells());former.addAll(r.automatic().formerNames()); if(r!=first) former.add(r.name()); }
-        String chosen=first==null || !first.automatic().classification().equals(classification)?validName(name):first.name();
-        if(first==null && regions().stream().anyMatch(r -> r.name().equals(chosen))) return false;
+        boolean mountain=classification.startsWith("MOUNTAIN") && first!=null && first.automatic().classification().startsWith("MOUNTAIN");
+        boolean renamed=overlapping.stream().anyMatch(r -> r.automatic().mountainRenamed());
+        boolean renameMountain=mountain && !renamed && cells.size()>first.cells().size() && !first.name().equals(name);
+        String chosen=mountain?(renameMountain?validName(name):first.name())
+                :first==null || !first.automatic().classification().equals(classification)?validName(name):first.name();
+        if((first==null || !chosen.equals(first.name())) && regions().stream().anyMatch(r -> !merged.contains(r.id()) && r.name().equals(chosen))) return false;
+        if(renameMountain) former.add(first.name());
         long order=first==null?regions().stream().filter(r -> r.automatic()!=null).mapToLong(r -> r.automatic().order()).max().orElse(0)+1:first.automatic().order();
-        Automatic info=new Automatic(classification,order,former.stream().distinct().limit(128).toList());
+        Automatic info=new Automatic(classification,order,former.stream().distinct().limit(128).toList(),renamed || renameMountain);
         Region next=new Region(first==null?UUID.randomUUID().toString():first.id(),1,chosen,color&0xffffff,cells,info);
         if(overlapping.size()==1 && next.equals(first)) return false;
         List<Region> result=new ArrayList<>();

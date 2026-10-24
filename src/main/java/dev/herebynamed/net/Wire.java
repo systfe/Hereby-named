@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 
 /** Bounded ordered fragments keep both C2S and S2C below Minecraft's payload limits. */
 public final class Wire {
-    public static final Identifier CHANNEL = Identifier.tryParse("hereby_named:regions_v3");
+    public static final Identifier CHANNEL = Identifier.tryParse("hereby_named:regions_v4");
     private static final AtomicInteger IDS = new AtomicInteger();
     private static final int PART = 24_000, MAX = 8_000_000;
     private Wire() {}
