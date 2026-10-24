@@ -59,6 +59,8 @@ OP 或控制台使用 `/herebynamed grant 在线玩家名` 授权，`/herebyname
 
 准备脚本也接受 `-InstancePath 实例目录`，自动从其 `mods` 寻找对应版本。Xaero 与嵌入的 XaeroLib 只作编译依赖，不随本项目再分发。Gradle Wrapper 下载 Gradle 8.12.1，首次构建还需下载 Fabric/Minecraft 依赖。
 
+每个版本均导出两个安装包：配置 JDK 21 后执行 `./scripts/export-release.ps1 -Version 0.2.0`，脚本构建并测试 1.20.1 和 1.21.1，全部通过后将两个 jar 复制到 `dist/`。
+
 0.1.0 起使用 `regions_v2` 通信通道；0.2.0 新增“不覆盖”编辑操作，多人共享需要服务器和客户端一同更新。已有区域文件格式保持兼容。可通过 `-Pmod_version=版本号` 指定构建版本。
 
 `scripts/smoke-client.ps1 -InstancePath 实例目录 -WorldPath 原存档目录 -JavaHome Java目录` 会将模组、配置与存档复制到工程的 `.tools/smoke-版本` 下，离线启动隔离客户端；原存档只读。请根据测试实例的实际要求指定 Java 运行时。
