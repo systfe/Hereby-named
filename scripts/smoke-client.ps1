@@ -2,11 +2,13 @@ param(
     [Parameter(Mandatory=$true)][string]$InstancePath,
     [string]$MinecraftVersion='1.21.1',
     [string]$WorldPath,
-    [string]$JavaHome='C:/Users/Lenovo/AppData/Roaming/.minecraft/runtime/java-runtime-delta',
+    [string]$JavaHome=$env:JAVA_HOME,
+    [string]$ModVersion='0.2.0',
     [switch]$PrepareOnly,
     [switch]$SkipPrepare
 )
 $ErrorActionPreference='Stop'
+if(!$JavaHome -or !(Test-Path -LiteralPath (Join-Path $JavaHome 'bin/java.exe'))) { throw 'Set JAVA_HOME or pass -JavaHome with a Java runtime directory' }
 $projectRoot=Split-Path -Parent $PSScriptRoot
 $instance=(Resolve-Path -LiteralPath $InstancePath).Path
 $minecraftRoot=Split-Path -Parent (Split-Path -Parent $instance)
@@ -38,7 +40,7 @@ if(!$SkipPrepare) {
     }
 }
 if($PrepareOnly) { Write-Output ('Prepared isolated test directory: '+$testRoot); exit 0 }
-$artifact=Join-Path $projectRoot ('build/'+$MinecraftVersion+'/libs/hereby-named-0.2.0+'+$MinecraftVersion+'.jar')
+$artifact=Join-Path $projectRoot ('build/'+$MinecraftVersion+'/libs/hereby-named-'+$ModVersion+'+'+$MinecraftVersion+'.jar')
 if(!(Test-Path -LiteralPath $artifact)) { throw ('Build the artifact first: '+$artifact) }
 Copy-Item -LiteralPath $artifact -Destination (Join-Path $testRoot 'mods')
 $versionFile=Join-Path $instance ((Split-Path -Leaf $instance)+'.json')

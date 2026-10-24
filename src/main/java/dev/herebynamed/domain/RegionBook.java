@@ -91,6 +91,21 @@ public final class RegionBook {
         }
         commit(new State(state.highestLayer(), state.layers(), updated));
     }
+    public record PaintPlan(Set<ChunkCell> conflicts,Set<ChunkCell> uncontested) {
+        public PaintPlan { conflicts=Set.copyOf(conflicts); uncontested=Set.copyOf(uncontested); }
+    }
+    public PaintPlan planPaint(String id,Set<ChunkCell> cells) {
+        Region target=region(id).orElseThrow(() -> new IllegalArgumentException("区域不存在"));
+        if(cells.size()>65_536) throw new IllegalArgumentException("单次最多编辑 65536 个区块，请分批操作");
+        Set<ChunkCell> conflicts=new HashSet<>();
+        for(Region other:regions()) if(other.layer()==target.layer() && !other.id().equals(id)) {
+            if(other.cells().size()<cells.size()) { for(ChunkCell c:other.cells()) if(cells.contains(c)) conflicts.add(c); }
+            else { for(ChunkCell c:cells) if(other.cells().contains(c)) conflicts.add(c); }
+        }
+        Set<ChunkCell> uncontested=new HashSet<>(cells); uncontested.removeAll(conflicts);
+        return new PaintPlan(conflicts,uncontested);
+    }
+    public void paintPreserving(String id,Set<ChunkCell> cells) { paint(id,planPaint(id,cells).uncontested(),true); }
     public boolean undo() {
         if (undo.isEmpty()) return false;
         redo.push(state); state = keepHighest(undo.pop()); return true;

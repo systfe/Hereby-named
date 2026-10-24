@@ -55,4 +55,5 @@ final class SelectionJob {
     }
     Set<ChunkCell> result() { return flood==null?Set.copyOf(selected):flood.result(); }
     int size() { return flood==null?selected.size():flood.size(); }
+    boolean biomeSelection() { return flood!=null; }
 }

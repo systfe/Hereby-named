@@ -5,3 +5,13 @@ run/
 libs/
 *.log
 .idea/
+dist/
+hereby-named/
+saves/
+options.txt
+servers.dat*
+usercache.json
+crash-reports/
+.env*
+*.jks
+*.keystore

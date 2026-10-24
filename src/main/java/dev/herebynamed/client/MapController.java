@@ -21,7 +21,7 @@ final class MapController {
     private final MapKnowledge knowledge;
     private final List<ClickableWidget> controls = new ArrayList<>();
     private final Map<Integer,String> remembered = new HashMap<>();
-    private final TreeMap<Integer,TreeMap<Integer,RegionBook.Region>> overlay = new TreeMap<>();
+    private final RegionOverlay overlay;
     private String dimension = "", selected = "";
     private int layer = 1, visibility, displayLayer = 1;
     private long generation = -1;
@@ -37,7 +37,7 @@ final class MapController {
     private Set<Integer> previousLayers = Set.of();
     private long expectedGeneration;
 
-    MapController(GuiMap map) { this.map = map; this.view = (GuiMapAccessor)map; knowledge = new MapKnowledge(map.getMapProcessor()); }
+    MapController(GuiMap map) { this.map = map; this.view = (GuiMapAccessor)map; knowledge = new MapKnowledge(map.getMapProcessor()); overlay=new RegionOverlay(knowledge); }
     GuiMap screen() { return map; }
     void close() { job = null; pressed = -1; data.exit(); }
     private String dimension() {
@@ -193,6 +193,7 @@ final class MapController {
     }
     void tick() {
         if (!dimension.equals(dimension()) || generation!=data.generation) build();
+        if(visibility!=2) overlay.tick();
         if (!editing()) { job=null; pressed=-1; return; }
         if (pressed>=0 && gesture==2 && !triggered && System.nanoTime()-downAt>=500_000_000L) {
             double x=client.mouse.getX()/client.getWindow().getScaleFactor(), y=client.mouse.getY()/client.getWindow().getScaleFactor();
@@ -202,16 +203,33 @@ final class MapController {
         if (job!=null) try {
             if (job.advance()) {
                 SelectionJob completed=job; job=null;
-                data.edit(dimension,completed.add?RegionEdit.Action.ADD:RegionEdit.Action.REMOVE,layer,completed.region,"",0,completed.result());
+                completeSelection(completed);
             }
         } catch (IllegalArgumentException ex) { job=null; data.message(ex.getMessage()); }
     }
+    private void completeSelection(SelectionJob completed) {
+        pressed=-1;
+        Set<ChunkCell> cells=completed.result();
+        if(completed.add && completed.biomeSelection()) {
+            RegionBook.PaintPlan plan=book().planPaint(completed.region,cells);
+            if(!plan.conflicts().isEmpty()) {
+                String targetDimension=dimension;
+                int targetLayer=layer; long version=data.generation;
+                client.setScreen(new OverwriteDialog(map,plan.conflicts().size(),overwrite -> {
+                    if(!dimension.equals(targetDimension) || !data.editing(targetDimension) || data.generation!=version) {
+                        data.message("区域数据或编辑权已变化，请重新选择"); return;
+                    }
+                    data.edit(targetDimension,overwrite?RegionEdit.Action.ADD:RegionEdit.Action.ADD_PRESERVING,targetLayer,completed.region,"",0,cells);
+                }));
+                return;
+            }
+        }
+        data.edit(dimension,completed.add?RegionEdit.Action.ADD:RegionEdit.Action.REMOVE,layer,completed.region,"",0,cells);
+    }
     private void rebuildOverlay() {
-        overlay.clear(); if (visibility==2 || dimension.isEmpty()) return;
+        if (visibility==2 || dimension.isEmpty()) return;
         Integer shown=visibility==1?(editing()?layer:displayLayer):null;
-        book().regions().stream().filter(r -> shown==null || r.layer()==shown).sorted(Comparator.comparingInt(RegionBook.Region::layer)).forEach(r -> {
-            for (ChunkCell c:r.cells()) overlay.computeIfAbsent(c.x(),x->new TreeMap<>()).put(c.z(),r);
-        });
+        overlay.update(dimension,book().regions(),shown);
     }
     void render(DrawContext context,int mouseX,int mouseY) {
         if (dimension.isEmpty() || GuiMap.hiddenUI) return;
@@ -233,24 +251,38 @@ final class MapController {
         context.getMatrices().pop();
     }
     private void drawOverlay(DrawContext context) {
-        if (overlay.isEmpty() || view.hereby$scale()<=0) return;
+        if (visibility==2 || view.hereby$scale()<=0) return;
         double scale=view.hereby$scale()/client.getWindow().getScaleFactor();
-        ChunkCell min=cellAt(0,0), max=cellAt(map.width,map.height);
-        // Clip to the map viewport, never to the space between UI labels/toolbars.
+        RegionMesh mesh=overlay.mesh();
         context.enableScissor(0,0,map.width,map.height);
-        for(var column:overlay.subMap(min.x(),true,max.x(),true).entrySet()) {
-            for(var entry:column.getValue().subMap(min.z(),true,max.z(),true).entrySet()) {
-                ChunkCell c=new ChunkCell(column.getKey(),entry.getKey());
-                if(knowledge.sample(c,false).biome()==null) continue;
-                int x=(int)Math.floor(map.width/2.0+(c.x()*16.0-view.hereby$cameraX())*scale);
-                int y=(int)Math.floor(map.height/2.0+(c.z()*16.0-view.hereby$cameraZ())*scale);
-                int x2=(int)Math.ceil(map.width/2.0+((c.x()+1)*16.0-view.hereby$cameraX())*scale);
-                int y2=(int)Math.ceil(map.height/2.0+((c.z()+1)*16.0-view.hereby$cameraZ())*scale);
-                context.fill(x,y,x2,y2,0x55000000|entry.getValue().color());
-            }
+        for(var fill:mesh.fills()) {
+            int x=screenX(fill.x1(),scale), y=screenZ(fill.z1(),scale);
+            int x2=screenX(fill.x2(),scale), y2=screenZ(fill.z2(),scale);
+            if(x2<0 || y2<0 || x>map.width || y>map.height) continue;
+            // Adjacent shapes share exactly the same rounded boundary: no bright grid seams.
+            context.fill(Math.max(0,x),Math.max(0,y),Math.min(map.width,x2),Math.min(map.height,y2),0x44000000|fill.color());
         }
+        for(var edge:mesh.edges()) {
+            int x=screenX(edge.x1(),scale), y=screenZ(edge.z1(),scale);
+            int x2=screenX(edge.x2(),scale), y2=screenZ(edge.z2(),scale);
+            if(x2<0 || y2<0 || x>map.width || y>map.height) continue;
+            context.fill(Math.max(0,x),Math.max(0,y),Math.min(map.width,Math.max(x+1,x2)),Math.min(map.height,Math.max(y+1,y2)),0xdd000000|edge.color());
+        }
+        context.getMatrices().push(); context.getMatrices().translate(0,0,10);
+        for(var label:mesh.labels()) {
+            int x=screenX(label.x(),scale), y=screenZ(label.z(),scale);
+            int width=client.textRenderer.getWidth(label.name());
+            float textScale=label.textScale(width,scale*16,map.width);
+            if(textScale<0.6 || x+width*textScale/2<0 || x-width*textScale/2>map.width || y+9*textScale<0 || y-9*textScale>map.height) continue;
+            context.getMatrices().push(); context.getMatrices().translate(x,y,0); context.getMatrices().scale(textScale,textScale,1);
+            context.drawCenteredTextWithShadow(client.textRenderer,label.name(),0,-4,0xffffff);
+            context.getMatrices().pop();
+        }
+        context.getMatrices().pop();
         context.disableScissor();
     }
+    private int screenX(double chunk,double scale) { return (int)Math.floor(map.width/2.0+(chunk*16-view.hereby$cameraX())*scale); }
+    private int screenZ(double chunk,double scale) { return (int)Math.floor(map.height/2.0+(chunk*16-view.hereby$cameraZ())*scale); }
     private final class Popup {
         final int x,y,rows,width;
         final List<String> names;

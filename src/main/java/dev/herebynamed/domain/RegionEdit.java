@@ -9,7 +9,7 @@ public record RegionEdit(String dimension, long revision, long requestId, Action
                       String region, String name, int color, Set<ChunkCell> cells) {
         this(dimension, revision, 0, action, layer, region, name, color, cells);
     }
-    public enum Action { READ, ACQUIRE, RELEASE, CREATE, RENAME, DELETE_REGION, ADD_LAYER, DELETE_LAYER, ADD, REMOVE, UNDO, REDO }
+    public enum Action { READ, ACQUIRE, RELEASE, CREATE, RENAME, DELETE_REGION, ADD_LAYER, DELETE_LAYER, ADD, REMOVE, UNDO, REDO, ADD_PRESERVING }
     public RegionEdit {
         Objects.requireNonNull(dimension); Objects.requireNonNull(action);
         region = region == null ? "" : region; name = name == null ? "" : name;
@@ -25,6 +25,7 @@ public record RegionEdit(String dimension, long revision, long requestId, Action
             case ADD_LAYER -> book.addLayer();
             case DELETE_LAYER -> book.deleteLayer(layer);
             case ADD -> book.paint(region, cells, true);
+            case ADD_PRESERVING -> book.paintPreserving(region,cells);
             case REMOVE -> book.paint(region, cells, false);
             case UNDO -> book.undo();
             case REDO -> book.redo();

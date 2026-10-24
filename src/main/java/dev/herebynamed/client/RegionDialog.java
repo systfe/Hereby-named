@@ -37,11 +37,12 @@ final class RegionDialog extends Screen implements EditorDialog {
         addDrawableChild(ButtonWidget.builder(Text.literal("取消"), button -> close()).dimensions(x+114,top+181,106,20).build());
     }
     @Override public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        ClientUi.background(this,context,mouseX,mouseY,delta); context.drawCenteredTextWithShadow(textRenderer, title, width/2,top,0xffffff);
+        ClientUi.background(this,context,mouseX,mouseY,delta);
+        super.render(context,mouseX,mouseY,delta);
+        context.drawCenteredTextWithShadow(textRenderer, title, width/2,top,0xffffff);
         context.drawTextWithShadow(textRenderer,"区域名称",width/2-110,top+18,0xdddddd);
         context.drawTextWithShadow(textRenderer,"标记颜色 · 点击色板或拖动调色",width/2-110,top+57,0xdddddd);
         context.fill(width/2+88,top+54,width/2+110,top+68,0xff000000|selectedColor);
-        super.render(context,mouseX,mouseY,delta);
         context.drawCenteredTextWithShadow(textRenderer,error,width/2,top+209,0xff7777);
     }
     @Override public void close() { client.setScreen(parent); }

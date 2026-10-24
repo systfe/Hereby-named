@@ -5,6 +5,36 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RegionBookTest {
+    @Test void biomeSelectionCanPreserveOtherRegionsAndUndoRemainsTransactional() {
+        RegionBook book=new RegionBook();
+        String target=book.createRegion(1,"高原",1), other=book.createRegion(1,"哨塔",2);
+        String upper=book.createRegion(2,"城市",3);
+        ChunkCell occupied=new ChunkCell(0,0), free=new ChunkCell(1,0), own=new ChunkCell(2,0);
+        book.paint(other,Set.of(occupied),true); book.paint(upper,Set.of(free),true); book.paint(target,Set.of(own),true);
+        Set<ChunkCell> selection=Set.of(occupied,free,own);
+        assertEquals(Set.of(occupied),book.planPaint(target,selection).conflicts());
+        assertEquals(Set.of(free,own),book.planPaint(target,selection).uncontested());
+        book.paintPreserving(target,selection);
+        assertEquals(other,book.owner(1,occupied).orElseThrow().id());
+        assertEquals(target,book.owner(1,free).orElseThrow().id());
+        assertEquals(upper,book.owner(2,free).orElseThrow().id());
+        assertTrue(book.undo());
+        assertTrue(book.owner(1,free).isEmpty());
+        assertEquals(target,book.owner(1,own).orElseThrow().id());
+    }
+    @Test void preservingRequestRoundTripsAndRechecksOwnershipWhenApplied() throws Exception {
+        RegionBook book=new RegionBook();
+        String target=book.createRegion(1,"高原",1), other=book.createRegion(1,"塔",2);
+        ChunkCell cell=new ChunkCell(-4,3);
+        assertTrue(book.planPaint(target,Set.of(cell)).conflicts().isEmpty());
+        var request=new RegionEdit("minecraft:overworld",5,17,RegionEdit.Action.ADD_PRESERVING,1,target,"",0,Set.of(cell));
+        book.paint(other,Set.of(cell),true);
+        var decoded=RegionEdit.decode(request.encode());
+        assertEquals(request,decoded); decoded.apply(book);
+        assertEquals(other,book.owner(1,cell).orElseThrow().id());
+        new RegionEdit("minecraft:overworld",5,RegionEdit.Action.ADD,1,target,"",0,Set.of(cell)).apply(book);
+        assertEquals(target,book.owner(1,cell).orElseThrow().id());
+    }
     @Test void deletedLayersKeepTheirNumberReservedEvenAfterUndo() {
         RegionBook book = new RegionBook();
         assertEquals(3, book.addLayer());
