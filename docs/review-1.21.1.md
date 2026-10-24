@@ -1,6 +1,6 @@
 # Fabric 1.21.1 适配审查
 
-基准 `87f0eaf04937188e5a7f0e756a1ede16a19a9809`，审查提交 `4450959`。使用 `git diff 87f0eaf...HEAD`，由两个独立审查代理分别审查。来源为用户的工程迁移、Fabric 1.21.1 实现及指定存档测试请求，既有功能参考 `docs/requirements.md`。
+基准 `483b634cca718f28f75a685eb4e077ec45c0f2e8`，审查提交 `ebff1bc`。使用 `git diff 483b634...HEAD`，由两个独立审查代理分别审查。来源为用户的工程迁移、Fabric 1.21.1 实现及指定存档测试请求，既有功能参考 `docs/requirements.md`。
 
 ## Standards
 
