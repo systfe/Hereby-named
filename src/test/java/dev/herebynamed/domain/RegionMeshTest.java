@@ -5,6 +5,14 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RegionMeshTest {
+    @Test void viewportContainsOnlyNearbyGeometryDespiteManyRemoteFragments() {
+        Set<ChunkCell> cells=new HashSet<>();
+        for(int x=0;x<128;x++) for(int z=0;z<128;z++) cells.add(new ChunkCell(x*4,z*4));
+        var mesh=RegionMesh.build(List.of(new RegionBook.Region("islands",1,"群岛",1,cells)),null);
+        var visible=mesh.inView(-0.25,-0.25,1.25,1.25);
+        assertEquals(1,visible.fills().size()); assertEquals(4,visible.edges().size());
+        assertTrue(mesh.inView(-50,-50,-40,-40).fills().isEmpty());
+    }
     @Test void largeRectangleHasFourOuterEdgesAndOneContinuousFill() {
         Set<ChunkCell> cells=new HashSet<>();
         for(int x=0;x<256;x++) for(int z=0;z<256;z++) cells.add(new ChunkCell(x,z));

@@ -3,10 +3,26 @@ package dev.herebynamed.domain;
 import java.util.*;
 
 /** Cached, world-space drawing geometry for the visible ownership of named regions. */
-public record RegionMesh(List<Fill> fills,List<Edge> edges,List<Label> labels) {
-    public RegionMesh { fills=List.copyOf(fills); edges=List.copyOf(edges); labels=List.copyOf(labels); }
-    public record Fill(int x1,int z1,int x2,int z2,int color) {}
-    public record Edge(int x1,int z1,int x2,int z2,int color) {}
+public final class RegionMesh {
+    private final List<Fill> fills;
+    private final List<Edge> edges;
+    private final List<Label> labels;
+    private final GeometryIndex<Fill> fillIndex;
+    private final GeometryIndex<Edge> edgeIndex;
+    public RegionMesh(List<Fill> fills,List<Edge> edges,List<Label> labels) {
+        this.fills=List.copyOf(fills); this.edges=List.copyOf(edges); this.labels=List.copyOf(labels);
+        fillIndex=new GeometryIndex<>(this.fills); edgeIndex=new GeometryIndex<>(this.edges);
+    }
+    public List<Fill> fills() { return fills; }
+    public List<Edge> edges() { return edges; }
+    public List<Label> labels() { return labels; }
+    public record View(List<Fill> fills,List<Edge> edges) {}
+    public View inView(double minX,double minZ,double maxX,double maxZ) {
+        return new View(fillIndex.query(minX,minZ,maxX,maxZ),edgeIndex.query(minX,minZ,maxX,maxZ));
+    }
+    interface Shape { int x1(); int z1(); int x2(); int z2(); }
+    public record Fill(int x1,int z1,int x2,int z2,int color) implements Shape {}
+    public record Edge(int x1,int z1,int x2,int z2,int color) implements Shape {}
     public record Label(String name,double x,double z,double span) {
         public float textScale(int textWidth,double pixelsPerChunk,int viewportWidth) {
             return (float)Math.max(0,Math.min(3,Math.min(span*pixelsPerChunk,viewportWidth*0.8)/Math.max(1,textWidth)));

@@ -254,15 +254,18 @@ final class MapController {
         if (visibility==2 || view.hereby$scale()<=0) return;
         double scale=view.hereby$scale()/client.getWindow().getScaleFactor();
         RegionMesh mesh=overlay.mesh();
+        double halfWidth=map.width/(2*scale),halfHeight=map.height/(2*scale);
+        RegionMesh.View visible=mesh.inView((view.hereby$cameraX()-halfWidth-1)/16,(view.hereby$cameraZ()-halfHeight-1)/16,
+                (view.hereby$cameraX()+halfWidth+1)/16,(view.hereby$cameraZ()+halfHeight+1)/16);
         context.enableScissor(0,0,map.width,map.height);
-        for(var fill:mesh.fills()) {
+        for(var fill:visible.fills()) {
             int x=screenX(fill.x1(),scale), y=screenZ(fill.z1(),scale);
             int x2=screenX(fill.x2(),scale), y2=screenZ(fill.z2(),scale);
             if(x2<0 || y2<0 || x>map.width || y>map.height) continue;
             // Adjacent shapes share exactly the same rounded boundary: no bright grid seams.
             context.fill(Math.max(0,x),Math.max(0,y),Math.min(map.width,x2),Math.min(map.height,y2),0x44000000|fill.color());
         }
-        for(var edge:mesh.edges()) {
+        for(var edge:visible.edges()) {
             int x=screenX(edge.x1(),scale), y=screenZ(edge.z1(),scale);
             int x2=screenX(edge.x2(),scale), y2=screenZ(edge.z2(),scale);
             if(x2<0 || y2<0 || x>map.width || y>map.height) continue;

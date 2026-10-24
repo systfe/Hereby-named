@@ -27,6 +27,9 @@ final class RegionOverlay {
         if(!this.dimension.equals(dimension)) recorded.clear();
         this.dimension=dimension; this.regions=regions; this.layer=layer;
         epoch++; mesh=EMPTY; dirty=true; nextBuild=nextScan=0;
+        Set<ChunkCell> needed=new HashSet<>();
+        for(var r:regions) needed.addAll(r.cells());
+        recorded.retainAll(needed);
         Set<ChunkCell> pending=new HashSet<>();
         for(var r:regions) if(layer==null || r.layer()==layer) pending.addAll(r.cells());
         pending.removeAll(recorded); unknown.clear(); unknown.addAll(pending); remaining=unknown.size();
