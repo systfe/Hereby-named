@@ -4,7 +4,6 @@
 
 在 Xaero 世界地图中给区块组成的地区命名，用图层区分高原、城市、建筑等范围；支持多人共享和进入区域标题。完整规则见 [需求规格](docs/requirements.md)。
 
-当前开发版本为 **0.2.0**，此前成果统一归为 **0.1.0**，见 [更新记录](CHANGELOG.md)。上传源码前请阅读 [隐私检查](docs/privacy-audit.md)，使用 `scripts/export-source.ps1` 生成不含旧 Git 历史的上传包。
 
 ## 安装
 
@@ -67,4 +66,3 @@ OP 或控制台使用 `/herebynamed grant 在线玩家名` 授权，`/herebyname
 
 测试覆盖区域覆盖／撤销、图层编号、首尾名称、群系连通和异步等待、标题排队、权限与维度锁、存档及网络分片。运行单个测试示例：`./gradlew.bat test --tests dev.herebynamed.domain.RegionBookTest`。
 
-本轮验证与审查见 [0.2.0 验证记录](docs/verification-0.2.0.md) 和 [审查记录](docs/review-0.2.0.md)；早期实现见 [首版验证](docs/verification.md)。
