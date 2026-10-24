@@ -17,7 +17,8 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
     private final Screen parent;
     private final AutomaticRegions automatic;
     private final AutoConfig draft;
-    private final List<Runnable> readFields=new ArrayList<>();
+    private final Map<String,String> rawFields=new LinkedHashMap<>();
+    private final Map<String,IntConsumer> fieldWriters=new LinkedHashMap<>();
     private final List<String> rowLabels=new ArrayList<>();
     private int tab,page,x,contentWidth,rows;
     private boolean saving;
@@ -34,7 +35,7 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
         return kind==TerrainKind.RIVER?"河流":"暂不分类";
     }
     @Override protected void init() {
-        readFields.clear();rowLabels.clear();contentWidth=Math.min(350,width-20);x=(width-contentWidth)/2;
+        rowLabels.clear();contentWidth=Math.min(350,width-20);x=(width-contentWidth)/2;
         rows=Math.max(1,Math.min(10,(height-140)/24));page=Math.min(page,Math.max(0,(count()-1)/rows));
         String[] tabs={"区域门槛","全局参数","完整名字","词根","群系规则"};
         int tabWidth=(contentWidth-8)/5;
@@ -52,26 +53,35 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
     private int count() { return tab==0?8:tab==1?9:tab==4?draft.biomeRules.size():names().size(); }
     private List<AutoConfig.Name> names() { return tab==3?draft.roots:draft.names; }
     private void navigate(int nextTab,int nextPage) {
-        if(!read()) return;tab=nextTab;page=Math.max(0,nextPage);clearAndInit();
+        tab=nextTab;page=Math.max(0,nextPage);error="";clearAndInit();
     }
     private boolean read() {
-        try { for(Runnable field:readFields) field.run();error="";return true; }
+        try {
+            Map<String,Integer> values=new LinkedHashMap<>();
+            rawFields.forEach((key,value) -> values.put(key,Integer.parseInt(value)));
+            values.forEach((key,value) -> fieldWriters.get(key).accept(value));
+            error="";return true;
+        }
         catch(IllegalArgumentException ex) { error="请输入有效的非负整数";return false; }
     }
-    private TextFieldWidget number(int bx,int by,int w,int value,String hint) {
+    private TextFieldWidget number(int bx,int by,int w,int value,String hint,String key,IntConsumer writer) {
         TextFieldWidget input=new TextFieldWidget(textRenderer,bx,by,w,18,Text.literal(hint));
-        input.setMaxLength(7);input.setTextPredicate(s -> s.matches("[0-9]*"));input.setText(Integer.toString(value));
+        fieldWriters.put(key,writer);rawFields.putIfAbsent(key,Integer.toString(value));
+        input.setMaxLength(7);input.setTextPredicate(s -> s.matches("[0-9]*"));input.setText(rawFields.get(key));
+        input.setChangedListener(text -> rawFields.put(key,text));
         input.setTooltip(Tooltip.of(Text.literal(hint)));addDrawableChild(input);return input;
     }
     private void thresholds() {
         for(int index=page*rows;index<Math.min(8,(page+1)*rows);index++) {
             TerrainKind kind=KINDS[index];AutoConfig.Threshold value=threshold(kind);int y=74+(index-page*rows)*24;
             int w=(contentWidth-90)/3;
-            var biomes=number(x+90,y,w-5,value.minimumBiomes(),"不同群系种数；0 停用。与最低跨度满足其一即可");
-            var span=number(x+90+w,y,w-5,value.minimumSpan(),"最低跨度，单位为方块；0 停用此分支");
-            var max=number(x+90+2*w,y,w-5,value.maximumSpan(),"跨度必须小于此值；0 表示没有上限");
+            number(x+90,y,w-5,value.minimumBiomes(),"不同群系种数；0 停用。与最低跨度满足其一即可",kind+":biomes",
+                    v -> { var t=threshold(kind);setThreshold(kind,new AutoConfig.Threshold(v,t.minimumSpan(),t.maximumSpan())); });
+            number(x+90+w,y,w-5,value.minimumSpan(),"最低跨度，单位为方块；0 停用此分支",kind+":span",
+                    v -> { var t=threshold(kind);setThreshold(kind,new AutoConfig.Threshold(t.minimumBiomes(),v,t.maximumSpan())); });
+            number(x+90+2*w,y,w-5,value.maximumSpan(),"跨度必须小于此值；0 表示没有上限",kind+":maximum",
+                    v -> { var t=threshold(kind);setThreshold(kind,new AutoConfig.Threshold(t.minimumBiomes(),t.minimumSpan(),v)); });
             rowLabels.add(label(kind));
-            readFields.add(() -> setThreshold(kind,new AutoConfig.Threshold(Integer.parseInt(biomes.getText()),Integer.parseInt(span.getText()),Integer.parseInt(max.getText()))));
         }
     }
     private AutoConfig.Threshold threshold(TerrainKind kind) {
@@ -95,9 +105,8 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
         IntConsumer[] setters={v -> draft.unlockSpan=v,v -> draft.minimumSpan=v,v -> draft.minimumBiomeChunks=v,v -> draft.maximumSamples=v,v -> draft.analysisIntervalSeconds=v,v -> draft.mountainRangeSpan=v,v -> draft.mountainMassifChunks=v,v -> draft.mountainRidgeRatioPercent=v};
         for(int index=page*rows;index<Math.min(9,(page+1)*rows);index++) {
             int y=74+(index-page*rows)*24;
-            if(index==8) { rowLabels.add("自动创建区域");button(x+contentWidth-96,y,90,draft.enabled?"开启":"关闭",() -> { if(read()) { draft.enabled=!draft.enabled;clearAndInit(); } });continue; }
-            rowLabels.add(labels[index]);var input=number(x+contentWidth-96,y,90,values[index],hints[index]);int i=index;
-            readFields.add(() -> setters[i].accept(Integer.parseInt(input.getText())));
+            if(index==8) { rowLabels.add("自动创建区域");button(x+contentWidth-96,y,90,draft.enabled?"开启":"关闭",() -> { draft.enabled=!draft.enabled;clearAndInit(); });continue; }
+            rowLabels.add(labels[index]);number(x+contentWidth-96,y,90,values[index],hints[index],"global:"+index,setters[index]);
         }
     }
     private void lists() {
@@ -122,8 +131,10 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
         if(saving || !read()) return;
         try { draft.validate(); } catch(IllegalArgumentException ex) { error=ex.getMessage();return; }
         saving=true;clearAndInit();
+        var connection=client.getNetworkHandler();var world=client.world;
         automatic.saveSettings(draft,message -> {
             saving=false;
+            if(client.currentScreen!=this || client.getNetworkHandler()!=connection || client.world!=world) return;
             if(message.isEmpty()) client.setScreen(parent);else { error=message;clearAndInit(); }
         });
     }
@@ -167,6 +178,7 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
             return addDrawableChild(ButtonWidget.builder(Text.literal(label),b -> { value=text.getText();action.run();if(client.currentScreen==this) clearAndInit(); }).dimensions(bx,by,bw,20).build());
         }
         @Override protected void init() {
+            if(text!=null) value=text.getText();
             w=Math.min(300,width-24);left=(width-w)/2;top=Math.max(8,(height-224)/2);
             text=new TextFieldWidget(textRenderer,left,top+38,w,18,Text.literal(rule?"群系 ID":"名称"));text.setMaxLength(rule?256:48);text.setText(value);addDrawableChild(text);setInitialFocus(text);
             if(rule) addButton(left,top+68,w,"分类："+label(ruleKind),() -> ruleKind=TerrainKind.values()[(ruleKind.ordinal()+1)%TerrainKind.values().length]);
