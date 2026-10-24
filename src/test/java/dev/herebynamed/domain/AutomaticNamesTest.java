@@ -9,6 +9,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class AutomaticNamesTest {
     @TempDir Path directory;
+    @Test void completeNamesAreUsedBeforeRootCombinations() {
+        AutoConfig config=new AutoConfig();
+        config.names=List.of(new AutoConfig.Name("银霜山",List.of("MOUNTAIN"),"COLD"));
+        config.roots=List.of(new AutoConfig.Name("白岚",List.of("MOUNTAIN"),"COLD"));
+        for(int x=0;x<8;x++) {
+            var candidate=new TerrainAnalysis.Candidate(TerrainKind.MOUNTAIN,Set.of(new ChunkCell(x,0)),0,1024);
+            assertEquals("银霜山",AutoNames.choose(candidate,new RegionBook(),config).orElseThrow());
+        }
+    }
     @Test void whitelistFiltersClimateAndNeverAddsNumbersWhenNoHonestAlternativeExists() {
         AutoConfig config=new AutoConfig();
         config.names=List.of(new AutoConfig.Name("银霜山",List.of("MOUNTAIN"),"COLD"),

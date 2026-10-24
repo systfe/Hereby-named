@@ -3,6 +3,11 @@ package dev.herebynamed.domain;
 import java.util.*;
 
 public final class TitleQueue {
+    public static boolean automaticCreationAround(RegionBook before,RegionBook after,ChunkCell previous,ChunkCell current) {
+        return before!=null && previous!=null && after.owner(1,current).filter(r -> r.automatic()!=null).isPresent()
+                && after.namesAt(previous).equals(after.namesAt(current))
+                && !before.namesAt(previous).equals(after.namesAt(previous));
+    }
     private String dimension = "";
     private List<String> current = List.of();
     private long changedAt;

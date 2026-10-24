@@ -19,10 +19,14 @@ public final class AutoNames {
         List<String> options=new ArrayList<>();
         for(var n:config.names) if(n.fits(candidate.kind(),candidate.temperature())) options.add(n.text());
         List<String> roots=config.roots.stream().filter(n -> n.fits(candidate.kind(),candidate.temperature())).map(AutoConfig.Name::text).toList();
-        for(String root:roots) options.add(root+suffix(candidate));
         int seed=candidate.cells().stream().mapToInt(ChunkCell::hashCode).sum();
         if(!options.isEmpty()) Collections.rotate(options,Math.floorMod(seed,options.size()));
         for(String option:options) if(valid(option) && !used.contains(option)) return Optional.of(option);
+        List<String> generated=new ArrayList<>();
+        for(String root:roots) generated.add(root+suffix(candidate));
+        if(!generated.isEmpty()) Collections.rotate(generated,Math.floorMod(seed,generated.size()));
+        for(String option:generated) if(valid(option) && !used.contains(option)) return Optional.of(option);
+        options.addAll(generated);
         // Pair whitelist roots only. Bound the search even for very large user lists.
         for(int i=0;i<Math.min(roots.size(),128);i++) for(int j=0;j<Math.min(roots.size(),128);j++) if(i!=j) {
             String option=roots.get(i)+roots.get(j)+suffix(candidate);

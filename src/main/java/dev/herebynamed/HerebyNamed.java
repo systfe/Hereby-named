@@ -7,6 +7,7 @@ import dev.herebynamed.auto.AutoWork;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.*;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandManager;
@@ -34,12 +35,38 @@ public final class HerebyNamed implements ModInitializer {
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
             ServerData d = data(server); d.assemblers.remove(handler.player.getUuid());
             d.readAt.remove(handler.player.getUuid());d.automaticAt.remove(handler.player.getUuid());
+            d.incoming.remove(handler.player.getUuid());
+            d.outgoing.keySet().removeIf(key -> key.player().equals(handler.player.getUuid()));
             for (String dimension : d.authority.releaseAll(handler.player.getUuid())) {
                 RegionBook book = d.books.get(dimension); if (book != null) book.clearHistory();
                 broadcast(server, dimension);
             }
         });
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+            ServerData d=SERVERS.get(server);if(d!=null) { d.writes.close();d.stopping=true; }
+        });
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> SERVERS.remove(server));
+        ServerTickEvents.END_SERVER_TICK.register(server -> {
+            ServerData d=SERVERS.get(server);if(d==null || d.stopping) return;
+            for(var entry:List.copyOf(d.incoming.entrySet())) {
+                if(!AutoWork.hasCapacity()) break;
+                var queue=entry.getValue();if(queue.isEmpty()) { d.incoming.remove(entry.getKey());continue; }
+                Incoming incoming=queue.peekFirst();
+                var decoding=AutoWork.submit(() -> RegionEdit.decode(incoming.bytes()));
+                if(AutoWork.rejected(decoding)) break;
+                queue.removeFirst();
+                decoding.whenComplete((edit,error) -> server.execute(() -> {
+                    if(SERVERS.get(server)!=d || d.stopping || incoming.player().isDisconnected()) return;
+                    if(error!=null) { LOG.warn("Invalid region request",error);return; }
+                    handle(server,incoming.player(),edit);
+                }));
+            }
+            for(int count=0;count<4 && !d.outgoing.isEmpty() && AutoWork.hasCapacity();count++) {
+                var entry=d.outgoing.entrySet().iterator().next();
+                Outgoing outgoing=entry.getValue();d.outgoing.remove(entry.getKey());
+                encode(server,d,outgoing);
+            }
+        });
         CommandRegistrationCallback.EVENT.register((dispatcher, registry, environment) -> dispatcher.register(
                 CommandManager.literal("herebynamed").requires(source -> source.hasPermissionLevel(2))
                     .then(CommandManager.literal("grant").then(CommandManager.argument("player", StringArgumentType.word())
@@ -73,10 +100,8 @@ public final class HerebyNamed implements ModInitializer {
         try {
             Optional<byte[]> bytes=d.assemblers.computeIfAbsent(player.getUuid(),id -> new Wire.Assembler()).accept(fragment);
             if(bytes.isEmpty()) return;
-            AutoWork.submit(() -> RegionEdit.decode(bytes.get())).whenComplete((edit,error) -> server.execute(() -> {
-                if(error!=null) { LOG.warn("Invalid region request",error);return; }
-                handle(server,player,edit);
-            }));
+            var queue=d.incoming.computeIfAbsent(player.getUuid(),id -> new ArrayDeque<>());
+            if(queue.size()<4) queue.addLast(new Incoming(player,bytes.get()));
         } catch(Exception ex) { LOG.warn("Invalid region fragment",ex); }
     }
     private static void handle(MinecraftServer server,ServerPlayerEntity player,RegionEdit edit) {
@@ -139,7 +164,7 @@ public final class HerebyNamed implements ModInitializer {
         }
         d.automaticAt.put(player.getUuid(),now);d.automaticBusy.add(dim);
         RegionBook next=book.snapshot();RegionBook.State before=book.state();
-        AutoWork.submit(() -> {
+        d.writes.submit(() -> {
             edit.apply(next);
             if(!before.equals(next.state())) d.store.save(dim,next);
             return next;
@@ -172,12 +197,28 @@ public final class HerebyNamed implements ModInitializer {
         if (!ServerTransport.canSend(player)) return;
         ServerData d = data(server);
         try {
-            Snapshot snapshot = new Snapshot(dimension, d.revisions.getOrDefault(dimension, 0L), responseTo,
-                    d.authority.holder(dimension), authorized(d, player), message, d.book(dimension).snapshot());
+            if(d.stopping || player.isDisconnected()) return;
+            d.outgoing.put(new Delivery(player.getUuid(),dimension,responseTo),new Outgoing(player,dimension,message,responseTo));
+        } catch (RuntimeException ex) { LOG.error("Cannot queue named regions",ex); }
+    }
+    private record Delivery(UUID player,String dimension,long responseTo) { }
+    private record Incoming(ServerPlayerEntity player,byte[] bytes) { }
+    private record Outgoing(ServerPlayerEntity player,String dimension,String message,long responseTo) { }
+    private static void encode(MinecraftServer server,ServerData d,Outgoing outgoing) {
+        var player=outgoing.player();String dimension=outgoing.dimension(),message=outgoing.message();long responseTo=outgoing.responseTo();
+        if(player.isDisconnected() || d.stopping) return;
+        try {
+            Snapshot snapshot = new Snapshot(dimension,d.revisions.getOrDefault(dimension,0L),responseTo,
+                    d.authority.holder(dimension),authorized(d,player),message,d.book(dimension).snapshot());
             AutoWork.submit(snapshot::encode).whenComplete((bytes,error) -> server.execute(() -> {
                 if(SERVERS.get(server)!=d) return;
                 if(player.isDisconnected()) return;
-                if(error!=null) { LOG.error("Cannot encode named regions",error);return; }
+                if(error!=null) {
+                    if(error instanceof java.util.concurrent.RejectedExecutionException)
+                        send(server,player,dimension,message,responseTo);
+                    else LOG.error("Cannot encode named regions",error);
+                    return;
+                }
                 if(snapshot.revision()!=d.revisions.getOrDefault(dimension,0L) || !Objects.equals(snapshot.holder(),d.authority.holder(dimension))
                         || snapshot.authorized()!=authorized(d,player)) { send(server,player,dimension,message,responseTo);return; }
                 Wire.send(bytes,packet -> ServerTransport.send(player,packet));
@@ -198,6 +239,10 @@ public final class HerebyNamed implements ModInitializer {
         final Map<UUID, Long> readAt = new HashMap<>();
         final Map<UUID,Long> automaticAt=new HashMap<>();
         final Set<String> automaticBusy=new HashSet<>();
+        final AutoWork.Session writes=new AutoWork.Session();
+        final Map<Delivery,Outgoing> outgoing=new LinkedHashMap<>();
+        final Map<UUID,ArrayDeque<Incoming>> incoming=new LinkedHashMap<>();
+        boolean stopping;
         ServerData(Path root) {
             this.root = root; store = new RegionStore(root.resolve("regions"));
             Path file = root.resolve("editors.txt");

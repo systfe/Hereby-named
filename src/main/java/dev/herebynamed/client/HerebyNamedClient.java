@@ -15,7 +15,7 @@ public final class HerebyNamedClient implements ClientModInitializer {
     private final RegionTitles titles = new RegionTitles();
     private dev.herebynamed.domain.ChunkCell lastCell;
     private String lastDimension="";
-    private java.util.List<String> lastNames=java.util.List.of();
+    private dev.herebynamed.domain.RegionBook lastBook;
     @Override public void onInitializeClient() {
         ClientTransport.initialize(REGIONS::receive);
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> reset());
@@ -27,9 +27,9 @@ public final class HerebyNamedClient implements ClientModInitializer {
                 String dim = client.world.getRegistryKey().getValue().toString();
                 var cell=new dev.herebynamed.domain.ChunkCell(client.player.getBlockX()>>4,client.player.getBlockZ()>>4);
                 var book=REGIONS.book(dim);var names=book.namesAt(cell);
-                if(dim.equals(lastDimension) && cell.equals(lastCell) && !names.equals(lastNames)
-                        && book.owner(1,cell).filter(r -> r.automatic()!=null).isPresent()) titles.observeWithoutTitle(dim,names);
-                titles.tick(dim,names);lastCell=cell;lastDimension=dim;lastNames=names;
+                if(dim.equals(lastDimension) && dev.herebynamed.domain.TitleQueue.automaticCreationAround(lastBook,book,lastCell,cell))
+                    titles.observeWithoutTitle(dim,names);
+                titles.tick(dim,names);lastCell=cell;lastDimension=dim;lastBook=book.snapshot();
             }
         });
         ClientUi.registerTitles(titles);
@@ -37,7 +37,7 @@ public final class HerebyNamedClient implements ClientModInitializer {
         else HerebyNamed.LOG.warn("Xaero's World Map absent: shared regions remain available, map editing is disabled");
     }
     private void reset() {
-        REGIONS.reset();titles.reset();lastCell=null;lastDimension="";lastNames=java.util.List.of();
+        REGIONS.reset();titles.reset();lastCell=null;lastDimension="";lastBook=null;
         if(AUTOMATIC!=null) AUTOMATIC.reset();
     }
 }

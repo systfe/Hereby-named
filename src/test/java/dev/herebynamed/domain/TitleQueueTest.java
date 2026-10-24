@@ -5,6 +5,14 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TitleQueueTest {
+    @Test void movingInsideNewlyCreatedAreaDoesNotCountAsEnteringIt() {
+        RegionBook before=new RegionBook(),after=new RegionBook();
+        ChunkCell previous=new ChunkCell(0,0),current=new ChunkCell(1,0),outside=new ChunkCell(-1,0);
+        after.automate("FOREST:TEMPERATE","银杉林",0x888888,java.util.Set.of(previous,current));
+        assertTrue(TitleQueue.automaticCreationAround(before,after,previous,current));
+        assertFalse(TitleQueue.automaticCreationAround(before,after,outside,current));
+        assertFalse(TitleQueue.automaticCreationAround(after,after,previous,current));
+    }
     @Test void automaticCreationWhileStandingStillWaitsForARealReentry() {
         TitleQueue queue=new TitleQueue();queue.observeWithoutTitle("overworld",List.of("银杉林"));
         assertTrue(queue.update("overworld",List.of("银杉林"),5000,false).isEmpty());

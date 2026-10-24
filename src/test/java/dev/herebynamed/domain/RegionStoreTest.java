@@ -4,10 +4,26 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.*;
+import dev.herebynamed.auto.AutoWork;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RegionStoreTest {
     @TempDir Path directory;
+    @Test void closedSessionCannotOverwriteDataAfterWorldReopens() throws Exception {
+        CountDownLatch started=new CountDownLatch(1),release=new CountDownLatch(1);
+        var blocker=AutoWork.submit(() -> { started.countDown();release.await();return true; });
+        assertTrue(started.await(5,TimeUnit.SECONDS));
+        AutoWork.Session session=new AutoWork.Session();
+        RegionStore store=new RegionStore(directory);
+        var stale=session.submit(() -> { store.save("minecraft:overworld",new RegionBook());return true; });
+        session.close();
+        RegionBook reopened=new RegionBook();reopened.createRegion(1,"新区域",0x888888);
+        store.save("minecraft:overworld",reopened);
+        release.countDown();blocker.get(5,TimeUnit.SECONDS);
+        assertThrows(Exception.class,() -> stale.get(5,TimeUnit.SECONDS));
+        assertEquals(reopened.state(),store.load("minecraft:overworld").state());
+    }
     @Test void savesNamesColorsCellsAndLayerCounterWithoutMixingDimensions() throws Exception {
         RegionStore store = new RegionStore(directory);
         RegionBook book = new RegionBook();

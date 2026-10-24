@@ -20,30 +20,31 @@ public final class ClientRegions {
     private final Map<String, Long> requested = new HashMap<>();
     private RegionStore store;
     private Wire.Assembler assembler = new Wire.Assembler();
+    private final ArrayDeque<byte[]> incoming=new ArrayDeque<>();
+    private boolean resync;
     private String editing;
     private String acquiring;
     private final PendingRequest pending = new PendingRequest();
     private long pendingSince;
     private boolean automaticSaving;
     private long session;
+    private AutoWork.Session writes=new AutoWork.Session();
     public long generation;
 
     public boolean shared() { return client.getNetworkHandler() != null && ClientTransport.canSend(); }
     public void reset() {
+        writes.close();writes=new AutoWork.Session();
         shared.clear(); local.clear(); failed.clear(); requested.clear(); store = null;
         editing = acquiring = null; pending.cancel(); pendingSince = 0; generation++; assembler = new Wire.Assembler();
         automaticSaving=false;session++;
+        incoming.clear();resync=false;
     }
     public void receive(Wire.Fragment fragment) {
         try {
             Optional<byte[]> bytes = assembler.accept(fragment);
             if (bytes.isEmpty()) return;
-            long epoch=session;
-            AutoWork.submit(() -> Snapshot.decode(bytes.get())).whenComplete((snapshot,error) -> client.execute(() -> {
-                if(epoch!=session) return;
-                if(error!=null) { HerebyNamed.LOG.error("Cannot decode region snapshot",error);return; }
-                accept(snapshot);
-            }));
+            if(incoming.size()<8) incoming.addLast(bytes.get());
+            else resync=true;
         } catch (Exception ex) { HerebyNamed.LOG.error("Cannot decode region snapshot", ex); message("区域同步失败，请重新打开地图"); }
     }
     private void accept(Snapshot snapshot) {
@@ -88,6 +89,21 @@ public final class ClientRegions {
     }
     public boolean editing(String dimension) { return dimension.equals(editing); }
     public boolean busy() {
+        if(!incoming.isEmpty() && AutoWork.hasCapacity()) {
+            long epoch=session;byte[] bytes=incoming.peekFirst();
+            var decoding=AutoWork.submit(() -> Snapshot.decode(bytes));
+            if(!AutoWork.rejected(decoding)) {
+                incoming.removeFirst();
+                decoding.whenComplete((snapshot,error) -> client.execute(() -> {
+                    if(epoch!=session) return;
+                    if(error!=null) { HerebyNamed.LOG.error("Cannot decode region snapshot",error);resync=true;return; }
+                    accept(snapshot);
+                }));
+            }
+        }
+        if(resync && incoming.isEmpty() && client.world!=null) {
+            resync=false;requested.clear();request(client.world.getRegistryKey().getValue().toString());
+        }
         if(automaticSaving) return true;
         if (pendingSince != 0 && System.nanoTime() - pendingSince > 10_000_000_000L) {
             pending.cancel(); pendingSince = 0;
@@ -108,17 +124,19 @@ public final class ClientRegions {
     }
     public Path surfaceCachePath() { return store().directory().resolve("automatic-surface.bin.gz"); }
     public boolean automatic(RegionEdit proposal) {
-        if(!automaticAllowed()) return false;
+        if(!automaticAllowed() || !AutoWork.hasCapacity()) return false;
         String dim="minecraft:overworld";
         if(!proposal.dimension().equals(dim)) return false;
         Snapshot snapshot=shared.get(dim);
         RegionEdit edit=new RegionEdit(dim,snapshot==null?0:snapshot.revision(),proposal.action(),1,proposal.region(),proposal.name(),proposal.color(),proposal.cells());
         if(shared()) { pendingSince=System.nanoTime();send(edit);return true; }
         RegionBook current=book(dim).snapshot();RegionStore destination=store();long epoch=session;
-        automaticSaving=true;
-        AutoWork.submit(() -> {
+        var saving=writes.submit(() -> {
             edit.apply(current);destination.save(dim,current);return current;
-        }).whenComplete((next,error) -> client.execute(() -> {
+        });
+        if(AutoWork.rejected(saving)) return false;
+        automaticSaving=true;
+        saving.whenComplete((next,error) -> client.execute(() -> {
             if(epoch!=session) return;
             automaticSaving=false;
             if(error!=null) { HerebyNamed.LOG.error("Automatic local save failed",error);failed.add(dim);return; }
