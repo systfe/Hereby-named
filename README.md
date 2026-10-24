@@ -65,4 +65,4 @@ OP 或控制台使用 `/herebynamed grant 在线玩家名` 授权，`/herebyname
 
 测试覆盖区域覆盖／撤销、图层编号、首尾名称、群系连通和异步等待、标题排队、权限与维度锁、存档及网络分片。运行单个测试示例：`./gradlew.bat test --tests dev.herebynamed.domain.RegionBookTest`。
 
-实现与手工验证记录见 [验证记录](docs/verification.md)。
+本轮验证与审查见 [0.2.0 验证记录](docs/verification-0.2.0.md) 和 [审查记录](docs/review-0.2.0.md)；早期实现见 [首版验证](docs/verification.md)。
