@@ -236,7 +236,7 @@ final class MapController {
         if (dimension.isEmpty() || GuiMap.hiddenUI) return;
         drawOverlay(context);
         context.getMatrices().push(); context.getMatrices().translate(0,0,500);
-        List<String> names=book().namesAt(new ChunkCell(view.hereby$mouseX()>>4,view.hereby$mouseZ()>>4));
+        List<String> names=book().namesAtBlock(view.hereby$mouseX(),view.hereby$mouseZ());
         for(int i=0;i<names.size();i++) {
             String name=client.textRenderer.trimToWidth(names.get(i),Math.max(30,map.width-160));
             int width=client.textRenderer.getWidth(name), y=24+i*11;

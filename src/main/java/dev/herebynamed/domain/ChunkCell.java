@@ -1,8 +1,9 @@
 package dev.herebynamed.domain;
 
 public record ChunkCell(int x, int z) {
+    public static final int MAX_COORDINATE = 1_875_000;
     public ChunkCell {
-        if (Math.abs((long) x) > 1_875_000 || Math.abs((long) z) > 1_875_000)
+        if (Math.abs((long) x) > MAX_COORDINATE || Math.abs((long) z) > MAX_COORDINATE)
             throw new IllegalArgumentException("区块坐标超出世界范围");
     }
     // Dense rectangles cluster badly with the record default (31*x+z), especially

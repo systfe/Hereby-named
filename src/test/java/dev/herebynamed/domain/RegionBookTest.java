@@ -5,6 +5,17 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RegionBookTest {
+    @Test void mapNamesIgnoreInvalidHoverCoordinatesAndRecoverForRealBlocks() {
+        RegionBook book=new RegionBook();
+        String low=book.createRegion(1,"北高",1), high=book.createRegion(2,"北塔",2);
+        for(String id:java.util.List.of(low,high)) book.paint(id,Set.of(new ChunkCell(-1,4)),true);
+        assertEquals(java.util.List.of(),book.namesAtBlock(Integer.MAX_VALUE,Integer.MAX_VALUE));
+        assertEquals(java.util.List.of(),book.namesAtBlock(Integer.MIN_VALUE,64));
+        assertEquals(java.util.List.of(),book.namesAtBlock(-1,Integer.MAX_VALUE));
+        assertEquals(java.util.List.of("北高","北塔"),book.namesAtBlock(-1,64));
+        assertEquals(java.util.List.of("北高","北塔"),book.namesAtBlock(-16,79));
+        assertEquals(java.util.List.of(),book.namesAtBlock(-17,64));
+    }
     @Test void biomeSelectionCanPreserveOtherRegionsAndUndoRemainsTransactional() {
         RegionBook book=new RegionBook();
         String target=book.createRegion(1,"高原",1), other=book.createRegion(1,"哨塔",2);

@@ -46,6 +46,12 @@ public final class RegionBook {
         commit(new State(state.highestLayer(), state.layers(), regions().stream()
                 .map(r -> r.id().equals(id) ? new Region(id, r.layer(), valid, color & 0xffffff, r.cells()) : r).toList(),state.suppressed()));
     }
+    public List<String> namesAtBlock(int blockX, int blockZ) {
+        int chunkX=blockX >> 4, chunkZ=blockZ >> 4;
+        // Map screens can render with sentinel mouse coordinates while UI focus changes.
+        if(Math.abs((long)chunkX)>ChunkCell.MAX_COORDINATE || Math.abs((long)chunkZ)>ChunkCell.MAX_COORDINATE) return List.of();
+        return namesAt(new ChunkCell(chunkX,chunkZ));
+    }
     public List<String> namesAt(ChunkCell cell) {
         List<Region> found = regions().stream().filter(r -> r.cells().contains(cell))
                 .sorted(Comparator.comparingInt(Region::layer)).toList();

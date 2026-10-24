@@ -1,7 +1,8 @@
 param(
     [Parameter(Mandatory=$true)][string]$SourceInstance,
     [Parameter(Mandatory=$true)][string]$Destination,
-    [string]$ModVersion='0.3.0'
+    [string]$ModVersion='0.3.0',
+    [switch]$IncludeVoxy
 )
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -47,6 +48,12 @@ foreach($file in Get-ChildItem -LiteralPath (Join-Path $source 'mods') -Filter '
 $needed=[Collections.Generic.Queue[string]]::new()
 foreach($id in @('fabric-api','xaeroworldmap','xaerominimap','travelerstitles','biomesoplenty','regions_unexplored',
         'biomeswevegone','natures_spirit','terralith','tectonic','mysticsbiomes','wwoo','sodium','lithium','ferritecore')) { $needed.Enqueue($id) }
+if($IncludeVoxy) {
+    $needed.Enqueue('voxy')
+    foreach($id in @('plaincraft-voxy-dirtysection-guard','plaincraft_voxy_dimension_transition')) {
+        if($providers.ContainsKey($id)) { $needed.Enqueue($id) }
+    }
+}
 $selected=[Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
 $resolved=[Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 foreach($id in @('minecraft','java','fabricloader')) { [void]$resolved.Add($id) }
