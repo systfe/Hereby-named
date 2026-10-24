@@ -12,6 +12,7 @@ import java.security.NoSuchAlgorithmException;
 public final class RegionStore {
     private final Path directory;
     public RegionStore(Path directory) { this.directory = directory; }
+    public Path directory() { return directory; }
     private Path path(String dimension) {
         if (dimension.length() > 256) throw new IllegalArgumentException("维度名称过长");
         String name = Base64.getUrlEncoder().withoutPadding().encodeToString(dimension.getBytes(StandardCharsets.UTF_8));

@@ -3,6 +3,7 @@ package dev.herebynamed;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import dev.herebynamed.domain.*;
 import dev.herebynamed.net.*;
+import dev.herebynamed.auto.AutoWork;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -32,7 +33,7 @@ public final class HerebyNamed implements ModInitializer {
                 send(server, handler.player, handler.player.getWorld().getRegistryKey().getValue().toString(), ""));
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
             ServerData d = data(server); d.assemblers.remove(handler.player.getUuid());
-            d.readAt.remove(handler.player.getUuid());
+            d.readAt.remove(handler.player.getUuid());d.automaticAt.remove(handler.player.getUuid());
             for (String dimension : d.authority.releaseAll(handler.player.getUuid())) {
                 RegionBook book = d.books.get(dimension); if (book != null) book.clearHistory();
                 broadcast(server, dimension);
@@ -67,15 +68,22 @@ public final class HerebyNamed implements ModInitializer {
         } catch (IOException ex) { LOG.error("Cannot persist region editors", ex); source.sendError(Text.literal("授权保存失败")); return 0; }
     }
     private static void receive(MinecraftServer server, ServerPlayerEntity player, Wire.Fragment fragment) {
-        if (player.isDisconnected()) return;
-        ServerData d = data(server);
-        String dimension = null;
-        long requestId = 0;
+        if(player.isDisconnected()) return;
+        ServerData d=data(server);
         try {
-            Optional<byte[]> bytes = d.assemblers.computeIfAbsent(player.getUuid(), id -> new Wire.Assembler()).accept(fragment);
-            if (bytes.isEmpty()) return;
-            RegionEdit edit = RegionEdit.decode(bytes.get());
-            requestId = edit.requestId();
+            Optional<byte[]> bytes=d.assemblers.computeIfAbsent(player.getUuid(),id -> new Wire.Assembler()).accept(fragment);
+            if(bytes.isEmpty()) return;
+            AutoWork.submit(() -> RegionEdit.decode(bytes.get())).whenComplete((edit,error) -> server.execute(() -> {
+                if(error!=null) { LOG.warn("Invalid region request",error);return; }
+                handle(server,player,edit);
+            }));
+        } catch(Exception ex) { LOG.warn("Invalid region fragment",ex); }
+    }
+    private static void handle(MinecraftServer server,ServerPlayerEntity player,RegionEdit edit) {
+        if(player.isDisconnected()) return;
+        ServerData d=data(server);
+        String dimension=null;long requestId=edit.requestId();
+        try {
             if (!validDimension(server, edit.dimension())) return;
             dimension = edit.dimension();
             if (edit.action() == RegionEdit.Action.READ) {
@@ -91,6 +99,12 @@ public final class HerebyNamed implements ModInitializer {
                 return;
             }
             boolean authorized = authorized(d, player);
+            if(edit.action()==RegionEdit.Action.AUTO_APPLY || edit.action()==RegionEdit.Action.AUTO_ALLOW_AGAIN) {
+                automatic(server,player,edit,d,book,authorized);return;
+            }
+            if(d.automaticBusy.contains(edit.dimension())) {
+                send(server,player,edit.dimension(),"区域更新中，请稍后重试",requestId);return;
+            }
             if (edit.action() == RegionEdit.Action.ACQUIRE) {
                 boolean already = d.authority.canEdit(edit.dimension(), player.getUuid(), authorized);
                 if (!d.authority.acquire(edit.dimension(), player.getUuid(), authorized)) {
@@ -114,6 +128,29 @@ public final class HerebyNamed implements ModInitializer {
             else player.sendMessage(Text.literal("此地名曰：无效区域请求"), false);
         }
     }
+    private static void automatic(MinecraftServer server,ServerPlayerEntity player,RegionEdit edit,ServerData d,RegionBook book,boolean authorized) {
+        String dim=edit.dimension();
+        long now=System.nanoTime();
+        if(!d.authority.canAutomate(dim,authorized) || !player.getWorld().getRegistryKey().getValue().toString().equals(dim)
+                || d.automaticBusy.contains(dim)
+                || edit.revision()!=d.revisions.getOrDefault(dim,0L)
+                || now-d.automaticAt.getOrDefault(player.getUuid(),0L)<2_000_000_000L) {
+            send(server,player,dim,"",edit.requestId());return;
+        }
+        d.automaticAt.put(player.getUuid(),now);d.automaticBusy.add(dim);
+        RegionBook next=book.snapshot();RegionBook.State before=book.state();
+        AutoWork.submit(() -> {
+            edit.apply(next);
+            if(!before.equals(next.state())) d.store.save(dim,next);
+            return next;
+        }).whenComplete((result,error) -> server.execute(() -> {
+            if(SERVERS.get(server)!=d) return;
+            d.automaticBusy.remove(dim);
+            if(error!=null) LOG.warn("Automatic region transaction failed",error);
+            else if(!before.equals(result.state())) { d.books.put(dim,result);d.revisions.merge(dim,1L,Long::sum); }
+            broadcast(server,dim,player.getUuid(),edit.requestId());
+        }));
+    }
     private static boolean validDimension(MinecraftServer server, String dimension) {
         return server.getWorldRegistryKeys().stream().anyMatch(key -> key.getValue().toString().equals(dimension));
     }
@@ -136,8 +173,15 @@ public final class HerebyNamed implements ModInitializer {
         ServerData d = data(server);
         try {
             Snapshot snapshot = new Snapshot(dimension, d.revisions.getOrDefault(dimension, 0L), responseTo,
-                    d.authority.holder(dimension), authorized(d, player), message, d.book(dimension));
-            Wire.send(snapshot.encode(), packet -> ServerTransport.send(player, packet));
+                    d.authority.holder(dimension), authorized(d, player), message, d.book(dimension).snapshot());
+            AutoWork.submit(snapshot::encode).whenComplete((bytes,error) -> server.execute(() -> {
+                if(SERVERS.get(server)!=d) return;
+                if(player.isDisconnected()) return;
+                if(error!=null) { LOG.error("Cannot encode named regions",error);return; }
+                if(snapshot.revision()!=d.revisions.getOrDefault(dimension,0L) || !Objects.equals(snapshot.holder(),d.authority.holder(dimension))
+                        || snapshot.authorized()!=authorized(d,player)) { send(server,player,dimension,message,responseTo);return; }
+                Wire.send(bytes,packet -> ServerTransport.send(player,packet));
+            }));
         } catch (IOException ex) {
             LOG.error("Cannot load/sync named regions", ex);
             player.sendMessage(Text.literal("此地名曰：区域存档读取或同步失败，已保留原文件"), false);
@@ -152,6 +196,8 @@ public final class HerebyNamed implements ModInitializer {
         final Map<String, Long> revisions = new HashMap<>();
         final Map<UUID, Wire.Assembler> assemblers = new HashMap<>();
         final Map<UUID, Long> readAt = new HashMap<>();
+        final Map<UUID,Long> automaticAt=new HashMap<>();
+        final Set<String> automaticBusy=new HashSet<>();
         ServerData(Path root) {
             this.root = root; store = new RegionStore(root.resolve("regions"));
             Path file = root.resolve("editors.txt");

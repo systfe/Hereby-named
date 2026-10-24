@@ -9,12 +9,12 @@ public record RegionEdit(String dimension, long revision, long requestId, Action
                       String region, String name, int color, Set<ChunkCell> cells) {
         this(dimension, revision, 0, action, layer, region, name, color, cells);
     }
-    public enum Action { READ, ACQUIRE, RELEASE, CREATE, RENAME, DELETE_REGION, ADD_LAYER, DELETE_LAYER, ADD, REMOVE, UNDO, REDO, ADD_PRESERVING }
+    public enum Action { READ, ACQUIRE, RELEASE, CREATE, RENAME, DELETE_REGION, ADD_LAYER, DELETE_LAYER, ADD, REMOVE, UNDO, REDO, ADD_PRESERVING, AUTO_APPLY, AUTO_ALLOW_AGAIN }
     public RegionEdit {
         Objects.requireNonNull(dimension); Objects.requireNonNull(action);
         region = region == null ? "" : region; name = name == null ? "" : name;
         cells = cells == null ? Set.of() : Set.copyOf(cells);
-        if (dimension.length() > 256 || region.length() > 80 || name.length() > 80 || cells.size() > 65_536)
+        if (dimension.length() > 256 || region.length() > 80 || name.length() > 80 || cells.size() > (action==Action.AUTO_APPLY?500_000:65_536))
             throw new IllegalArgumentException("编辑请求过大");
     }
     public void apply(RegionBook book) {
@@ -29,6 +29,13 @@ public record RegionEdit(String dimension, long revision, long requestId, Action
             case REMOVE -> book.paint(region, cells, false);
             case UNDO -> book.undo();
             case REDO -> book.redo();
+            case AUTO_APPLY -> {
+                if(!dimension.equals("minecraft:overworld") || layer!=1 || !region.matches("(MOUNTAIN|OCEAN|FROZEN_OCEAN|PLAIN|FOREST|LAKE|FLOWER|DESERT)(:(COLD|HOT|TEMPERATE))?"))
+                    throw new IllegalArgumentException("自动区域只支持主世界地表");
+                if(name.codePoints().anyMatch(Character::isDigit)) throw new IllegalArgumentException("自动名称不能包含数字");
+                book.automate(region,name,color,cells);
+            }
+            case AUTO_ALLOW_AGAIN -> book.allowAutomaticAgain();
             default -> throw new IllegalArgumentException("不是区域修改请求");
         }
     }
@@ -46,7 +53,7 @@ public record RegionEdit(String dimension, long revision, long requestId, Action
             String dim = in.readUTF(); long revision = in.readLong(), requestId = in.readLong(); int action = in.readInt();
             if (action < 0 || action >= Action.values().length) throw new IOException("未知操作");
             int layer = in.readInt(); String region = in.readUTF(), name = in.readUTF(); int color = in.readInt();
-            int size = in.readInt(); if (size < 0 || size > 65_536) throw new IOException("区块数量过大");
+            int size = in.readInt(); if (size < 0 || size > (Action.values()[action]==Action.AUTO_APPLY?500_000:65_536)) throw new IOException("区块数量过大");
             Set<ChunkCell> cells = new HashSet<>();
             for (int i = 0; i < size; i++) cells.add(new ChunkCell(in.readInt(), in.readInt()));
             if (in.read() != -1) throw new IOException("请求尾部无效");

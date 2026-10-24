@@ -18,6 +18,10 @@ public final class RegionTitles {
     private String dimension = "";
     private int remaining;
     public void reset() { queue = new TitleQueue(); displayed = observed = List.of(); remaining = 0; dimension = ""; }
+    public void observeWithoutTitle(String dimension,List<String> names) {
+        queue.observeWithoutTitle(dimension,names);this.dimension=dimension;observed=List.copyOf(names);remaining=0;
+        if(travelers!=null) travelers.clear();
+    }
     public void tick(String dimension, List<String> names) {
         if (!checked) {
             checked = true;

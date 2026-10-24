@@ -11,20 +11,33 @@ import net.minecraft.client.MinecraftClient;
 
 public final class HerebyNamedClient implements ClientModInitializer {
     public static final ClientRegions REGIONS = new ClientRegions();
+    public static AutomaticRegions AUTOMATIC;
     private final RegionTitles titles = new RegionTitles();
+    private dev.herebynamed.domain.ChunkCell lastCell;
+    private String lastDimension="";
+    private java.util.List<String> lastNames=java.util.List.of();
     @Override public void onInitializeClient() {
         ClientTransport.initialize(REGIONS::receive);
-        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> { REGIONS.reset(); titles.reset(); });
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> { REGIONS.reset(); titles.reset(); });
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> reset());
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> reset());
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             REGIONS.busy();
+            if(AUTOMATIC!=null) AUTOMATIC.tick();
             if (client.world != null && client.player != null) {
                 String dim = client.world.getRegistryKey().getValue().toString();
-                titles.tick(dim, REGIONS.book(dim).namesAt(new dev.herebynamed.domain.ChunkCell(client.player.getBlockX() >> 4, client.player.getBlockZ() >> 4)));
+                var cell=new dev.herebynamed.domain.ChunkCell(client.player.getBlockX()>>4,client.player.getBlockZ()>>4);
+                var book=REGIONS.book(dim);var names=book.namesAt(cell);
+                if(dim.equals(lastDimension) && cell.equals(lastCell) && !names.equals(lastNames)
+                        && book.owner(1,cell).filter(r -> r.automatic()!=null).isPresent()) titles.observeWithoutTitle(dim,names);
+                titles.tick(dim,names);lastCell=cell;lastDimension=dim;lastNames=names;
             }
         });
         ClientUi.registerTitles(titles);
-        if (FabricLoader.getInstance().isModLoaded("xaeroworldmap")) MapIntegration.initialize();
+        if (FabricLoader.getInstance().isModLoaded("xaeroworldmap")) { AUTOMATIC=new AutomaticRegions();MapIntegration.initialize(); }
         else HerebyNamed.LOG.warn("Xaero's World Map absent: shared regions remain available, map editing is disabled");
+    }
+    private void reset() {
+        REGIONS.reset();titles.reset();lastCell=null;lastDimension="";lastNames=java.util.List.of();
+        if(AUTOMATIC!=null) AUTOMATIC.reset();
     }
 }

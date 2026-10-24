@@ -5,6 +5,12 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TitleQueueTest {
+    @Test void automaticCreationWhileStandingStillWaitsForARealReentry() {
+        TitleQueue queue=new TitleQueue();queue.observeWithoutTitle("overworld",List.of("银杉林"));
+        assertTrue(queue.update("overworld",List.of("银杉林"),5000,false).isEmpty());
+        queue.update("overworld",List.of(),6000,false);queue.update("overworld",List.of("银杉林"),7000,false);
+        assertEquals(List.of("银杉林"),queue.update("overworld",List.of("银杉林"),8000,false).orElseThrow());
+    }
     @Test void waitsForOriginalTitlesAndOnlyShowsLatestStablePlace() {
         TitleQueue queue = new TitleQueue();
         assertTrue(queue.update("overworld", List.of("北高"), 0, true).isEmpty());

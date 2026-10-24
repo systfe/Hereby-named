@@ -1,0 +1,214 @@
+[
+  {
+    "text": "艾尔",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "洛恩",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "瑟兰",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "伊瑟",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "埃文",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "洛瑟",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "维兰",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "塞琳",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "维尔",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "艾瑟",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "欧瑞",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "卡尔",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "诺兰",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "希尔",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "洛瑞",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "塞尔",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "岚歌",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "星辉",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "银露",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "晨曦",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "月影",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "风语",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "琉光",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "清辉",
+    "kinds": [
+      "ALL"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "银霜",
+    "kinds": [
+      "MOUNTAIN",
+      "FOREST",
+      "PLAIN",
+      "LAKE",
+      "FROZEN_OCEAN"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "寒鸦",
+    "kinds": [
+      "MOUNTAIN",
+      "FOREST",
+      "PLAIN",
+      "LAKE",
+      "FROZEN_OCEAN"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "雪羽",
+    "kinds": [
+      "MOUNTAIN",
+      "FOREST",
+      "PLAIN",
+      "LAKE",
+      "FROZEN_OCEAN"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "冰镜",
+    "kinds": [
+      "MOUNTAIN",
+      "FOREST",
+      "PLAIN",
+      "LAKE",
+      "FROZEN_OCEAN"
+    ],
+    "climate": "COLD"
+  }
+]

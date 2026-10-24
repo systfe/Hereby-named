@@ -3,6 +3,9 @@ package dev.herebynamed.domain;
 import java.util.*;
 
 public final class EditAuthority {
+    public boolean canAutomate(String dimension,boolean authorized) {
+        return authorized && dimension.equals("minecraft:overworld") && holder(dimension)==null;
+    }
     private final Map<String, UUID> holders = new HashMap<>();
     public boolean acquire(String dimension, UUID player, boolean authorized) {
         if (!authorized || (holders.containsKey(dimension) && !player.equals(holders.get(dimension)))) return false;

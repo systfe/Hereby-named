@@ -3,7 +3,7 @@ param(
     [string]$MinecraftVersion='1.21.1',
     [string]$WorldPath,
     [string]$JavaHome=$env:JAVA_HOME,
-    [string]$ModVersion='0.2.0',
+    [string]$ModVersion='0.3.0',
     [switch]$PrepareOnly,
     [switch]$SkipPrepare
 )

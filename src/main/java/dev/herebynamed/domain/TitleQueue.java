@@ -7,6 +7,9 @@ public final class TitleQueue {
     private List<String> current = List.of();
     private long changedAt;
     private boolean delivered;
+    public void observeWithoutTitle(String dimension,List<String> names) {
+        this.dimension=dimension;current=List.copyOf(names);delivered=true;
+    }
 
     public Optional<List<String>> update(String dimension, List<String> names, long nowMillis, boolean originalBusy) {
         if (!this.dimension.equals(dimension) || !current.equals(names)) {

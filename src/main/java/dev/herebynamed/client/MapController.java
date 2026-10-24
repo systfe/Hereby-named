@@ -70,6 +70,7 @@ final class MapController {
             if (editing()) { job = null; pressed = -1; data.exit(); } else data.enter(dimension);
             build();
         });
+        if(HerebyNamedClient.AUTOMATIC!=null) icon(0,80,11,"自动创建区域设置",b -> client.setScreen(new AutomaticSettingsScreen(map,HerebyNamedClient.AUTOMATIC)));
         if (editing()) {
             int[] cursor = {Math.max(24,(map.width-299)/2), 48};
             RegionBook.Region current = book.region(selected).orElse(null);

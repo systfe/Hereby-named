@@ -33,6 +33,12 @@ DrawH 10 5 1 6; DrawH 10 5 14 6; DrawV 10 1 5 6; DrawV 10 14 5 6
 Pixel 10 3 2; Pixel 10 2 3; Pixel 10 12 2; Pixel 10 13 3
 Pixel 10 2 12; Pixel 10 3 13; Pixel 10 13 12; Pixel 10 12 13
 DrawH 10 6 4 4; Pixel 10 5 5; DrawV 10 10 5 2; DrawH 10 8 7 2; DrawV 10 7 8 2; Pixel 10 7 12
+# Small gear: automatic-region settings.
+Box 11 4 4 8 8
+Box 11 6 6 4 4
+DrawH 11 6 2 4; DrawH 11 6 13 4
+DrawV 11 2 6 4; DrawV 11 13 6 4
+Pixel 11 3 3; Pixel 11 12 3; Pixel 11 3 12; Pixel 11 12 12
 $target = Join-Path (Split-Path -Parent $PSScriptRoot) 'src/main/resources/assets/hereby_named/textures/gui/map_tools.png'
 [IO.Directory]::CreateDirectory((Split-Path -Parent $target)) | Out-Null
 try { $bitmap.Save($target,[Drawing.Imaging.ImageFormat]::Png) } finally { $bitmap.Dispose() }

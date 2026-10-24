@@ -1,0 +1,772 @@
+[
+  {
+    "text": "寒鸦岭",
+    "kinds": [
+      "MOUNTAIN"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "银霜山脉",
+    "kinds": [
+      "MOUNTAIN"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "月牙湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "幽影密林",
+    "kinds": [
+      "FOREST"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "翡翠湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "黑苔冻原",
+    "kinds": [
+      "PLAIN"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "鸦羽森林",
+    "kinds": [
+      "FOREST"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "蓝镜湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "金雀草原",
+    "kinds": [
+      "PLAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "灰沙荒漠",
+    "kinds": [
+      "DESERT"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "暮色平原",
+    "kinds": [
+      "PLAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "紫杉林",
+    "kinds": [
+      "FOREST"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "双月湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "风铃草甸",
+    "kinds": [
+      "FLOWER"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "雷云峰",
+    "kinds": [
+      "MOUNTAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "月影森林",
+    "kinds": [
+      "FOREST"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "寒松岭",
+    "kinds": [
+      "MOUNTAIN"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "星尘湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "风语草原",
+    "kinds": [
+      "PLAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "金叶林",
+    "kinds": [
+      "FOREST"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "风蚀石林",
+    "kinds": [
+      "FOREST"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "龙脊山脉",
+    "kinds": [
+      "MOUNTAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "霜花湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "鸦岭荒原",
+    "kinds": [
+      "PLAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "星陨湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "金辉平原",
+    "kinds": [
+      "PLAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "暗影林",
+    "kinds": [
+      "FOREST"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "白鹿草原",
+    "kinds": [
+      "PLAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "月桂森林",
+    "kinds": [
+      "FOREST"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "霜叶林",
+    "kinds": [
+      "FOREST"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "星语湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "雾松岭",
+    "kinds": [
+      "MOUNTAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "赤沙荒原",
+    "kinds": [
+      "PLAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "鸦羽湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "银霜平原",
+    "kinds": [
+      "PLAIN"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "雪鸮岭",
+    "kinds": [
+      "MOUNTAIN"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "月泪湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "雾草甸",
+    "kinds": [
+      "FLOWER"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "霜狼荒原",
+    "kinds": [
+      "PLAIN"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "银杉林",
+    "kinds": [
+      "FOREST"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "黑曜石峰",
+    "kinds": [
+      "MOUNTAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "灰烬草原",
+    "kinds": [
+      "PLAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "寒星湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "风语林",
+    "kinds": [
+      "FOREST"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "鸦影森林",
+    "kinds": [
+      "FOREST"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "金穗草甸",
+    "kinds": [
+      "FLOWER"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "雷暴山",
+    "kinds": [
+      "MOUNTAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "寒冰湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "雾隐林",
+    "kinds": [
+      "FOREST"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "霜语森林",
+    "kinds": [
+      "FOREST"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "月泉湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "雷光峰",
+    "kinds": [
+      "MOUNTAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "星雾湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "蓝风草原",
+    "kinds": [
+      "PLAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "金鹿林",
+    "kinds": [
+      "FOREST"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "风鸣岭",
+    "kinds": [
+      "MOUNTAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "赤霞峰",
+    "kinds": [
+      "MOUNTAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "银霜湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "雪峰湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "星月湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "风铃草原",
+    "kinds": [
+      "PLAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "黑岩峰",
+    "kinds": [
+      "MOUNTAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "蓝羽湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "银叶林",
+    "kinds": [
+      "FOREST"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "霜鸦岭",
+    "kinds": [
+      "MOUNTAIN"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "雾海湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "黑风草原",
+    "kinds": [
+      "PLAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "寒鸦湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "赤岩峰",
+    "kinds": [
+      "MOUNTAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "幽月湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "白桦林",
+    "kinds": [
+      "FOREST"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "风语湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "龙鳞湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "霜草甸",
+    "kinds": [
+      "FLOWER"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "蓝冰湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "风蚀湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "银月湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "黑松岭",
+    "kinds": [
+      "MOUNTAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "白鹿林",
+    "kinds": [
+      "FOREST"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "雷石山",
+    "kinds": [
+      "MOUNTAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "金雀湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "幽泉湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "黑风湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "赤石峰",
+    "kinds": [
+      "MOUNTAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "雾松湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "金穗草原",
+    "kinds": [
+      "PLAIN"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "黑水湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "幽影湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "白霜湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "风啸湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "蓝雾林",
+    "kinds": [
+      "FOREST"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "赤霞湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "月影湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "霜语湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "银沙湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "黑岩湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "白鹿湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "雷光湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "寒松湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "COLD"
+  },
+  {
+    "text": "金叶湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "幽蓝湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "赤风湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "蓝晶湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "白帆湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "灰羽湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "龙吟湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "风铃湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "黑鸦湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "白桦湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  },
+  {
+    "text": "雷石湖",
+    "kinds": [
+      "LAKE"
+    ],
+    "climate": "ANY"
+  }
+]
