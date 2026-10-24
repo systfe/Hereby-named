@@ -5,7 +5,8 @@ param(
     [string]$JavaHome=$env:JAVA_HOME,
     [string]$ModVersion='0.3.0',
     [switch]$PrepareOnly,
-    [switch]$SkipPrepare
+    [switch]$SkipPrepare,
+    [switch]$InPlace
 )
 $ErrorActionPreference='Stop'
 if(!$JavaHome -or !(Test-Path -LiteralPath (Join-Path $JavaHome 'bin/java.exe'))) { throw 'Set JAVA_HOME or pass -JavaHome with a Java runtime directory' }
@@ -13,6 +14,12 @@ $projectRoot=Split-Path -Parent $PSScriptRoot
 $instance=(Resolve-Path -LiteralPath $InstancePath).Path
 $minecraftRoot=Split-Path -Parent (Split-Path -Parent $instance)
 $testRoot=Join-Path $projectRoot ('.tools/smoke-'+$MinecraftVersion)
+if($InPlace) {
+    if(!$SkipPrepare -or !(Test-Path -LiteralPath (Join-Path $instance 'test-mods.json'))) {
+        throw 'In-place launch is restricted to prepared test instances and requires -SkipPrepare'
+    }
+    $testRoot=$instance
+}
 [IO.Directory]::CreateDirectory($testRoot) | Out-Null
 function Copy-TestTree([string]$source,[string]$destination) {
     if(!(Test-Path -LiteralPath $source)) { return }

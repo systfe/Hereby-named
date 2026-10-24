@@ -9,6 +9,19 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class AutomaticNamesTest {
     @TempDir Path directory;
+    @Test void existingPartialConfigurationGainsEditableDefaultsWithoutLosingCustomValues() throws Exception {
+        java.nio.file.Files.writeString(directory.resolve("automatic.json"),
+                "{\"enabled\":false,\"unlockSpan\":3000,\"thresholds\":{\"forest\":{\"minimumBiomes\":7}}}");
+        AutoConfig config=AutoConfig.load(directory);
+        assertFalse(config.enabled);assertEquals(3000,config.unlockSpan);
+        assertEquals(new AutoConfig.Threshold(7,1000,0),config.thresholds.forest);
+        assertEquals(5,config.thresholds.plain.minimumBiomes());
+        String saved=java.nio.file.Files.readString(directory.resolve("automatic.json"));
+        assertTrue(saved.contains("\"frozenOcean\""));
+        assertTrue(saved.contains("\"maximumSpan\""));
+        config.thresholds.lake=new AutoConfig.Threshold(0,2000,500);
+        assertThrows(IllegalArgumentException.class,config::validate);
+    }
     @Test void completeNamesAreUsedBeforeRootCombinations() {
         AutoConfig config=new AutoConfig();
         config.names=List.of(new AutoConfig.Name("银霜山",List.of("MOUNTAIN"),"COLD"));

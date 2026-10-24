@@ -17,10 +17,21 @@ class AutoRegionsTest {
     private static TerrainSample sample(String biome, TerrainKind kind) {
         return new TerrainSample(biome, kind, 0.7f, 70);
     }
-    @Test void threeRealBiomeIdsCanCreateAShortForestButTinyFragmentsCannot() {
+    @Test void customForestCountOrSpanControlsCreationIndependently() {
+        AutoConfig config=new AutoConfig();config.unlockSpan=256;
+        Map<ChunkCell,TerrainSample> map=new HashMap<>();
+        for(int x=0;x<48;x++) map.put(new ChunkCell(x,0),sample("test:forest"+(x/24),TerrainKind.FOREST));
+        config.thresholds.forest=new AutoConfig.Threshold(2,800,0);
+        assertEquals(1,new TerrainAnalysis().analyze(map,config).candidates().size());
+        config.thresholds.forest=new AutoConfig.Threshold(3,800,0);
+        assertTrue(new TerrainAnalysis().analyze(map,config).candidates().isEmpty());
+        config.thresholds.forest=new AutoConfig.Threshold(0,768,0);
+        assertEquals(1,new TerrainAnalysis().analyze(map,config).candidates().size());
+    }
+    @Test void fiveRealBiomeIdsCanCreateAShortForestButFourAndTinyFragmentsCannot() {
         AutoConfig config = new AutoConfig(); config.unlockSpan = 256;
         Map<ChunkCell, TerrainSample> map = new HashMap<>();
-        for (int x=0;x<24;x++) map.put(new ChunkCell(x,0), sample("test:forest"+(x/8),TerrainKind.FOREST));
+        for (int x=0;x<40;x++) map.put(new ChunkCell(x,0), sample("test:forest"+(x/8),TerrainKind.FOREST));
         var result = new TerrainAnalysis().analyze(map,config);
         assertEquals(1,result.candidates().size());
         assertEquals(TerrainKind.FOREST,result.candidates().get(0).kind());
@@ -35,6 +46,10 @@ class AutoRegionsTest {
             map.put(new ChunkCell(x,z),sample("minecraft:plains",TerrainKind.PLAIN));
         for(int x=0;x<32;x++) for(int z=0;z<32;z++)
             map.put(new ChunkCell(x,z),sample("minecraft:ocean",TerrainKind.OCEAN));
+        assertEquals(List.of(TerrainKind.LAKE),new TerrainAnalysis().analyze(map,config).candidates().stream().map(TerrainAnalysis.Candidate::kind).toList());
+        config.thresholds.lake=new AutoConfig.Threshold(0,640,2000);
+        assertTrue(new TerrainAnalysis().analyze(map,config).candidates().isEmpty());
+        config.thresholds.lake=new AutoConfig.Threshold(0,480,520);
         assertEquals(List.of(TerrainKind.LAKE),new TerrainAnalysis().analyze(map,config).candidates().stream().map(TerrainAnalysis.Candidate::kind).toList());
         map.remove(new ChunkCell(-1,12));
         assertTrue(new TerrainAnalysis().analyze(map,config).candidates().isEmpty());

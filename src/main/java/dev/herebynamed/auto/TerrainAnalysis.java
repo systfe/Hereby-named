@@ -45,8 +45,7 @@ public final class TerrainAnalysis {
             int span=(int)Math.min(Integer.MAX_VALUE,16L*Math.max((long)maxX-minX+1,(long)maxZ-minZ+1));
             long count=biomes.values().stream().filter(n -> n>=config.minimumBiomeChunks).count();
             TerrainKind kind=seed.kind();
-            if(kind.water() && kind!=TerrainKind.RIVER && span>=500 && span<2000 && enclosed(cells,samples)) kind=TerrainKind.LAKE;
-            if(span>=config.minimumSpan && qualifies(kind,span,count))
+            if(config.qualifies(kind,span,count))
                 candidates.add(new Candidate(kind,cells,temperature/cells.size(),span));
         }
         candidates.sort(Comparator.comparing(c -> c.cells().stream().min(Comparator.comparingInt(ChunkCell::x).thenComparingInt(ChunkCell::z)).orElseThrow(),
@@ -62,7 +61,8 @@ public final class TerrainAnalysis {
             Set<ChunkCell> body=flood(water,start);
             Candidate whole=candidate(TerrainKind.OCEAN,body,samples);
             boolean closed=enclosed(body,samples);
-            if(closed && whole.span()>=Math.max(500,config.minimumSpan) && whole.span()<2000) {
+            long wholeBiomes=biomeCount(body,samples,config);
+            if(closed && config.qualifies(TerrainKind.LAKE,whole.span(),wholeBiomes)) {
                 out.add(candidate(TerrainKind.LAKE,body,samples)); continue;
             }
             Set<ChunkCell> ice=new HashSet<>(),warm=new HashSet<>(body);
@@ -71,7 +71,7 @@ public final class TerrainAnalysis {
             for(ChunkCell frozenStart:new ArrayList<>(ice)) {
                 if(!ice.contains(frozenStart)) continue;
                 Set<ChunkCell> part=flood(ice,frozenStart);
-                if(warmArea>0 && part.size()*3L<warmArea && whole.span()>=2000) warm.addAll(part);
+                if(warmArea>0 && part.size()*3L<warmArea && config.qualifies(TerrainKind.OCEAN,whole.span(),wholeBiomes)) warm.addAll(part);
                 else addIfQualified(out,TerrainKind.FROZEN_OCEAN,part,samples,config);
             }
             for(ChunkCell warmStart:new ArrayList<>(warm)) if(warm.contains(warmStart))
@@ -91,19 +91,13 @@ public final class TerrainAnalysis {
         return new Candidate(kind,cells,(float)(temperature/cells.size()),(int)Math.min(Integer.MAX_VALUE,16L*Math.max((long)maxX-minX+1,(long)maxZ-minZ+1)));
     }
     private static void addIfQualified(List<Candidate> out,TerrainKind kind,Set<ChunkCell> cells,Map<ChunkCell,TerrainSample> samples,AutoConfig config) {
-        Candidate c=candidate(kind,cells,samples); Map<String,Integer> biomes=new HashMap<>();
-        for(ChunkCell cell:cells) biomes.merge(samples.get(cell).biome(),1,Integer::sum);
-        if(c.span()>=config.minimumSpan && qualifies(kind,c.span(),biomes.values().stream().filter(n -> n>=config.minimumBiomeChunks).count())) out.add(c);
+        Candidate c=candidate(kind,cells,samples);
+        if(config.qualifies(kind,c.span(),biomeCount(cells,samples,config))) out.add(c);
     }
-    private static boolean qualifies(TerrainKind kind,int span,long biomes) {
-        return switch(kind) {
-            case MOUNTAIN -> span>=1000;
-            case OCEAN -> span>=2000;
-            case FROZEN_OCEAN,PLAIN,FOREST,FLOWER -> biomes>=3 || span>=1000;
-            case DESERT -> biomes>=4 || span>=1500;
-            case LAKE -> span>=500 && span<2000;
-            default -> false;
-        };
+    private static long biomeCount(Set<ChunkCell> cells,Map<ChunkCell,TerrainSample> samples,AutoConfig config) {
+        Map<String,Integer> biomes=new HashMap<>();
+        for(ChunkCell cell:cells) biomes.merge(samples.get(cell).biome(),1,Integer::sum);
+        return biomes.values().stream().filter(n -> n>=config.minimumBiomeChunks).count();
     }
     private static boolean enclosed(Set<ChunkCell> cells,Map<ChunkCell,TerrainSample> samples) {
         for(ChunkCell c:cells) for(ChunkCell n:neighbors(c)) if(!cells.contains(n)) {
