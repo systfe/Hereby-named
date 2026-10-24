@@ -1,6 +1,6 @@
 # Xaero的世界地图 | 此地名曰
 
-**Xaero's World Map | Hereby Named**，Fabric 附属模组，标识 `hereby_named`。
+**Xaero's World Map | Hereby Named**，Fabric 附属模组: `hereby_named`。
 
 在 Xaero 世界地图中给区块组成的地区命名，用图层区分高原、城市、建筑等范围；支持多人共享和进入区域标题。完整规则见 [需求规格](docs/requirements.md)。
 
@@ -62,7 +62,6 @@ OP 或控制台使用 `/herebynamed grant 在线玩家名` 授权，`/herebyname
 
 0.1.0 起使用 `regions_v2` 通信通道；0.2.0 新增“不覆盖”编辑操作，多人共享需要服务器和客户端一同更新。已有区域文件格式保持兼容。可通过 `-Pmod_version=版本号` 指定构建版本。
 
-`scripts/smoke-client.ps1 -InstancePath 实例目录 -WorldPath 原存档目录 -JavaHome Java目录` 会将模组、配置与存档复制到工程的 `.tools/smoke-版本` 下，离线启动隔离客户端；原存档只读。请根据测试实例的实际要求指定 Java 运行时。
 
 测试覆盖区域覆盖／撤销、图层编号、首尾名称、群系连通和异步等待、标题排队、权限与维度锁、存档及网络分片。运行单个测试示例：`./gradlew.bat test --tests dev.herebynamed.domain.RegionBookTest`。
 
