@@ -9,6 +9,7 @@
 **此地名曰 (Hereby Named)** 是一款专为 **Xaero's World Map** 设计的 Minecraft Fabric 附属模组。
 
 在广袤的方块世界中，你是否曾希望那些跨越数千格的雄伟山脉、浩瀚大洋、广袤原野与幽深森林拥有属于自己的名字？本模组能在 Xaero 世界地图中为地理区域提供**自动宏观识别与命名**、**手动多图层圈地绘制**、**踏足新领地时的沉浸式大标题**，以及**多人联机共享与权限管理**。
+在广袤的方块世界中，你是否曾希望那些跨越数千格的雄伟山脉、浩瀚大洋、广袤原野与幽深森林拥有属于自己的名字？本模组能在 Xaero 世界地图中为地理区域提供**自动宏观识别与命名**、**手动多图层圈地绘制**、**踏足新领地时的沉浸式大标题**，以及**多人联机共享与权限管理**。
 
 ---
 
@@ -17,12 +18,21 @@
 - 🌍 **探索地貌自动命名**
   - **群系斑块拓扑分析**：以宏观生物群系连通块为图单元，快速识别大洋、山脉、森林、平原、沙漠、北地冻土与封闭湖泊；
   - **自然地理过渡与包容**：微小杂乱群系斑块自动被周围主导地貌吞没，消除地图孔洞,保证地区完整；
+  - **群系斑块拓扑分析**：以宏观生物群系连通块为图单元，快速识别大洋、山脉、森林、平原、沙漠、北地冻土与封闭湖泊；
+  - **自然地理过渡与包容**：微小杂乱群系斑块自动被周围主导地貌吞没，消除地图孔洞,保证地区完整；
   - **山地动态演变**：山地随探索不断扩张，长条山地演化为“山脉”，广袤山体演化为“峦”，最多自动进阶改名一次。
   - **群系支持**：已支持识别以下模组中的群系:
 
    Terralith、Biomes O' Plenty、Biomes We've Gone(BWG)、RegionsUnexplored、Nature's Spirit、Mystic's Biomes、William Wythers' Overhauled Overworld (WWOO) 
 
+  - **群系支持**：已支持识别以下模组中的群系:
 
+   Terralith、Biomes O' Plenty、Biomes We've Gone(BWG)、RegionsUnexplored、Nature's Spirit、Mystic's Biomes、William Wythers' Overhauled Overworld (WWOO) 
+
+
+- 📜 **命名库**
+  - **随机默认名**：可自定义命名池；
+  - **单字词根随机组合**：基于数十个自然字素（寒、霜、月、风、龙、星、岩、林等），结合地形与冷暖气候偏好自然衍生组合命名；
 - 📜 **命名库**
   - **随机默认名**：可自定义命名池；
   - **单字词根随机组合**：基于数十个自然字素（寒、霜、月、风、龙、星、岩、林等），结合地形与冷暖气候偏好自然衍生组合命名；
@@ -36,6 +46,9 @@
   - **地图无缝矢量呈现**：平滑半透明渲染，外边缘与孔洞自动描边，区域名称居中并随缩放智能调整字号。
 
 - 🏰 **跨入领地沉浸式标题**
+  - 支持兼容 **Traveler's Titles** 模组,行至新区域稳定 1 秒后触发进入标题提示；未安装时自动使用内置平滑 HUD 渲染。
+
+- ⚙️ **设置界面**
   - 支持兼容 **Traveler's Titles** 模组,行至新区域稳定 1 秒后触发进入标题提示；未安装时自动使用内置平滑 HUD 渲染。
 
 - ⚙️ **设置界面**
@@ -54,6 +67,10 @@
 
 将对应 Minecraft 版本的模组 jar 文件放入客户端（或服务器）的 `mods` 目录下即可。
 
+| Minecraft 版本 | 必需前置模组 | 推荐/可选模组 |
+| :--- | :--- | :--- |
+| **1.20.1** | [Fabric Loader](https://fabricmc.net/) $\ge 0.16.0$<br>[Fabric API](https://curseforge.com/minecraft/mc-mods/fabric-api)<br>[Xaero's World Map](https://curseforge.com/minecraft/mc-mods/xaeros-world-map) $\ge 1.47.0$ | [Traveler's Titles](https://curseforge.com/minecraft/mc-mods/travelers-titles) 4.0.2 |
+| **1.21.1** | [Fabric Loader](https://fabricmc.net/) $\ge 0.16.0$<br>[Fabric API](https://curseforge.com/minecraft/mc-mods/fabric-api)<br>[Xaero's World Map](https://curseforge.com/minecraft/mc-mods/xaeros-world-map) $\ge 1.44.2$ | [Traveler's Titles](https://curseforge.com/minecraft/mc-mods/travelers-titles) 5.1.3 |
 | Minecraft 版本 | 必需前置模组 | 推荐/可选模组 |
 | :--- | :--- | :--- |
 | **1.20.1** | [Fabric Loader](https://fabricmc.net/) $\ge 0.16.0$<br>[Fabric API](https://curseforge.com/minecraft/mc-mods/fabric-api)<br>[Xaero's World Map](https://curseforge.com/minecraft/mc-mods/xaeros-world-map) $\ge 1.47.0$ | [Traveler's Titles](https://curseforge.com/minecraft/mc-mods/travelers-titles) 4.0.2 |
