@@ -6,6 +6,10 @@ import java.util.*;
 public final class TerrainClassifier {
     private TerrainClassifier() { }
     static TerrainKind explicitRule(String id,AutoConfig config) {
+        if(config.biomeOverrides!=null && config.biomeOverrides.containsKey(id)) {
+            String kindName=config.biomeOverrides.get(id);
+            try { return TerrainKind.valueOf(kindName); } catch(Exception ignored) { }
+        }
         for(var rule:config.biomeRules) {
             String pattern=rule.biome();
             if(pattern.endsWith("*")?id.startsWith(pattern.substring(0,pattern.length()-1)):id.equals(pattern)) return rule.kind();
@@ -43,6 +47,9 @@ public final class TerrainClassifier {
         }
         if(relief>=48 && !contains(path,"swamp","marsh","cave","beach","shore")) return TerrainKind.MOUNTAIN;
         return TerrainKind.OTHER;
+    }
+    public static TerrainKind defaultClassify(String id) {
+        return classify(id,Set.of(),0.7f,0,new AutoConfig());
     }
     private static boolean has(Set<String> tags,String... paths) {
         for(String p:paths) if(tags.contains("minecraft:"+p) || tags.contains("c:"+p) || tags.contains("forge:"+p)) return true;

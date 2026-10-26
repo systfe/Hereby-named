@@ -86,7 +86,7 @@ class AutomaticNamesTest {
     @Test void shippedWhitelistsLoadAndConfigurationRoundTripsWithoutOverwritingNames() throws Exception {
         AutoConfig config=AutoConfig.load(directory);assertFalse(config.names.isEmpty());assertFalse(config.roots.isEmpty());
         Set<String> restricted=config.names.stream().filter(n -> !n.kinds().isEmpty()).map(AutoConfig.Name::text).collect(java.util.stream.Collectors.toSet());
-        assertEquals(Set.of("峨邙","岷峨","岱北","穆朗","嵩湘","梓浦"),restricted);
+        assertTrue(restricted.containsAll(Set.of("峨邙","岷峨","岱北","穆朗","嵩湘","梓浦","寒松","赤岩","霜火")));
         assertTrue(config.names.stream().anyMatch(n -> n.text().equals("亚速") && n.kinds().isEmpty() && n.climates().isEmpty()));
         var names=config.names;
         config.enabled=false;config.save(directory);
@@ -94,6 +94,30 @@ class AutomaticNamesTest {
         assertFalse(loaded.enabled);assertEquals(names,loaded.names);
         loaded.names=List.of(new AutoConfig.Name("银霜山2",List.of("MOUNTAIN"),"COLD"));
         assertThrows(IllegalArgumentException.class,loaded::validate);
+    }
+
+    @Test void oldVersion030UnmodifiedAssetsAutomaticallyUpgradeToLatest() throws Exception {
+        java.nio.file.Path legacyDir = directory.resolve("legacy_test");
+        java.nio.file.Files.createDirectories(legacyDir);
+        // Write mock 0.3.0 names with 125 entries ending in 梓浦
+        List<AutoConfig.Name> mockOldNames = new ArrayList<>();
+        for(int i=0;i<124;i++) mockOldNames.add(new AutoConfig.Name("老名"+(char)('a'+(i%26))+(char)('a'+(i/26)),List.of(),List.of()));
+        mockOldNames.add(new AutoConfig.Name("梓浦",List.of(),List.of()));
+        java.nio.file.Files.writeString(legacyDir.resolve("names.json"), new com.google.gson.Gson().toJson(mockOldNames));
+
+        // Write mock 0.3.0 roots with 157 entries containing 霜风 and 汜拉诺
+        List<AutoConfig.Name> mockOldRoots = new ArrayList<>();
+        for(int i=0;i<155;i++) mockOldRoots.add(new AutoConfig.Name("词根"+(char)('a'+(i%26))+(char)('a'+(i/26)),List.of(),List.of()));
+        mockOldRoots.add(new AutoConfig.Name("霜风",List.of(),List.of()));
+        mockOldRoots.add(new AutoConfig.Name("汜拉诺",List.of(),List.of()));
+        java.nio.file.Files.writeString(legacyDir.resolve("roots.json"), new com.google.gson.Gson().toJson(mockOldRoots));
+
+        AutoConfig loaded = AutoConfig.load(legacyDir);
+        // Assert that they got automatically upgraded to latest 246 names and clean roots!
+        assertEquals(246, loaded.names.size());
+        assertTrue(loaded.names.stream().anyMatch(n -> n.text().equals("寒松")));
+        assertTrue(loaded.names.stream().anyMatch(n -> n.text().equals("赤岩")));
+        assertFalse(loaded.roots.stream().anyMatch(n -> n.text().equals("霜风")));
     }
 
     @Test void defaultNamesGainTerrainSuffixAndAreUsedBeforeUniqueRootCompositions() {
@@ -184,7 +208,7 @@ class AutomaticNamesTest {
                 "[{\"text\":\"乞\",\"kinds\":[\"ALL\"],\"climate\":\"COLD\"}]");
         AutoConfig config=AutoConfig.load(directory);
         assertEquals(List.of("COLD"),config.roots.get(0).climates());
-        assertEquals(new AutoConfig.Threshold(1000,0),config.thresholds.northland);
+        assertEquals(new AutoConfig.Threshold(1500,0),config.thresholds.northland);
         config.saveAll(directory);
         String migrated=java.nio.file.Files.readString(directory.resolve("roots.json"));
         assertTrue(migrated.contains("\"climates\""));assertFalse(migrated.contains("\"climate\""));
@@ -205,3 +229,4 @@ class AutomaticNamesTest {
         assertTrue(java.nio.file.Files.readString(directory.resolve("roots.json")).contains("\"climates\""));
     }
 }
+

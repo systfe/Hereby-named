@@ -114,4 +114,29 @@ class TerrainCompatibilityTest {
         map.clear();for(int x=0;x<20_000;x++) map.put(new ChunkCell(x*3,x*3),new TerrainSample("test:forest",TerrainKind.FOREST,0.7f,80));
         assertTimeout(java.time.Duration.ofSeconds(10),() -> assertFalse(new TerrainAnalysis().analyze(map,new AutoConfig()).unlocked()));
     }
+
+    @Test void tinyPatchIsAbsorbedIntoEnclosingHostPatch() {
+        AutoConfig config=new AutoConfig();config.unlockSpan=256;
+        config.thresholds.forest=new AutoConfig.Threshold(256,0);
+        Map<ChunkCell,TerrainSample> samples=new HashMap<>();
+        // 20x20 grid of forest, with a 1-chunk swamp right in the center (10,10)
+        for(int x=0;x<20;x++) for(int z=0;z<20;z++) {
+            if(x==10 && z==10) {
+                samples.put(new ChunkCell(x,z),new TerrainSample("minecraft:swamp",TerrainKind.PLAIN,0.7f,64));
+            } else {
+                samples.put(new ChunkCell(x,z),new TerrainSample("minecraft:forest",TerrainKind.FOREST,0.7f,64));
+            }
+        }
+        var result=new TerrainAnalysis().analyze(samples,config);
+        assertEquals(1,result.candidates().size());
+        assertEquals(TerrainKind.FOREST,result.candidates().get(0).kind());
+        // Center swamp chunk was absorbed into the forest candidate!
+        assertTrue(result.candidates().get(0).cells().contains(new ChunkCell(10,10)));
+    }
+
+    @Test void biomeOverridesTakePrecedenceOverRulesAndDefaults() {
+        AutoConfig config=new AutoConfig();
+        config.biomeOverrides.put("minecraft:plains","MOUNTAIN");
+        assertEquals(TerrainKind.MOUNTAIN,TerrainClassifier.classify("minecraft:plains",Set.of(),0.8f,0,config));
+    }
 }

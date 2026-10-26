@@ -40,7 +40,7 @@ public final class AutoConfig {
         public Threshold flower=new Threshold(1000,0);
         public Threshold desert=new Threshold(1500,0);
         public Threshold lake=new Threshold(500,2000);
-        public Threshold northland=new Threshold(1000,0);
+        public Threshold northland=new Threshold(1500,0);
         Threshold forKind(TerrainKind kind) {
             return switch(kind) {
                 case MOUNTAIN -> mountain;case OCEAN -> ocean;case FROZEN_OCEAN -> frozenOcean;
@@ -65,6 +65,12 @@ public final class AutoConfig {
     public int mountainMassifChunks = 4096;
     public int mountainRidgeRatioPercent = 180;
     public List<BiomeRule> biomeRules=new ArrayList<>();
+    public Map<String,String> biomeOverrides=new LinkedHashMap<>(Map.of(
+            "biomesoplenty:pumpkin_patch","FLOWER",
+            "biomeswevegone:pumpkin_valley","FLOWER",
+            "regions_unexplored:pumpkin_fields","FLOWER",
+            "biomeswevegone:shattered_glacier","NORTHLAND"
+    ));
     public transient List<Name> names=new ArrayList<>(),roots=new ArrayList<>();
     public static AutoConfig load(Path directory) throws IOException {
         Files.createDirectories(directory);
@@ -91,7 +97,7 @@ public final class AutoConfig {
         JsonObject thresholds=input.getAsJsonObject("thresholds");
         if(thresholds==null) return;
         Map<String,Integer> spans=Map.of("mountain",1000,"ocean",2000,"frozenOcean",1000,"plain",1000,
-                "forest",1000,"flower",1000,"desert",1500,"lake",500,"northland",1000);
+                "forest",1000,"flower",1000,"desert",1500,"lake",500,"northland",1500);
         for(var entry:spans.entrySet()) {
             if(!thresholds.has(entry.getKey()) || !thresholds.get(entry.getKey()).isJsonObject()) continue;
             JsonObject threshold=thresholds.getAsJsonObject(entry.getKey());
@@ -140,6 +146,20 @@ public final class AutoConfig {
             if(loaded.legacySignature()!=null) {
                 String hash=HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(loaded.legacySignature().getBytes(StandardCharsets.UTF_8)));
                 upgrade=hash.equals(oldHash);
+            }
+            if(!upgrade) {
+                Path target=directory.resolve(file);
+                if(Files.exists(target)) {
+                    byte[] bytes=Files.readAllBytes(target);
+                    String fileHash=HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(bytes));
+                    if(file.equals("names.json") && fileHash.equals("471eff73e6dcce7ac0ae2797af0b4c85ac83f259cac2497c7efeac3c3af826e8")) upgrade=true;
+                    if(file.equals("roots.json") && fileHash.equals("799a7b661fe8072146bffe14cb8c636bd8501bb6253e0abb2aeb0c63d3f1e493")) upgrade=true;
+                }
+                if(!upgrade && file.equals("roots.json") && loaded.values().size()==157
+                        && loaded.values().stream().anyMatch(n -> n.text().equals("霜风"))
+                        && loaded.values().stream().anyMatch(n -> n.text().equals("汜拉诺"))) upgrade=true;
+                if(!upgrade && file.equals("names.json") && loaded.values().size()==125
+                        && loaded.values().get(124).text().equals("梓浦")) upgrade=true;
             }
             if(upgrade) result=defaultNames(file.equals("roots.json"));
             if(upgrade || loaded.migrated()) {
@@ -206,13 +226,21 @@ public final class AutoConfig {
                 || mountainRidgeRatioPercent<110 || mountainRidgeRatioPercent>1000)
             throw new IllegalArgumentException("山地形态参数超出范围");
         for(BiomeRule r:biomeRules) if(r==null || r.kind()==null || r.biome()==null || !r.biome().matches("[a-z0-9_.-]+:[a-z0-9_./*-]+")) throw new IllegalArgumentException("群系覆盖规则无效");
+        if(biomeOverrides!=null) {
+            if(biomeOverrides.size()>8192) throw new IllegalArgumentException("群系覆盖数量超出范围");
+            for(var entry:biomeOverrides.entrySet()) {
+                if(entry.getKey()==null || !entry.getKey().matches("[a-z0-9_.-]+:[a-z0-9_./-]+")) throw new IllegalArgumentException("群系覆盖条目无效："+entry.getKey());
+                if(entry.getValue()==null || Arrays.stream(TerrainKind.values()).noneMatch(k -> k.name().equals(entry.getValue())))
+                    throw new IllegalArgumentException("群系覆盖类别无效："+entry.getValue());
+            }
+        }
         for(List<Name> list:List.of(names,roots)) {
             if(list==null || list.size()>4096) throw new IllegalArgumentException("名称数量超出范围");
             for(Name n:list) if(n==null || n.text()==null || n.text().isBlank() || n.text().length()>48
                     || n.text().codePoints().anyMatch(c -> Character.isISOControl(c) || Character.isDigit(c))
                     || n.kinds()==null || n.kinds().stream().anyMatch(k -> !k.equals("ALL") && Arrays.stream(TerrainKind.values()).noneMatch(t -> t.name().equals(k)))
                     || n.climates()==null || n.climates().stream().anyMatch(c -> !Set.of("COLD","TEMPERATE","HOT").contains(c))
-                    || n.climates().stream().distinct().count()!=n.climates().size()) throw new IllegalArgumentException("名称条目无效");
+                    || n.climates().stream().distinct().count()!=n.climates().size()) throw new IllegalArgumentException("名称条目无效："+n);
         }
     }
 }

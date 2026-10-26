@@ -1,649 +1,2340 @@
-[
-  {
-    "text": "奥斯通古",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "亚速",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "基朗",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "瓦尔登",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "洛希亚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "卡兰迪",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "梅尔文",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "泰瑞安",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "奥兰迪",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "塞拉诺",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "维斯塔",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "诺兰蒂",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "伊瑟兰",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "阿卡迪亚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "贝伦蒂",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "科罗曼",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "达西亚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "埃兰诺",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "法罗纳",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "格伦达",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "哈兰迪",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "伊洛瓦",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "杰拉尼",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "卡西姆",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "洛塔林",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "米拉诺",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "奈尔达",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "奥菲斯",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "佩拉戈",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "奎兰蒂",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "罗塞尼亚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "萨兰迪",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "塔兰托",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "乌尔比诺",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "维罗纳",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "锡耶纳",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "拉文纳",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "帕尔马",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "摩德纳",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "费拉拉",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "曼图亚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "克雷莫纳",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "布雷西亚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "贝加莫",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "科莫",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "洛迪",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "帕维亚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "阿斯蒂",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "库内奥",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "萨沃纳",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "因佩里亚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "拉斯佩齐亚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "马萨",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "卡拉拉",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "卢卡",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "皮斯托亚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "普拉托",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "阿雷佐",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "埃洛温",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "卡瑟兰",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "诺维安",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "泰洛希",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "米拉恩",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "奥兰瑟",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "维兰迪",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "塞洛姆",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "达里安",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "科兰诺",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "伊洛尔",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "贝兰迪",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "卡兰迪亚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "洛希亚诺",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "梅尔文迪",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "泰瑞安诺",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "奥兰迪亚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "塞拉诺瓦",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "维斯塔兰",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "诺兰蒂亚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "伊瑟兰迪",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "贝伦蒂亚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "科罗曼迪",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "达西亚诺",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "埃兰诺瓦",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "法罗纳迪",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "格伦达兰",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "兰迪亚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "杰拉尼安",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "洛塔诺",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "米诺迪",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "奈尔兰达",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "奎蒂亚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "萨兰迪亚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "耶纳诺",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "文纳迪",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "费诺",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "亚速尔",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "喀尔巴阡",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "安第斯",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "贝加尔",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "乞力马扎罗",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "密西西比",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "亚马逊",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "西伯利亚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "美索不达米亚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "阿特拉斯",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "高加索",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "乌拉尔",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "帕米尔",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "阿尔泰",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "落基",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "伏尔加",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "莱茵",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "尼罗",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "多瑙",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "伊比利亚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "马加",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "风信",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "丹罗",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "北基朗",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "北邙",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "淮聚",
-    "kinds": [],
-    "climates": []
-  },
-  {
-    "text": "峨邙",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climates": []
-  },
-  {
-    "text": "岷峨",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climates": []
-  },
-  {
-    "text": "岱北",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climates": []
-  },
-  {
-    "text": "穆朗",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climates": []
-  },
-  {
-    "text": "嵩湘",
-    "kinds": [
-      "LAKE"
-    ],
-    "climates": []
-  },
-  {
-    "text": "梓浦",
-    "kinds": [
-      "LAKE"
-    ],
-    "climates": []
-  }
+﻿[
+    {
+        "text":  "奥斯通古",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "亚速",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "基朗",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "瓦尔登",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "洛希亚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "卡兰迪",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "梅尔文",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "泰瑞安",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "奥兰迪",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "塞拉诺",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "维斯塔",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "诺兰蒂",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "伊瑟兰",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "阿卡迪亚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "贝伦蒂",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "科罗曼",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "达西亚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "埃兰诺",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "法罗纳",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "格伦达",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "哈兰迪",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "伊洛瓦",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "杰拉尼",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "卡西姆",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "洛塔林",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "米拉诺",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "奈尔达",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "奥菲斯",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "佩拉戈",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "奎兰蒂",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "罗塞尼亚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "萨兰迪",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "塔兰托",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "乌尔比诺",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "维罗纳",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "锡耶纳",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "拉文纳",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "帕尔马",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "摩德纳",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "费拉拉",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "曼图亚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "克雷莫纳",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "布雷西亚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "贝加莫",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "科莫",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "洛迪",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "帕维亚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "阿斯蒂",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "库内奥",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "萨沃纳",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "因佩里亚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "拉斯佩齐亚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "马萨",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "卡拉拉",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "卢卡",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "皮斯托亚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "普拉托",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "阿雷佐",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "埃洛温",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "卡瑟兰",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "诺维安",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "泰洛希",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "米拉恩",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "奥兰瑟",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "维兰迪",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "塞洛姆",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "达里安",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "科兰诺",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "伊洛尔",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "贝兰迪",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "卡兰迪亚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "洛希亚诺",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "梅尔文迪",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "泰瑞安诺",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "奥兰迪亚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "塞拉诺瓦",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "维斯塔兰",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "诺兰蒂亚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "伊瑟兰迪",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "贝伦蒂亚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "科罗曼迪",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "达西亚诺",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "埃兰诺瓦",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "法罗纳迪",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "格伦达兰",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "兰迪亚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "杰拉尼安",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "洛塔诺",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "米诺迪",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "奈尔兰达",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "奎蒂亚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "萨兰迪亚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "耶纳诺",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "文纳迪",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "费诺",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "亚速尔",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "喀尔巴阡",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "安第斯",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "贝加尔",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "乞力马扎罗",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "密西西比",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "亚马逊",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "西伯利亚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "美索不达米亚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "阿特拉斯",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "高加索",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "乌拉尔",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "帕米尔",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "阿尔泰",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "落基",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "伏尔加",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "莱茵",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "尼罗",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "多瑙",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "伊比利亚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "马加",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "风信",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "丹罗",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "北基朗",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "北邙",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "淮聚",
+        "kinds":  [
+
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "峨邙",
+        "kinds":  [
+                      "MOUNTAIN"
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "岷峨",
+        "kinds":  [
+                      "MOUNTAIN"
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "岱北",
+        "kinds":  [
+                      "MOUNTAIN"
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "穆朗",
+        "kinds":  [
+                      "MOUNTAIN"
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "嵩湘",
+        "kinds":  [
+                      "LAKE"
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "text":  "梓浦",
+        "kinds":  [
+                      "LAKE"
+                  ],
+        "climates":  [
+
+                     ]
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "银霜"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "白霜"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "月泪"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "寒星"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "月牙"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "雾语"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "风嚎"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "幽影"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "双月"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "风铃"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "月影"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "幽蓝"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "雾隐"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "星陨"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "风啸"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "暗影"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "星语"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "蓝晶"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "蓝雾"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "蓝月"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "幽光"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "雷暴"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "星落"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "星雾"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "星尘"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "霜泪"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "霜语"
+    },
+    {
+        "climates":  [
+                         "HOT"
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "赤霞"
+    },
+    {
+        "climates":  [
+                         "HOT"
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "赤风"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "龙息"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "银鳞"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "翡翠"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "雷鸣"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "暮色"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "迷雾"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "鸦啼"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "风语"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "金辉"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "黑风"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "龙尾"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "风泣"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "雷光"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "风鸣"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "龙吟"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "星月"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "蓝羽"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "银雾"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "幽月"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "龙鳞"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "银月"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "寒鸦"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "雪鸮"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "霜鸦"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "鸦羽"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "金雀"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "蛇曲"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "鹿鸣"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "鹰愁"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "夜莺"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "鸦岭"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "灰羽"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "白鹿"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "鸦影"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "黑鸦"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "鸦鸣"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "金鹿"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "龙涎"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "断魂"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "冰裂"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "霜狼"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "蓝冰"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "寒冰"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "蓝镜"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "白鲸"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "黑水"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "赤潮"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "雾海"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "银沙"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "幽泉"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "蓝海"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "银瀑"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "白帆"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "银链"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "白鸥"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+
+                  ],
+        "text":  "蓝风"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "PLAIN",
+                      "FOREST",
+                      "NORTHLAND",
+                      "FLOWER",
+                      "DESERT",
+                      "LAKE"
+                  ],
+        "text":  "寒松"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "PLAIN",
+                      "FOREST",
+                      "NORTHLAND",
+                      "FLOWER",
+                      "DESERT",
+                      "LAKE"
+                  ],
+        "text":  "霜花"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "PLAIN",
+                      "FOREST",
+                      "NORTHLAND",
+                      "FLOWER",
+                      "DESERT",
+                      "LAKE"
+                  ],
+        "text":  "雪松"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "PLAIN",
+                      "FOREST",
+                      "NORTHLAND",
+                      "FLOWER",
+                      "DESERT",
+                      "LAKE"
+                  ],
+        "text":  "黑松"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "PLAIN",
+                      "FOREST",
+                      "NORTHLAND",
+                      "FLOWER",
+                      "DESERT",
+                      "LAKE"
+                  ],
+        "text":  "白桦"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "PLAIN",
+                      "FOREST",
+                      "NORTHLAND",
+                      "FLOWER",
+                      "DESERT",
+                      "LAKE"
+                  ],
+        "text":  "霜草"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "PLAIN",
+                      "FOREST",
+                      "NORTHLAND",
+                      "FLOWER",
+                      "DESERT",
+                      "LAKE"
+                  ],
+        "text":  "霜叶"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "PLAIN",
+                      "FOREST",
+                      "NORTHLAND",
+                      "FLOWER",
+                      "DESERT",
+                      "LAKE"
+                  ],
+        "text":  "银杉"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "PLAIN",
+                      "FOREST",
+                      "NORTHLAND",
+                      "FLOWER",
+                      "DESERT",
+                      "LAKE"
+                  ],
+        "text":  "雾松"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "PLAIN",
+                      "FOREST",
+                      "NORTHLAND",
+                      "FLOWER",
+                      "DESERT",
+                      "LAKE"
+                  ],
+        "text":  "黑苔"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "PLAIN",
+                      "FOREST",
+                      "NORTHLAND",
+                      "FLOWER",
+                      "DESERT",
+                      "LAKE"
+                  ],
+        "text":  "紫杉"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "PLAIN",
+                      "FOREST",
+                      "NORTHLAND",
+                      "FLOWER",
+                      "DESERT",
+                      "LAKE"
+                  ],
+        "text":  "沉雾"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "PLAIN",
+                      "FOREST",
+                      "NORTHLAND",
+                      "FLOWER",
+                      "DESERT",
+                      "LAKE"
+                  ],
+        "text":  "金叶"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "PLAIN",
+                      "FOREST",
+                      "NORTHLAND",
+                      "FLOWER",
+                      "DESERT",
+                      "LAKE"
+                  ],
+        "text":  "月桂"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "PLAIN",
+                      "FOREST",
+                      "NORTHLAND",
+                      "FLOWER",
+                      "DESERT",
+                      "LAKE"
+                  ],
+        "text":  "金穗"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "PLAIN",
+                      "FOREST",
+                      "NORTHLAND",
+                      "FLOWER",
+                      "DESERT",
+                      "LAKE"
+                  ],
+        "text":  "幽林"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "PLAIN",
+                      "FOREST",
+                      "NORTHLAND",
+                      "FLOWER",
+                      "DESERT",
+                      "LAKE"
+                  ],
+        "text":  "银叶"
+    },
+    {
+        "climates":  [
+                         "HOT"
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "PLAIN",
+                      "FOREST",
+                      "NORTHLAND",
+                      "FLOWER",
+                      "DESERT",
+                      "LAKE"
+                  ],
+        "text":  "盐碱"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "FOREST"
+                  ],
+        "text":  "霜火"
+    },
+    {
+        "climates":  [
+                         "COLD"
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "FOREST"
+                  ],
+        "text":  "霜石"
+    },
+    {
+        "climates":  [
+                         "HOT"
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "FOREST"
+                  ],
+        "text":  "赤岩"
+    },
+    {
+        "climates":  [
+                         "HOT"
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "FOREST"
+                  ],
+        "text":  "赤土"
+    },
+    {
+        "climates":  [
+                         "HOT"
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "FOREST"
+                  ],
+        "text":  "赤石"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "FOREST"
+                  ],
+        "text":  "白骨"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "FOREST"
+                  ],
+        "text":  "黑石"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "FOREST"
+                  ],
+        "text":  "龙骨"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "FOREST"
+                  ],
+        "text":  "龙脊"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "FOREST"
+                  ],
+        "text":  "雷石"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "FOREST"
+                  ],
+        "text":  "黑岩"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "FOREST"
+                  ],
+        "text":  "龙爪"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "FOREST"
+                  ],
+        "text":  "灰岩"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "FOREST"
+                  ],
+        "text":  "灰雾"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "FOREST"
+                  ],
+        "text":  "灰烬"
+    },
+    {
+        "climates":  [
+
+                     ],
+        "kinds":  [
+                      "MOUNTAIN",
+                      "FOREST"
+                  ],
+        "text":  "灰沙"
+    }
 ]

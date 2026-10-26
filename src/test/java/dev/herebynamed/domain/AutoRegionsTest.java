@@ -177,10 +177,10 @@ class AutoRegionsTest {
     }
     @Test void temperateForestDoesNotBridgeSnowAndHotForestIntoOneClimate() {
         Map<ChunkCell,TerrainSample> map=new HashMap<>();
-        for(int x=0;x<210;x++) map.put(new ChunkCell(x,0),new TerrainSample("test:forest",TerrainKind.FOREST,x<70?0:x<140?0.7f:1.5f,70));
+        for(int x=0;x<300;x++) map.put(new ChunkCell(x,0),new TerrainSample("test:forest",TerrainKind.FOREST,x<100?0:x<200?0.7f:1.5f,70));
         var result=new TerrainAnalysis().analyze(map,new AutoConfig());
         assertEquals(2,result.candidates().size());
-        for(var region:result.candidates()) assertFalse(region.cells().contains(new ChunkCell(0,0)) && region.cells().contains(new ChunkCell(209,0)));
+        for(var region:result.candidates()) assertFalse(region.cells().contains(new ChunkCell(0,0)) && region.cells().contains(new ChunkCell(299,0)));
     }
 
     @Test void legacyMinimumBiomesConfigurationIsIgnoredAndMigratedToSpanThreshold() throws Exception {
@@ -317,3 +317,4 @@ class AutoRegionsTest {
         assertEquals(1, plainCount);
     }
 }
+
