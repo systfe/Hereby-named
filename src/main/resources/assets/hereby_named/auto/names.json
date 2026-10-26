@@ -1,611 +1,649 @@
 [
   {
-    "text": "淮聚峰",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climate": "ANY"
+    "text": "奥斯通古",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "北邙山",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climate": "ANY"
+    "text": "亚速",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "丹罗山",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climate": "ANY"
+    "text": "基朗",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "赤霞峰",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climate": "ANY"
+    "text": "瓦尔登",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "阿斯迦山",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climate": "ANY"
+    "text": "洛希亚",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "诺兰峰",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climate": "ANY"
+    "text": "卡兰迪",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "维斯特岭",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climate": "ANY"
+    "text": "梅尔文",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "奥兰山脉",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climate": "ANY"
+    "text": "泰瑞安",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "萨隆山脉",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climate": "ANY"
+    "text": "奥兰迪",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "璃歌岭",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climate": "ANY"
+    "text": "塞拉诺",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "银霜山脉",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climate": "COLD"
+    "text": "维斯塔",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "寒鸦岭",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climate": "COLD"
+    "text": "诺兰蒂",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "伊瑟雪山",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climate": "COLD"
+    "text": "伊瑟兰",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "白岚峰",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climate": "COLD"
+    "text": "阿卡迪亚",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "北峨蟒岭",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climate": "COLD"
+    "text": "贝伦蒂",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "洛维尔山脉",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climate": "COLD"
+    "text": "科罗曼",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "赤岚山",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climate": "HOT"
+    "text": "达西亚",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "南洛峰",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climate": "HOT"
+    "text": "埃兰诺",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "丹霞岭",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climate": "HOT"
+    "text": "法罗纳",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "卡尔都山脉",
-    "kinds": [
-      "MOUNTAIN"
-    ],
-    "climate": "HOT"
+    "text": "格伦达",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "亚速洋",
-    "kinds": [
-      "OCEAN"
-    ],
-    "climate": "ANY"
+    "text": "哈兰迪",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "风信洋",
-    "kinds": [
-      "OCEAN"
-    ],
-    "climate": "ANY"
+    "text": "伊洛瓦",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "奥瑟洋",
-    "kinds": [
-      "OCEAN"
-    ],
-    "climate": "ANY"
+    "text": "杰拉尼",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "伊兰洋",
-    "kinds": [
-      "OCEAN"
-    ],
-    "climate": "ANY"
+    "text": "卡西姆",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "塞维洋",
-    "kinds": [
-      "OCEAN"
-    ],
-    "climate": "ANY"
+    "text": "洛塔林",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "洛兰洋",
-    "kinds": [
-      "OCEAN"
-    ],
-    "climate": "ANY"
+    "text": "米拉诺",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "南瑟海",
-    "kinds": [
-      "OCEAN"
-    ],
-    "climate": "ANY"
+    "text": "奈尔达",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "维斯海",
-    "kinds": [
-      "OCEAN"
-    ],
-    "climate": "ANY"
+    "text": "奥菲斯",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "北冕冻洋",
-    "kinds": [
-      "FROZEN_OCEAN"
-    ],
-    "climate": "COLD"
+    "text": "佩拉戈",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "银澜冻洋",
-    "kinds": [
-      "FROZEN_OCEAN"
-    ],
-    "climate": "COLD"
+    "text": "奎兰蒂",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "霜暮洋",
-    "kinds": [
-      "FROZEN_OCEAN"
-    ],
-    "climate": "COLD"
+    "text": "罗塞尼亚",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "寒星洋",
-    "kinds": [
-      "FROZEN_OCEAN"
-    ],
-    "climate": "COLD"
+    "text": "萨兰迪",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "丹罗平原",
-    "kinds": [
-      "PLAIN"
-    ],
-    "climate": "ANY"
+    "text": "塔兰托",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "奥斯通古高原",
-    "kinds": [
-      "PLAIN"
-    ],
-    "climate": "ANY"
+    "text": "乌尔比诺",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "伊兰原野",
-    "kinds": [
-      "PLAIN"
-    ],
-    "climate": "ANY"
+    "text": "维罗纳",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "维斯平原",
-    "kinds": [
-      "PLAIN"
-    ],
-    "climate": "ANY"
+    "text": "锡耶纳",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "诺兰高原",
-    "kinds": [
-      "PLAIN"
-    ],
-    "climate": "ANY"
+    "text": "拉文纳",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "洛希原野",
-    "kinds": [
-      "PLAIN"
-    ],
-    "climate": "ANY"
+    "text": "帕尔马",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "阿尔维平原",
-    "kinds": [
-      "PLAIN"
-    ],
-    "climate": "ANY"
+    "text": "摩德纳",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "费拉拉",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "曼图亚",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "克雷莫纳",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "布雷西亚",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "贝加莫",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "科莫",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "洛迪",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "帕维亚",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "阿斯蒂",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "库内奥",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "萨沃纳",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "因佩里亚",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "拉斯佩齐亚",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "马萨",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "卡拉拉",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "卢卡",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "皮斯托亚",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "普拉托",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "阿雷佐",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "埃洛温",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "卡瑟兰",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "诺维安",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "泰洛希",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "米拉恩",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "奥兰瑟",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "维兰迪",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "塞洛姆",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "达里安",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "科兰诺",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "伊洛尔",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "贝兰迪",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "卡兰迪亚",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "洛希亚诺",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "梅尔文迪",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "泰瑞安诺",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "奥兰迪亚",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "塞拉诺瓦",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "维斯塔兰",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "诺兰蒂亚",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "伊瑟兰迪",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "贝伦蒂亚",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "科罗曼迪",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "达西亚诺",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "埃兰诺瓦",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "法罗纳迪",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "格伦达兰",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "兰迪亚",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "杰拉尼安",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "洛塔诺",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "米诺迪",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "奈尔兰达",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "奎蒂亚",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "萨兰迪亚",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "耶纳诺",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "文纳迪",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "费诺",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "亚速尔",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "喀尔巴阡",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "安第斯",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "贝加尔",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "乞力马扎罗",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "密西西比",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "亚马逊",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "西伯利亚",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "美索不达米亚",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "阿特拉斯",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "高加索",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "乌拉尔",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "帕米尔",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "阿尔泰",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "落基",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "伏尔加",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "莱茵",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "尼罗",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "多瑙",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "伊比利亚",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "马加",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "风信",
+    "kinds": [],
+    "climates": []
+  },
+  {
+    "text": "丹罗",
+    "kinds": [],
+    "climates": []
   },
   {
     "text": "北基朗",
-    "kinds": [
-      "PLAIN"
-    ],
-    "climate": "COLD"
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "霜岚冰原",
-    "kinds": [
-      "PLAIN"
-    ],
-    "climate": "COLD"
+    "text": "北邙",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "伊瑟冻原",
-    "kinds": [
-      "PLAIN"
-    ],
-    "climate": "COLD"
+    "text": "淮聚",
+    "kinds": [],
+    "climates": []
   },
   {
-    "text": "北洛平原",
+    "text": "峨邙",
     "kinds": [
-      "PLAIN"
+      "MOUNTAIN"
     ],
-    "climate": "COLD"
+    "climates": []
   },
   {
-    "text": "萨兰荒原",
+    "text": "岷峨",
     "kinds": [
-      "PLAIN"
+      "MOUNTAIN"
     ],
-    "climate": "HOT"
+    "climates": []
   },
   {
-    "text": "南丹平原",
+    "text": "岱北",
     "kinds": [
-      "PLAIN"
+      "MOUNTAIN"
     ],
-    "climate": "HOT"
+    "climates": []
   },
   {
-    "text": "阿兹高原",
+    "text": "穆朗",
     "kinds": [
-      "PLAIN"
+      "MOUNTAIN"
     ],
-    "climate": "HOT"
+    "climates": []
   },
   {
-    "text": "瑟兰之森",
-    "kinds": [
-      "FOREST"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "诺维之林",
-    "kinds": [
-      "FOREST"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "伊瑟森",
-    "kinds": [
-      "FOREST"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "洛兰林",
-    "kinds": [
-      "FOREST"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "幽岚之森",
-    "kinds": [
-      "FOREST"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "维斯之林",
-    "kinds": [
-      "FOREST"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "月影之林",
-    "kinds": [
-      "FOREST"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "奥瑟林",
-    "kinds": [
-      "FOREST"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "银杉之森",
-    "kinds": [
-      "FOREST"
-    ],
-    "climate": "COLD"
-  },
-  {
-    "text": "霜暮之林",
-    "kinds": [
-      "FOREST"
-    ],
-    "climate": "COLD"
-  },
-  {
-    "text": "北岚森",
-    "kinds": [
-      "FOREST"
-    ],
-    "climate": "COLD"
-  },
-  {
-    "text": "寒星林",
-    "kinds": [
-      "FOREST"
-    ],
-    "climate": "COLD"
-  },
-  {
-    "text": "南瑟之森",
-    "kinds": [
-      "FOREST"
-    ],
-    "climate": "HOT"
-  },
-  {
-    "text": "青岚之林",
-    "kinds": [
-      "FOREST"
-    ],
-    "climate": "HOT"
-  },
-  {
-    "text": "阿兹森",
-    "kinds": [
-      "FOREST"
-    ],
-    "climate": "HOT"
-  },
-  {
-    "text": "威尔比内湖",
+    "text": "嵩湘",
     "kinds": [
       "LAKE"
     ],
-    "climate": "ANY"
+    "climates": []
   },
   {
-    "text": "瑟兰湖",
+    "text": "梓浦",
     "kinds": [
       "LAKE"
     ],
-    "climate": "ANY"
-  },
-  {
-    "text": "蓝镜湖",
-    "kinds": [
-      "LAKE"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "伊维湖",
-    "kinds": [
-      "LAKE"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "奥兰湖",
-    "kinds": [
-      "LAKE"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "星澜湖",
-    "kinds": [
-      "LAKE"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "月牙湖",
-    "kinds": [
-      "LAKE"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "霜镜湖",
-    "kinds": [
-      "LAKE"
-    ],
-    "climate": "COLD"
-  },
-  {
-    "text": "银岚湖",
-    "kinds": [
-      "LAKE"
-    ],
-    "climate": "COLD"
-  },
-  {
-    "text": "北冕湖",
-    "kinds": [
-      "LAKE"
-    ],
-    "climate": "COLD"
-  },
-  {
-    "text": "风铃花甸",
-    "kinds": [
-      "FLOWER"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "繁花层甸",
-    "kinds": [
-      "FLOWER"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "伊薇花原",
-    "kinds": [
-      "FLOWER"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "洛瑟花甸",
-    "kinds": [
-      "FLOWER"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "瑟兰花甸",
-    "kinds": [
-      "FLOWER"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "星露花原",
-    "kinds": [
-      "FLOWER"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "霜铃花甸",
-    "kinds": [
-      "FLOWER"
-    ],
-    "climate": "COLD"
-  },
-  {
-    "text": "北岚花原",
-    "kinds": [
-      "FLOWER"
-    ],
-    "climate": "COLD"
-  },
-  {
-    "text": "阿兹沙漠",
-    "kinds": [
-      "DESERT"
-    ],
-    "climate": "HOT"
-  },
-  {
-    "text": "萨隆沙海",
-    "kinds": [
-      "DESERT"
-    ],
-    "climate": "HOT"
-  },
-  {
-    "text": "卡尔都荒漠",
-    "kinds": [
-      "DESERT"
-    ],
-    "climate": "HOT"
-  },
-  {
-    "text": "奥兰沙漠",
-    "kinds": [
-      "DESERT"
-    ],
-    "climate": "HOT"
-  },
-  {
-    "text": "赤岚荒漠",
-    "kinds": [
-      "DESERT"
-    ],
-    "climate": "HOT"
-  },
-  {
-    "text": "丹霞荒原",
-    "kinds": [
-      "DESERT"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "风蚀彩原",
-    "kinds": [
-      "DESERT"
-    ],
-    "climate": "ANY"
-  },
-  {
-    "text": "瑟兰荒漠",
-    "kinds": [
-      "DESERT"
-    ],
-    "climate": "ANY"
+    "climates": []
   }
 ]

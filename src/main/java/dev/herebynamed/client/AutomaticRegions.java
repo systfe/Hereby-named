@@ -145,7 +145,7 @@ public final class AutomaticRegions {
                 BiomeInfo info=biomeInfo.computeIfAbsent(sample.biome(),this::biome);
                 if(info==null) continue;
                 TerrainKind kind=TerrainClassifier.classify(sample.biome(),info.tags(),info.temperature(),0,config);
-                if(sample.water() && !kind.water()) kind=info.temperature()<=0.15f?TerrainKind.FROZEN_OCEAN:TerrainKind.LAKE;
+                if(sample.water() && kind==TerrainKind.OTHER) kind=info.temperature()<=0.15f?TerrainKind.NORTHLAND:TerrainKind.LAKE;
                 observations.add(new Observation(cell,new TerrainSample(sample.biome(),kind,info.temperature(),sample.height())));
                 if(observations.size()>=256) break;
             }
@@ -179,20 +179,55 @@ public final class AutomaticRegions {
         if((state.analysisDirty || force) && (force || now-state.lastAnalysis>=config.analysisIntervalSeconds*1_000_000_000L)) {
             state.analysis=new TerrainAnalysis().analyze(withRelief(state.samples),config);state.lastAnalysis=now;state.analysisDirty=false;analyzed=true;
         }
+        if(analyzed && !config.suppressDeletedRegions) book.allowAutomaticAgain();
         if(state.dirty && now-state.lastSave>30_000_000_000L) { SurfaceCache.save(state.path,state.samples);state.lastSave=now;state.dirty=false; }
         List<RegionEdit> edits=new ArrayList<>();int unnamed=0;
         if(!analyzed && state.lastBook==book.state()) return new Output(state.samples.size(),state.analysis!=null && state.analysis.unlocked(),state.unnamed,List.of());
         state.lastBook=book.state();
+        if(analyzed) {
+            Set<ChunkCell> manualCells=new HashSet<>();
+            for(RegionBook.Region r:book.regions()) if(r.layer()==1 && r.automatic()==null) manualCells.addAll(r.cells());
+            for(RegionBook.Region r:book.regions()) {
+                if(r.layer()==1 && r.automatic()!=null) {
+                    Set<ChunkCell> available=new HashSet<>(r.cells());
+                    available.removeAll(manualCells);
+                    String classification=r.automatic().classification();
+                    String kindName=classification.contains(":")?classification.substring(0,classification.indexOf(':')):classification;
+                    TerrainKind kind;
+                    try { kind=TerrainKind.valueOf(kindName); } catch(Exception ex) { kind=null; }
+                    int minX=Integer.MAX_VALUE,maxX=Integer.MIN_VALUE,minZ=minX,maxZ=maxX;
+                    for(ChunkCell c:available) { minX=Math.min(minX,c.x());maxX=Math.max(maxX,c.x());minZ=Math.min(minZ,c.z());maxZ=Math.max(maxZ,c.z()); }
+                    int span=available.isEmpty()?0:(int)Math.min(Integer.MAX_VALUE,16L*Math.max((long)maxX-minX+1,(long)maxZ-minZ+1));
+                    if(kind==null || !config.qualifies(kind,span)) {
+                        edits.add(new RegionEdit(DIMENSION,0,RegionEdit.Action.AUTO_PRUNE,1,r.id(),"",0,Set.of()));
+                        book.deleteRegion(r.id(),false);
+                        if(edits.size()>=16) break;
+                    }
+                }
+            }
+        }
         if(state.analysis!=null && state.analysis.unlocked()) for(var candidate:state.analysis.candidates()) {
-            if(!state.active) break;
-            Optional<String> name=AutoNames.choose(candidate,book,config);
-            if(name.isEmpty()) { unnamed++;continue; }
-            int color=book.regions().stream().filter(r -> r.layer()==1 && r.automatic()!=null && !Collections.disjoint(r.cells(),candidate.cells()))
-                    .sorted(Comparator.comparingLong(r -> r.automatic().order()))
-                    .map(RegionBook.Region::color).findFirst().orElseGet(() -> candidate.kind().variedColor(name.get().hashCode()));
-            if(book.automate(AutoNames.key(candidate),name.get(),color,candidate.cells())) {
-                edits.add(new RegionEdit(DIMENSION,0,RegionEdit.Action.AUTO_APPLY,1,AutoNames.key(candidate),name.get(),color,candidate.cells()));
+            if(!state.active || edits.size()>=16) break;
+            Set<ChunkCell> available=new HashSet<>(candidate.cells());
+            available.removeAll(book.state().suppressed());
+            for(RegionBook.Region r:book.regions()) if(r.layer()==1 && r.automatic()==null) available.removeAll(r.cells());
+            if(available.isEmpty()) continue;
+            for(Set<ChunkCell> component:RegionBook.components(available)) {
                 if(edits.size()>=16) break;
+                int minX=Integer.MAX_VALUE,maxX=Integer.MIN_VALUE,minZ=minX,maxZ=maxX;
+                for(ChunkCell c:component) { minX=Math.min(minX,c.x());maxX=Math.max(maxX,c.x());minZ=Math.min(minZ,c.z());maxZ=Math.max(maxZ,c.z()); }
+                int span=(int)Math.min(Integer.MAX_VALUE,16L*Math.max((long)maxX-minX+1,(long)maxZ-minZ+1));
+                if(!config.qualifies(candidate.kind(),span)) continue;
+
+                var subCandidate=new TerrainAnalysis.Candidate(candidate.kind(),component,candidate.temperature(),span);
+                Optional<String> name=AutoNames.choose(subCandidate,book,config);
+                if(name.isEmpty()) { unnamed++;continue; }
+                int color=book.regions().stream().filter(r -> r.layer()==1 && r.automatic()!=null && TerrainKind.matches(r.automatic().classification(),candidate.kind()) && !Collections.disjoint(r.cells(),component))
+                        .sorted(Comparator.comparingLong(r -> r.automatic().order()))
+                        .map(RegionBook.Region::color).findFirst().orElseGet(() -> candidate.kind().variedColor(name.get().hashCode()));
+                if(book.automate(AutoNames.key(subCandidate),name.get(),color,component)) {
+                    edits.add(new RegionEdit(DIMENSION,0,RegionEdit.Action.AUTO_APPLY,1,AutoNames.key(subCandidate),name.get(),color,component));
+                }
             }
         }
         state.unnamed=unnamed;

@@ -58,6 +58,19 @@ class AutomaticOwnershipTest {
         assertEquals("银杉古林",book.owner(1,b).orElseThrow().name());
         assertEquals(book.state(),BookCodec.decode(BookCodec.encode(book)).state());
     }
+
+    @Test void automaticUpdateDoesNotReattachDisconnectedOldRemainders() {
+        RegionBook book=new RegionBook();
+        Set<ChunkCell> old=Set.of(new ChunkCell(0,0),new ChunkCell(1,0),new ChunkCell(2,0),new ChunkCell(3,0));
+        book.automate("FOREST:TEMPERATE","旧林",0x336633,old);
+        book.automate("FOREST:TEMPERATE","新林",0x336633,Set.of(new ChunkCell(0,0)));
+
+        assertEquals(2,book.regions().size());
+        assertEquals("旧林",book.owner(1,new ChunkCell(0,0)).orElseThrow().name());
+        var remainder=book.owner(1,new ChunkCell(3,0)).orElseThrow();
+        assertEquals("旧林",remainder.name());
+        assertEquals(Set.of(new ChunkCell(1,0),new ChunkCell(2,0),new ChunkCell(3,0)),remainder.cells());
+    }
     @Test void deletedAutomaticFootprintStaysProtectedAcrossSaveUndoAndExplicitRelease() throws Exception {
         RegionBook book=new RegionBook(); ChunkCell a=new ChunkCell(0,0),b=new ChunkCell(1,0);
         book.automate("FOREST","银杉林",0x549b63,Set.of(a));

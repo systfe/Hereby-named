@@ -4,9 +4,21 @@ if($Version -notmatch '^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$') { throw 'Invalid re
 $projectRoot=Split-Path -Parent $PSScriptRoot
 Push-Location $projectRoot
 try {
+    $java21Candidates = @(
+        $env:JAVA21_HOME,
+        (Join-Path $env:APPDATA '.minecraft\runtime\java-runtime-delta'),
+        'C:\Program Files\Java\jdk-21',
+        'C:\Program Files\Eclipse Adoptium\jdk-21'
+    )
+    $java21 = $java21Candidates | Where-Object { $_ -and (Test-Path (Join-Path $_ 'bin\java.exe')) } | Select-Object -First 1
+
     $versions=@('1.20.1','1.21.1')
     foreach($minecraft in $versions) {
-        & (Join-Path $projectRoot 'gradlew.bat') ('-Pminecraft_version='+$minecraft) ('-Pmod_version='+$Version) build --console plain
+        $extraArgs = @()
+        if($minecraft -eq '1.21.1' -and $java21) {
+            $extraArgs += ('-Dorg.gradle.java.home=' + $java21)
+        }
+        & (Join-Path $projectRoot 'gradlew.bat') @extraArgs ('-Pminecraft_version='+$minecraft) ('-Pmod_version='+$Version) build --console plain
         if($LASTEXITCODE -ne 0) { throw ('Build failed for Minecraft '+$minecraft) }
     }
     $packages=@(foreach($minecraft in $versions) {

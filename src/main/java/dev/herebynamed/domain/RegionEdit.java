@@ -9,7 +9,7 @@ public record RegionEdit(String dimension, long revision, long requestId, Action
                       String region, String name, int color, Set<ChunkCell> cells) {
         this(dimension, revision, 0, action, layer, region, name, color, cells);
     }
-    public enum Action { READ, ACQUIRE, RELEASE, CREATE, RENAME, DELETE_REGION, ADD_LAYER, DELETE_LAYER, ADD, REMOVE, UNDO, REDO, ADD_PRESERVING, AUTO_APPLY, AUTO_ALLOW_AGAIN }
+    public enum Action { READ, ACQUIRE, RELEASE, CREATE, RENAME, DELETE_REGION, ADD_LAYER, DELETE_LAYER, ADD, REMOVE, UNDO, REDO, ADD_PRESERVING, AUTO_APPLY, AUTO_ALLOW_AGAIN, AUTO_PRUNE }
     public RegionEdit {
         Objects.requireNonNull(dimension); Objects.requireNonNull(action);
         region = region == null ? "" : region; name = name == null ? "" : name;
@@ -30,12 +30,13 @@ public record RegionEdit(String dimension, long revision, long requestId, Action
             case UNDO -> book.undo();
             case REDO -> book.redo();
             case AUTO_APPLY -> {
-                if(!dimension.equals("minecraft:overworld") || layer!=1 || !region.matches("(MOUNTAIN|OCEAN|FROZEN_OCEAN|PLAIN|FOREST|LAKE|FLOWER|DESERT)(:(COLD|HOT|TEMPERATE))?"))
+                if(!dimension.equals("minecraft:overworld") || layer!=1 || !region.matches("(MOUNTAIN|OCEAN|FROZEN_OCEAN|PLAIN|FOREST|LAKE|FLOWER|DESERT|NORTHLAND)(:(COLD|HOT|TEMPERATE))?"))
                     throw new IllegalArgumentException("自动区域只支持主世界地表");
                 if(name.codePoints().anyMatch(Character::isDigit)) throw new IllegalArgumentException("自动名称不能包含数字");
                 book.automate(region,name,color,cells);
             }
             case AUTO_ALLOW_AGAIN -> book.allowAutomaticAgain();
+            case AUTO_PRUNE -> book.deleteRegion(region, false);
             default -> throw new IllegalArgumentException("不是区域修改请求");
         }
     }

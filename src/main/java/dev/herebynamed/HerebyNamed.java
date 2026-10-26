@@ -141,7 +141,7 @@ public final class HerebyNamed implements ModInitializer {
                 return;
             }
             boolean authorized = authorized(d, player);
-            if(edit.action()==RegionEdit.Action.AUTO_APPLY || edit.action()==RegionEdit.Action.AUTO_ALLOW_AGAIN) {
+            if(edit.action()==RegionEdit.Action.AUTO_APPLY || edit.action()==RegionEdit.Action.AUTO_ALLOW_AGAIN || edit.action()==RegionEdit.Action.AUTO_PRUNE) {
                 automatic(server,player,edit,d,book,authorized);return;
             }
             if(d.automaticBusy.contains(edit.dimension())) {

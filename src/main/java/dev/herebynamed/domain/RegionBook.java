@@ -37,9 +37,46 @@ public final class RegionBook {
         commit(new State(state.highestLayer(), layers, regions().stream().filter(r -> r.layer() != layer).toList(),suppressed));
     }
     public void deleteRegion(String id) {
+        deleteRegion(id,true);
+    }
+    public void deleteRegion(String id,boolean suppress) {
         Set<ChunkCell> suppressed=new HashSet<>(state.suppressed());
-        region(id).filter(r -> r.automatic()!=null).ifPresent(r -> suppressed.addAll(r.cells()));
+        if(suppress) region(id).filter(r -> r.automatic()!=null).ifPresent(r -> suppressed.addAll(r.cells()));
         commit(new State(state.highestLayer(), state.layers(), regions().stream().filter(r -> !r.id().equals(id)).toList(),suppressed));
+    }
+    public boolean pruneUnderqualifiedAutomatic(dev.herebynamed.auto.AutoConfig config) {
+        Set<ChunkCell> manualCells=new HashSet<>();
+        for(Region r:regions()) if(r.layer()==1 && r.automatic()==null) manualCells.addAll(r.cells());
+        List<Region> remaining=new ArrayList<>();
+        boolean changed=false;
+        for(Region r:regions()) {
+            if(r.layer()==1 && r.automatic()!=null) {
+                Set<ChunkCell> available=new HashSet<>(r.cells());
+                available.removeAll(manualCells);
+                if(available.isEmpty()) { changed=true;continue; }
+                String classification=r.automatic().classification();
+                String kindName=classification.contains(":")?classification.substring(0,classification.indexOf(':')):classification;
+                dev.herebynamed.auto.TerrainKind kind;
+                try { kind=dev.herebynamed.auto.TerrainKind.valueOf(kindName); } catch(Exception ex) { kind=null; }
+                if(kind!=null) {
+                    int minX=Integer.MAX_VALUE,maxX=Integer.MIN_VALUE,minZ=minX,maxZ=maxX;
+                    for(ChunkCell c:available) { minX=Math.min(minX,c.x());maxX=Math.max(maxX,c.x());minZ=Math.min(minZ,c.z());maxZ=Math.max(maxZ,c.z()); }
+                    int span=(int)Math.min(Integer.MAX_VALUE,16L*Math.max((long)maxX-minX+1,(long)maxZ-minZ+1));
+                    if(!config.qualifies(kind,span)) { changed=true;continue; }
+                }
+                if(available.size()!=r.cells().size()) {
+                    changed=true;
+                    remaining.add(new Region(r.id(),r.layer(),r.name(),r.color(),available,r.automatic()));
+                    continue;
+                }
+            }
+            remaining.add(r);
+        }
+        if(changed) {
+            commit(new State(state.highestLayer(),state.layers(),remaining,state.suppressed()));
+            return true;
+        }
+        return false;
     }
     public void renameRegion(String id, String name, int color) {
         region(id).orElseThrow(() -> new IllegalArgumentException("区域不存在"));
@@ -105,8 +142,9 @@ public final class RegionBook {
             if (r.layer() != target.layer() || (!add && !r.id().equals(id))) { updated.add(r); continue; }
             Set<ChunkCell> content = new HashSet<>(r.cells());
             if (add && r.id().equals(id)) content.addAll(cells); else content.removeAll(cells);
-            boolean touched=r.id().equals(id) || !Collections.disjoint(r.cells(),cells);
-            updated.add(new Region(r.id(), r.layer(), r.name(), r.color(), content,touched?null:r.automatic()));
+            if (content.isEmpty() && r.automatic() != null) continue;
+            boolean targetTouched = r.id().equals(id);
+            updated.add(new Region(r.id(), r.layer(), r.name(), r.color(), content, targetTouched ? null : r.automatic()));
         }
         commit(new State(state.highestLayer(), state.layers(), updated,state.suppressed()));
     }
@@ -133,29 +171,43 @@ public final class RegionBook {
         cells.removeAll(state.suppressed());
         for(Region r:regions()) if(r.layer()==1 && r.automatic()==null) cells.removeAll(r.cells());
         if(cells.isEmpty()) return false;
+        List<Set<ChunkCell>> proposedComponents=components(cells);
+        if(proposedComponents.size()>1) {
+            boolean changed=false;
+            for(Set<ChunkCell> component:proposedComponents) changed|=automate(classification,name,color,component);
+            return changed;
+        }
         List<Region> overlapping=regions().stream().filter(r -> r.layer()==1 && r.automatic()!=null
-                && (r.automatic().classification().equals(classification) || cells.containsAll(r.cells())) && !Collections.disjoint(r.cells(),cells))
+                && !Collections.disjoint(r.cells(),cells))
                 .sorted(Comparator.comparingLong(r -> r.automatic().order())).toList();
-        Region first=overlapping.isEmpty()?null:overlapping.get(0);
+        List<Region> sameKind=overlapping.stream()
+                .filter(r -> dev.herebynamed.auto.TerrainKind.matches(r.automatic().classification(),classification))
+                .toList();
+        Region first=sameKind.isEmpty()?null:sameKind.get(0);
         Set<String> merged=new HashSet<>(); List<String> former=new ArrayList<>();
-        for(Region r:overlapping) { merged.add(r.id());cells.addAll(r.cells());former.addAll(r.automatic().formerNames()); if(r!=first) former.add(r.name()); }
+        for(Region r:overlapping) merged.add(r.id());
+        for(Region r:sameKind) { former.addAll(r.automatic().formerNames()); if(r!=first) former.add(r.name()); }
         boolean mountain=classification.startsWith("MOUNTAIN") && first!=null && first.automatic().classification().startsWith("MOUNTAIN");
-        boolean renamed=overlapping.stream().anyMatch(r -> r.automatic().mountainRenamed());
+        boolean renamed=sameKind.stream().anyMatch(r -> r.automatic().mountainRenamed());
         boolean renameMountain=mountain && !renamed && cells.size()>first.cells().size() && !first.name().equals(name);
         String chosen=mountain?(renameMountain?validName(name):first.name())
-                :first==null || !first.automatic().classification().equals(classification)?validName(name):first.name();
+                :first==null || !first.automatic().classification().equals(classification)
+                || (sameKind.size()==1 && isSuffixUpgrade(first.name(),name))?validName(name):first.name();
         if((first==null || !chosen.equals(first.name())) && regions().stream().anyMatch(r -> !merged.contains(r.id()) && r.name().equals(chosen))) return false;
         if(renameMountain) former.add(first.name());
         long order=first==null?regions().stream().filter(r -> r.automatic()!=null).mapToLong(r -> r.automatic().order()).max().orElse(0)+1:first.automatic().order();
         Automatic info=new Automatic(classification,order,former.stream().distinct().limit(128).toList(),renamed || renameMountain);
         Region next=new Region(first==null?UUID.randomUUID().toString():first.id(),1,chosen,color&0xffffff,cells,info);
-        if(overlapping.size()==1 && next.equals(first)) return false;
+        if(sameKind.size()==1 && next.equals(first)) return false;
         List<Region> result=new ArrayList<>();
         for(Region r:regions()) {
-            if(merged.contains(r.id())) continue;
-            if(r.layer()==1 && r.automatic()!=null && !Collections.disjoint(r.cells(),cells)) {
+            if(merged.contains(r.id())) {
                 Set<ChunkCell> rest=new HashSet<>(r.cells());rest.removeAll(cells);
-                if(!rest.isEmpty()) result.add(new Region(r.id(),r.layer(),r.name(),r.color(),rest,r.automatic()));
+                List<Set<ChunkCell>> comps=components(rest);
+                if(!comps.isEmpty()) {
+                    Set<ChunkCell> largest=comps.stream().max(Comparator.comparingInt(Set::size)).orElseThrow();
+                    result.add(new Region(UUID.randomUUID().toString(),r.layer(),r.name(),r.color(),largest,r.automatic()));
+                }
             } else result.add(r);
         }
         result.add(next);
@@ -163,6 +215,30 @@ public final class RegionBook {
         State updated=new State(state.highestLayer(),state.layers(),result,state.suppressed());
         if(updated.equals(state)) return false;
         replace(updated); return true;
+    }
+    private static boolean isSuffixUpgrade(String oldName,String newName) {
+        return !oldName.equals(newName) && stem(oldName).equals(stem(newName));
+    }
+    private static String stem(String name) {
+        for(String suffix:List.of("山脉","山岭","之森","之林","森林","草甸","草原","荒原","平原","之原","冰原","北地","冻土","高原","沙漠","荒漠","冻洋","内海","大洋","群山","花甸","山","岭","峰","峦","洋","海","湖","林","森","地","原"))
+            if(name.endsWith(suffix) && name.length()>suffix.length()) return name.substring(0,name.length()-suffix.length());
+        return name;
+    }
+    public static List<Set<ChunkCell>> components(Set<ChunkCell> cells) {
+        Set<ChunkCell> unseen=new HashSet<>(cells);List<Set<ChunkCell>> result=new ArrayList<>();
+        while(!unseen.isEmpty()) {
+            ChunkCell first=unseen.iterator().next();unseen.remove(first);
+            Set<ChunkCell> component=new HashSet<>();ArrayDeque<ChunkCell> pending=new ArrayDeque<>();
+            component.add(first);pending.add(first);
+            while(!pending.isEmpty()) {
+                ChunkCell current=pending.removeFirst();
+                for(ChunkCell next:List.of(new ChunkCell(current.x()-1,current.z()),new ChunkCell(current.x()+1,current.z()),
+                        new ChunkCell(current.x(),current.z()-1),new ChunkCell(current.x(),current.z()+1)))
+                    if(unseen.remove(next)) { component.add(next);pending.addLast(next); }
+            }
+            result.add(component);
+        }
+        return result;
     }
     public void allowAutomaticAgain() {
         commit(new State(state.highestLayer(),state.layers(),regions(),Set.of()));

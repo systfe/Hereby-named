@@ -19,7 +19,7 @@ final class AutomaticSettingsScreen extends Screen implements EditorDialog {
         addDrawableChild(ButtonWidget.builder(Text.literal(automatic.enabled()?"自动创建：开启":"自动创建：关闭"),b -> {
             automatic.toggle();b.setMessage(Text.literal(automatic.enabled()?"自动创建：开启":"自动创建：关闭"));
         }).dimensions(x,top+68,240,20).build()).active=automatic.ready();
-        button(x,top+94,116,"完整名字白名单",() -> client.setScreen(new AutomaticConfigScreen(this,automatic,2))).active=wasReady;
+        button(x,top+94,116,"默认名白名单",() -> client.setScreen(new AutomaticConfigScreen(this,automatic,2))).active=wasReady;
         button(x+124,top+94,116,"词根白名单",() -> client.setScreen(new AutomaticConfigScreen(this,automatic,3))).active=wasReady;
         button(x,top+120,116,"区域判断设置",() -> client.setScreen(new AutomaticConfigScreen(this,automatic,0))).active=wasReady;
         button(x+124,top+120,116,"重新加载配置",() -> { automatic.reload();clearAndInit(); });

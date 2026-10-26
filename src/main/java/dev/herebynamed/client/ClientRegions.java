@@ -172,7 +172,7 @@ public final class ClientRegions {
         boolean tracked = edit.action() != RegionEdit.Action.READ && edit.action() != RegionEdit.Action.RELEASE;
         long id = tracked ? pending.begin(edit.dimension(), edit.action() == RegionEdit.Action.ACQUIRE) : pending.nextId();
         edit = new RegionEdit(edit.dimension(), edit.revision(), id, edit.action(), edit.layer(), edit.region(), edit.name(), edit.color(), edit.cells());
-        if(edit.action()==RegionEdit.Action.AUTO_APPLY || edit.action()==RegionEdit.Action.AUTO_ALLOW_AGAIN) {
+        if(edit.action()==RegionEdit.Action.AUTO_APPLY || edit.action()==RegionEdit.Action.AUTO_ALLOW_AGAIN || edit.action()==RegionEdit.Action.AUTO_PRUNE) {
             RegionEdit automatic=edit;long epoch=session;
             AutoWork.submit(automatic::encode).whenComplete((bytes,error) -> client.execute(() -> {
                 if(epoch!=session) return;

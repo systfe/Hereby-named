@@ -8,56 +8,57 @@ import java.util.*;
 
 public final class AutoConfig {
     private static final Gson JSON=new GsonBuilder().setPrettyPrinting().create();
-    public record Name(String text,List<String> kinds,String climate) {
+    public record Name(String text,List<String> kinds,List<String> climates) {
+        public Name(String text,List<String> kinds,String climate) {
+            this(text,kinds,"ANY".equals(climate)?List.of():List.of(climate));
+        }
         public boolean fits(TerrainKind kind,float temperature) {
-            return (kinds.contains(kind.name()) || kinds.contains("ALL")) && switch(climate) {
-                case "COLD" -> temperature<=0.15f;
-                case "HOT" -> temperature>=1.2f;
-                case "TEMPERATE" -> temperature>0.15f && temperature<1.2f;
-                default -> true;
-            };
+            if(!kinds.isEmpty() && !kinds.contains("ALL") && !kinds.contains(kind.name())) return false;
+            if(climates.isEmpty()) return true;
+            String climate=temperature<=0.15f?"COLD":temperature>=1.2f?"HOT":"TEMPERATE";
+            return climates.contains(climate);
         }
     }
     public record BiomeRule(String biome,TerrainKind kind) { }
-    /** Zero disables a lower-bound branch; maximumSpan is exclusive, with zero meaning unlimited. */
-    public record Threshold(int minimumBiomes,int minimumSpan,int maximumSpan) {
-        public boolean accepts(int span,long biomes) {
-            return (maximumSpan==0 || span<maximumSpan)
-                    && ((minimumBiomes>0 && biomes>=minimumBiomes) || (minimumSpan>0 && span>=minimumSpan));
+    /** maximumSpan is exclusive, with zero meaning unlimited. */
+    public record Threshold(int minimumSpan,int maximumSpan) {
+        public boolean accepts(int span) {
+            return (maximumSpan==0 || span<maximumSpan) && minimumSpan>0 && span>=minimumSpan;
         }
         void validate() {
-            if(minimumBiomes<0 || minimumBiomes>4096 || minimumSpan<0 || minimumSpan>1_000_000
-                    || maximumSpan<0 || maximumSpan>1_000_000 || (minimumBiomes==0 && minimumSpan==0)
+            if(minimumSpan<1 || minimumSpan>1_000_000 || maximumSpan<0 || maximumSpan>1_000_000
                     || (maximumSpan>0 && minimumSpan>=maximumSpan))
-                throw new IllegalArgumentException("区域门槛无效：数量和跨度至少启用一项，上限必须大于最小跨度");
+                throw new IllegalArgumentException("区域跨度门槛无效：上限必须大于最小跨度");
         }
     }
     public static final class Thresholds {
-        public Threshold mountain=new Threshold(0,1000,0);
-        public Threshold ocean=new Threshold(0,2000,0);
-        public Threshold frozenOcean=new Threshold(5,1000,0);
-        public Threshold plain=new Threshold(5,1000,0);
-        public Threshold forest=new Threshold(5,1000,0);
-        public Threshold flower=new Threshold(5,1000,0);
-        public Threshold desert=new Threshold(4,1500,0);
-        public Threshold lake=new Threshold(0,500,2000);
+        public Threshold mountain=new Threshold(1000,0);
+        public Threshold ocean=new Threshold(2000,0);
+        public Threshold frozenOcean=new Threshold(1000,0);
+        public Threshold plain=new Threshold(1000,0);
+        public Threshold forest=new Threshold(1000,0);
+        public Threshold flower=new Threshold(1000,0);
+        public Threshold desert=new Threshold(1500,0);
+        public Threshold lake=new Threshold(500,2000);
+        public Threshold northland=new Threshold(1000,0);
         Threshold forKind(TerrainKind kind) {
             return switch(kind) {
                 case MOUNTAIN -> mountain;case OCEAN -> ocean;case FROZEN_OCEAN -> frozenOcean;
                 case PLAIN -> plain;case FOREST -> forest;case FLOWER -> flower;case DESERT -> desert;case LAKE -> lake;
+                case NORTHLAND -> northland;
                 default -> null;
             };
         }
     }
     public Thresholds thresholds=new Thresholds();
-    public boolean qualifies(TerrainKind kind,int span,long biomes) {
+    public boolean qualifies(TerrainKind kind,int span) {
         Threshold threshold=thresholds.forKind(kind);
-        return span>=minimumSpan && threshold!=null && threshold.accepts(span,biomes);
+        return span>=minimumSpan && threshold!=null && threshold.accepts(span);
     }
     public boolean enabled = true;
+    public boolean suppressDeletedRegions = true;
     public int unlockSpan = 2000;
     public int minimumSpan = 256;
-    public int minimumBiomeChunks = 4;
     public int maximumSamples = 250_000;
     public int analysisIntervalSeconds = 20;
     public int mountainRangeSpan = 2000;
@@ -71,17 +72,33 @@ public final class AutoConfig {
         try {
             if(Files.exists(file) && Files.size(file)>1_000_000) throw new IOException("自动区域配置过大");
             JsonObject input=Files.exists(file)?JsonParser.parseString(Files.readString(file)).getAsJsonObject():new JsonObject();
+            normalizeLegacyThresholds(input);
+            input.remove("minimumBiomeChunks");
             boolean expanded=fillMissing(input,JSON.toJsonTree(new AutoConfig()).getAsJsonObject());
             config=JSON.fromJson(input,AutoConfig.class);
             if(config==null) throw new IllegalArgumentException("配置为空");
-            config.names=loadNames(directory,"names.json","/assets/hereby_named/auto/names.json");
-            config.roots=loadNames(directory,"roots.json","/assets/hereby_named/auto/roots.json");
+            LoadedNames names=loadNames(directory,"names.json","/assets/hereby_named/auto/names.json");
+            LoadedNames roots=loadNames(directory,"roots.json","/assets/hereby_named/auto/roots.json");
+            config.names=names.values();config.roots=roots.values();
             config.validate();
-            config.names=upgradeDefaultNames(directory,"names.json",config.names,"df7f1ee69c954aeca9261a24bc3da99116363837e45d7c8d1bd4770b9ea06cc1");
-            config.roots=upgradeDefaultNames(directory,"roots.json",config.roots,"136ac016273bf16ae9ee790ab5245a2e07e8b8438fef079c0474a2fd9aacf03f");
+            config.names=upgradeDefaultNames(directory,"names.json",names,"df7f1ee69c954aeca9261a24bc3da99116363837e45d7c8d1bd4770b9ea06cc1");
+            config.roots=upgradeDefaultNames(directory,"roots.json",roots,"136ac016273bf16ae9ee790ab5245a2e07e8b8438fef079c0474a2fd9aacf03f");
             if(expanded) writeConfiguration(directory,input);
             return config;
         } catch(RuntimeException ex) { throw new IOException("自动区域配置无效，请检查 automatic.json、names.json 和 roots.json",ex); }
+    }
+    private static void normalizeLegacyThresholds(JsonObject input) {
+        JsonObject thresholds=input.getAsJsonObject("thresholds");
+        if(thresholds==null) return;
+        Map<String,Integer> spans=Map.of("mountain",1000,"ocean",2000,"frozenOcean",1000,"plain",1000,
+                "forest",1000,"flower",1000,"desert",1500,"lake",500,"northland",1000);
+        for(var entry:spans.entrySet()) {
+            if(!thresholds.has(entry.getKey()) || !thresholds.get(entry.getKey()).isJsonObject()) continue;
+            JsonObject threshold=thresholds.getAsJsonObject(entry.getKey());
+            threshold.remove("minimumBiomes");
+            if(!threshold.has("minimumSpan") || threshold.get("minimumSpan").getAsInt()==0)
+                threshold.addProperty("minimumSpan",entry.getValue());
+        }
     }
     private static boolean fillMissing(JsonObject input,JsonObject defaults) {
         boolean changed=false;
@@ -93,21 +110,39 @@ public final class AutoConfig {
         }
         return changed;
     }
-    private static List<Name> loadNames(Path directory,String file,String resource) throws IOException {
+    private record LoadedNames(List<Name> values,String legacySignature,boolean migrated) { }
+    private static LoadedNames loadNames(Path directory,String file,String resource) throws IOException {
         Path target=directory.resolve(file);
         if(!Files.exists(target)) try(InputStream in=AutoConfig.class.getResourceAsStream(resource)) {
             if(in==null) throw new IOException("缺少默认名称资源"); Files.copy(in,target);
         }
         if(Files.size(target)>1_000_000) throw new IOException("名称白名单过大");
-        return new ArrayList<>(Arrays.asList(JSON.fromJson(Files.readString(target),Name[].class)));
+        JsonArray input=JsonParser.parseString(Files.readString(target)).getAsJsonArray();
+        StringBuilder legacy=new StringBuilder();boolean migrated=false,allLegacy=true;
+        for(JsonElement element:input) {
+            JsonObject object=element.getAsJsonObject();JsonElement oldClimate=object.remove("climate");
+            if(!object.has("climates") && oldClimate!=null) {
+                String value=oldClimate.getAsString();JsonArray climates=new JsonArray();
+                if(!value.equals("ANY")) climates.add(value);
+                object.add("climates",climates);migrated=true;
+                legacy.append(object.get("text").getAsString()).append('|');
+                JsonArray kinds=object.getAsJsonArray("kinds");
+                for(int i=0;i<kinds.size();i++) { if(i>0) legacy.append(',');legacy.append(kinds.get(i).getAsString()); }
+                legacy.append('|').append(value).append('\n');
+            } else allLegacy=false;
+        }
+        return new LoadedNames(new ArrayList<>(Arrays.asList(JSON.fromJson(input,Name[].class))),
+                allLegacy&&migrated?legacy.toString():null,migrated);
     }
-    private static List<Name> upgradeDefaultNames(Path directory,String file,List<Name> result,String oldHash) throws IOException {
-        StringBuilder signature=new StringBuilder();
-        for(Name n:result) signature.append(n.text()).append('|').append(String.join(",",n.kinds())).append('|').append(n.climate()).append('\n');
+    private static List<Name> upgradeDefaultNames(Path directory,String file,LoadedNames loaded,String oldHash) throws IOException {
+        List<Name> result=loaded.values();boolean upgrade=false;
         try {
-            String hash=HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(signature.toString().getBytes(StandardCharsets.UTF_8)));
-            if(hash.equals(oldHash)) {
-                result=defaultNames(file.equals("roots.json"));
+            if(loaded.legacySignature()!=null) {
+                String hash=HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(loaded.legacySignature().getBytes(StandardCharsets.UTF_8)));
+                upgrade=hash.equals(oldHash);
+            }
+            if(upgrade) result=defaultNames(file.equals("roots.json"));
+            if(upgrade || loaded.migrated()) {
                 Path temporary=directory.resolve(file+".tmp");Files.writeString(temporary,JSON.toJson(result),StandardCharsets.UTF_8);
                 Files.move(temporary,directory.resolve(file),StandardCopyOption.REPLACE_EXISTING);
             }
@@ -122,8 +157,8 @@ public final class AutoConfig {
     }
     public AutoConfig copy() {
         AutoConfig copy=JSON.fromJson(JSON.toJsonTree(this),AutoConfig.class);
-        copy.names=new ArrayList<>(names.stream().map(n -> new Name(n.text(),List.copyOf(n.kinds()),n.climate())).toList());
-        copy.roots=new ArrayList<>(roots.stream().map(n -> new Name(n.text(),List.copyOf(n.kinds()),n.climate())).toList());
+        copy.names=new ArrayList<>(names.stream().map(n -> new Name(n.text(),List.copyOf(n.kinds()),List.copyOf(n.climates()))).toList());
+        copy.roots=new ArrayList<>(roots.stream().map(n -> new Name(n.text(),List.copyOf(n.kinds()),List.copyOf(n.climates()))).toList());
         return copy;
     }
     /** Validate and stage the entire settings draft before replacing any active file. */
@@ -164,7 +199,7 @@ public final class AutoConfig {
             threshold.validate();
         }
         if(unlockSpan<256 || unlockSpan>1_000_000 || minimumSpan<16 || minimumSpan>100_000
-                || minimumBiomeChunks<1 || minimumBiomeChunks>4096 || maximumSamples<4096 || maximumSamples>500_000
+                || maximumSamples<4096 || maximumSamples>500_000
                 || analysisIntervalSeconds<10 || analysisIntervalSeconds>600 || biomeRules==null || biomeRules.size()>4096)
             throw new IllegalArgumentException("自动区域参数超出范围");
         if(mountainRangeSpan<16 || mountainRangeSpan>1_000_000 || mountainMassifChunks<1 || mountainMassifChunks>500_000
@@ -175,8 +210,9 @@ public final class AutoConfig {
             if(list==null || list.size()>4096) throw new IllegalArgumentException("名称数量超出范围");
             for(Name n:list) if(n==null || n.text()==null || n.text().isBlank() || n.text().length()>48
                     || n.text().codePoints().anyMatch(c -> Character.isISOControl(c) || Character.isDigit(c))
-                    || n.kinds()==null || n.kinds().isEmpty() || n.kinds().stream().anyMatch(k -> !k.equals("ALL") && Arrays.stream(TerrainKind.values()).noneMatch(t -> t.name().equals(k)))
-                    || !Set.of("ANY","COLD","TEMPERATE","HOT").contains(n.climate())) throw new IllegalArgumentException("名称条目无效");
+                    || n.kinds()==null || n.kinds().stream().anyMatch(k -> !k.equals("ALL") && Arrays.stream(TerrainKind.values()).noneMatch(t -> t.name().equals(k)))
+                    || n.climates()==null || n.climates().stream().anyMatch(c -> !Set.of("COLD","TEMPERATE","HOT").contains(c))
+                    || n.climates().stream().distinct().count()!=n.climates().size()) throw new IllegalArgumentException("名称条目无效");
         }
     }
 }

@@ -18,12 +18,92 @@ class TerrainCompatibilityTest {
         config.biomeRules=List.of(new AutoConfig.BiomeRule("test:unknown",TerrainKind.FOREST));
         assertEquals(TerrainKind.FOREST,TerrainClassifier.classify("test:unknown",Set.of(),0.7f,0,config));
     }
+
+    @Test void popularModdedBiomesClassifyIntoAppropriateSurfaceKindsAndExcludeCaves() {
+        AutoConfig config=new AutoConfig();
+        // Caves / underground remain OTHER
+        assertEquals(TerrainKind.OTHER,TerrainClassifier.classify("terralith:amethyst_caves",Set.of(),0.8f,0,config));
+        assertEquals(TerrainKind.OTHER,TerrainClassifier.classify("galosphere:crystal_canyons",Set.of(),0.5f,0,config));
+        assertEquals(TerrainKind.OTHER,TerrainClassifier.classify("yungscavebiomes:frosted_caves",Set.of(),0.5f,0,config));
+        assertEquals(TerrainKind.OTHER,TerrainClassifier.classify("minecraft:dripstone_caves",Set.of(),0.8f,0,config));
+        assertEquals(TerrainKind.OTHER,TerrainClassifier.classify("biomesoplenty:glowing_grotto",Set.of(),0.5f,0,config));
+
+        // Mountains / Cliffs / Spires / Slopes / Volcanoes
+        assertEquals(TerrainKind.MOUNTAIN,TerrainClassifier.classify("terralith:white_cliffs",Set.of(),0.4f,0,config));
+        assertEquals(TerrainKind.MOUNTAIN,TerrainClassifier.classify("terralith:bryce_canyon",Set.of(),2.0f,0,config));
+        assertEquals(TerrainKind.MOUNTAIN,TerrainClassifier.classify("terralith:stony_spires",Set.of(),0.7f,0,config));
+        assertEquals(TerrainKind.MOUNTAIN,TerrainClassifier.classify("biomesoplenty:jade_cliffs",Set.of(),0.8f,0,config));
+        assertEquals(TerrainKind.MOUNTAIN,TerrainClassifier.classify("biomesoplenty:volcano",Set.of(),0.95f,0,config));
+        assertEquals(TerrainKind.MOUNTAIN,TerrainClassifier.classify("regions_unexplored:pine_slopes",Set.of(),0.4f,0,config));
+        assertEquals(TerrainKind.MOUNTAIN,TerrainClassifier.classify("natures_spirit:white_cliffs",Set.of(),0.95f,0,config));
+
+        // Forests / Glades / Orchards / Gardens / Shields
+        assertEquals(TerrainKind.FOREST,TerrainClassifier.classify("minecraft:pale_garden",Set.of(),0.7f,0,config));
+        assertEquals(TerrainKind.FOREST,TerrainClassifier.classify("biomesoplenty:aspen_glade",Set.of(),0.4f,0,config));
+        assertEquals(TerrainKind.FOREST,TerrainClassifier.classify("biomeswevegone:enchanted_tangle",Set.of(),0.8f,0,config));
+        assertEquals(TerrainKind.FOREST,TerrainClassifier.classify("terralith:shield",Set.of(),0.4f,0,config));
+        assertEquals(TerrainKind.FOREST,TerrainClassifier.classify("plaincraft_erdtree_sanctuary:erdtree_sanctuary",Set.of(),0.65f,0,config));
+
+        // Plains / Valleys / Basins / Swamps / Wetlands / Beaches
+        assertEquals(TerrainKind.PLAIN,TerrainClassifier.classify("minecraft:swamp",Set.of(),0.8f,0,config));
+        assertEquals(TerrainKind.PLAIN,TerrainClassifier.classify("biomesoplenty:bayou",Set.of(),0.95f,0,config));
+        assertEquals(TerrainKind.PLAIN,TerrainClassifier.classify("biomeswevegone:cypress_swamplands",Set.of(),0.8f,0,config));
+        assertEquals(TerrainKind.PLAIN,TerrainClassifier.classify("terralith:lush_valley",Set.of(),0.4f,0,config));
+        assertEquals(TerrainKind.PLAIN,TerrainClassifier.classify("biomesoplenty:origin_valley",Set.of(),0.6f,0,config));
+        assertEquals(TerrainKind.PLAIN,TerrainClassifier.classify("regions_unexplored:ancient_delta",Set.of(),1.1f,0,config));
+        assertEquals(TerrainKind.PLAIN,TerrainClassifier.classify("terralith:gravel_beach",Set.of(),0.8f,0,config));
+
+        // Deserts / Dunes / Sands / Oasis
+        assertEquals(TerrainKind.DESERT,TerrainClassifier.classify("terralith:sandstone_valley",Set.of(),2.0f,0,config));
+        assertEquals(TerrainKind.DESERT,TerrainClassifier.classify("terralith:ancient_sands",Set.of(),2.0f,0,config));
+        assertEquals(TerrainKind.DESERT,TerrainClassifier.classify("terralith:red_oasis",Set.of(),2.0f,0,config));
+        assertEquals(TerrainKind.DESERT,TerrainClassifier.classify("biomesoplenty:dryland",Set.of(),0.85f,0,config));
+        assertEquals(TerrainKind.DESERT,TerrainClassifier.classify("mysticsbiomes:lush_oasis",Set.of(),1.7f,0,config));
+
+        // Water / Lakes / Lagoons / Reefs
+        assertEquals(TerrainKind.LAKE,TerrainClassifier.classify("mysticsbiomes:lagoon",Set.of(),1.3f,0,config));
+        assertEquals(TerrainKind.LAKE,TerrainClassifier.classify("biomesoplenty:hot_springs",Set.of(),0.17f,0,config));
+        assertEquals(TerrainKind.OCEAN,TerrainClassifier.classify("regions_unexplored:rocky_reef",Set.of(),0.8f,0,config));
+        assertEquals(TerrainKind.OCEAN,TerrainClassifier.classify("regions_unexplored:hyacinth_deeps",Set.of(),0.5f,0,config));
+    }
     @Test void disposableSurfaceCachePreservesNegativeCoordinatesAndHonorsMemoryLimit() throws Exception {
         Map<ChunkCell,TerrainSample> samples=new LinkedHashMap<>();
         samples.put(new ChunkCell(-12,36),new TerrainSample("test:forest",TerrainKind.FOREST,0.7f,2400));
         samples.put(new ChunkCell(3,-9),new TerrainSample("test:cold",TerrainKind.FROZEN_OCEAN,0,TerrainSample.UNKNOWN_HEIGHT));
         Path path=directory.resolve("surface.gz");SurfaceCache.save(path,samples);
         assertEquals(samples,SurfaceCache.load(path,10));assertEquals(1,SurfaceCache.load(path,1).size());
+    }
+
+    @Test void northlandTakesColdNonMountainNonOceanBiomesAfterExplicitRules() {
+        AutoConfig config=new AutoConfig();
+        assertEquals(TerrainKind.NORTHLAND,TerrainClassifier.classify("test:pine_forest",Set.of("c:is_forest"),0,0,config));
+        assertEquals(TerrainKind.NORTHLAND,TerrainClassifier.classify("test:frozen_lake",Set.of(),0,0,config));
+        assertEquals(TerrainKind.NORTHLAND,TerrainClassifier.classify("test:river",Set.of("minecraft:is_river"),0,0,config));
+        assertEquals(TerrainKind.MOUNTAIN,TerrainClassifier.classify("test:mountain",Set.of(),0,0,config));
+        assertEquals(TerrainKind.FROZEN_OCEAN,TerrainClassifier.classify("test:frozen_ocean",Set.of("minecraft:is_ocean"),0,0,config));
+        config.biomeRules=List.of(new AutoConfig.BiomeRule("test:pine_forest",TerrainKind.FOREST));
+        assertEquals(TerrainKind.FOREST,TerrainClassifier.classify("test:pine_forest",Set.of(),0,0,config));
+    }
+
+    @Test void coldForestAndPlainSamplesAnalyzeAsOneNorthlandCandidate() {
+        AutoConfig config=new AutoConfig();config.unlockSpan=256;
+        config.thresholds.northland=new AutoConfig.Threshold(256,0);
+        Map<ChunkCell,TerrainSample> samples=new HashMap<>();
+        for(int x=0;x<20;x++) samples.put(new ChunkCell(x,0),new TerrainSample("test:cold_"+(x/4),
+                x<10?TerrainKind.FOREST:TerrainKind.PLAIN,0,70));
+        var result=new TerrainAnalysis().analyze(samples,config);
+        assertEquals(1,result.candidates().size());assertEquals(TerrainKind.NORTHLAND,result.candidates().get(0).kind());
+        assertEquals(20,result.candidates().get(0).cells().size());
+    }
+
+    @Test void anExplicitColdBiomeRuleKeepsItsRequestedCategoryInsteadOfNorthland() {
+        AutoConfig config=new AutoConfig();config.unlockSpan=256;
+        config.biomeRules=List.of(new AutoConfig.BiomeRule("test:cold_woods",TerrainKind.FOREST));
+        config.thresholds.forest=new AutoConfig.Threshold(256,0);
+        Map<ChunkCell,TerrainSample> samples=new HashMap<>();
+        for(int x=0;x<20;x++) samples.put(new ChunkCell(x,0),new TerrainSample("test:cold_woods",TerrainKind.NORTHLAND,0,70));
+        var result=new TerrainAnalysis().analyze(samples,config);
+        assertEquals(List.of(TerrainKind.FOREST),result.candidates().stream().map(TerrainAnalysis.Candidate::kind).toList());
     }
     @Test void denseAndScatteredMapsStayBoundedAndKeepNaturalBoundaries() {
         Map<ChunkCell,TerrainSample> map=new HashMap<>();

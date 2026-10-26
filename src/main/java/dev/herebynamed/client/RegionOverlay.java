@@ -46,7 +46,7 @@ final class RegionOverlay {
             long until=now+2_000_000L;
             for(int budget=0;budget<512 && remaining>0 && System.nanoTime()<until;budget++) {
                 ChunkCell cell=unknown.removeFirst(); remaining--;
-                if(knowledge.sample(cell,false).biome()!=null) { recorded.add(cell); dirty=true; }
+                if(knowledge.sample(cell,true).biome()!=null) { recorded.add(cell); dirty=true; }
                 else unknown.addLast(cell);
             }
             if(remaining==0) nextScan=now+1_000_000_000L;

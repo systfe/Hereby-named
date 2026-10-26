@@ -12,8 +12,9 @@ import java.util.function.IntConsumer;
 /** One isolated settings draft shared by the forms and list editors. */
 final class AutomaticConfigScreen extends Screen implements EditorDialog {
     private static final TerrainKind[] KINDS={TerrainKind.MOUNTAIN,TerrainKind.OCEAN,TerrainKind.FROZEN_OCEAN,
-            TerrainKind.PLAIN,TerrainKind.FOREST,TerrainKind.FLOWER,TerrainKind.DESERT,TerrainKind.LAKE};
-    private static final String[] LABELS={"山地","大洋","冻洋","原野","森林","花草甸","沙漠","湖泊"};
+            TerrainKind.PLAIN,TerrainKind.FOREST,TerrainKind.FLOWER,TerrainKind.DESERT,TerrainKind.LAKE,TerrainKind.NORTHLAND};
+    private static final String[] LABELS={"山地","大洋","冻洋","原野","森林","花草甸","沙漠","湖泊","北地"};
+    private static final String[] CLIMATES={"COLD","TEMPERATE","HOT"};
     private final Screen parent;
     private final AutomaticRegions automatic;
     private final AutoConfig draft;
@@ -32,12 +33,12 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
     }
     static String label(TerrainKind kind) {
         for(int i=0;i<KINDS.length;i++) if(KINDS[i]==kind) return LABELS[i];
-        return kind==TerrainKind.RIVER?"河流":"暂不分类";
+        return kind==TerrainKind.NORTHLAND?"北地":kind==TerrainKind.RIVER?"河流":"暂不分类";
     }
     @Override protected void init() {
         rowLabels.clear();contentWidth=Math.min(350,width-20);x=(width-contentWidth)/2;
         rows=Math.max(1,Math.min(10,(height-140)/24));page=Math.min(page,Math.max(0,(count()-1)/rows));
-        String[] tabs={"区域门槛","全局参数","完整名字","词根","群系规则"};
+        String[] tabs={"区域门槛","全局参数","默认名","词根","群系规则"};
         int tabWidth=(contentWidth-8)/5;
         for(int i=0;i<tabs.length;i++) { final int index=i;
             button(x+i*(tabWidth+2),26,tabWidth,tabs[i],() -> navigate(index,0)).active=tab!=i;
@@ -50,7 +51,7 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
         button(x+(contentWidth+6)/2,height-28,(contentWidth-6)/2,"取消",this::close);
         if(saving) for(var child:children()) if(child instanceof ClickableWidget widget) widget.active=false;
     }
-    private int count() { return tab==0?8:tab==1?9:tab==4?draft.biomeRules.size():names().size(); }
+    private int count() { return tab==0?9:tab==1?9:tab==4?draft.biomeRules.size():names().size(); }
     private List<AutoConfig.Name> names() { return tab==3?draft.roots:draft.names; }
     private void navigate(int nextTab,int nextPage) {
         tab=nextTab;page=Math.max(0,nextPage);error="";clearAndInit();
@@ -72,15 +73,13 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
         input.setTooltip(Tooltip.of(Text.literal(hint)));addDrawableChild(input);return input;
     }
     private void thresholds() {
-        for(int index=page*rows;index<Math.min(8,(page+1)*rows);index++) {
+        for(int index=page*rows;index<Math.min(KINDS.length,(page+1)*rows);index++) {
             TerrainKind kind=KINDS[index];AutoConfig.Threshold value=threshold(kind);int y=74+(index-page*rows)*24;
-            int w=(contentWidth-90)/3;
-            number(x+90,y,w-5,value.minimumBiomes(),"不同群系种数；0 停用。与最低跨度满足其一即可",kind+":biomes",
-                    v -> { var t=threshold(kind);setThreshold(kind,new AutoConfig.Threshold(v,t.minimumSpan(),t.maximumSpan())); });
-            number(x+90+w,y,w-5,value.minimumSpan(),"最低跨度，单位为方块；0 停用此分支",kind+":span",
-                    v -> { var t=threshold(kind);setThreshold(kind,new AutoConfig.Threshold(t.minimumBiomes(),v,t.maximumSpan())); });
-            number(x+90+2*w,y,w-5,value.maximumSpan(),"跨度必须小于此值；0 表示没有上限",kind+":maximum",
-                    v -> { var t=threshold(kind);setThreshold(kind,new AutoConfig.Threshold(t.minimumBiomes(),t.minimumSpan(),v)); });
+            int w=(contentWidth-90)/2;
+            number(x+90,y,w-5,value.minimumSpan(),"最低跨度，单位为方块",kind+":span",
+                    v -> { var t=threshold(kind);setThreshold(kind,new AutoConfig.Threshold(v,t.maximumSpan())); });
+            number(x+90+w,y,w-5,value.maximumSpan(),"跨度必须小于此值；0 表示没有上限",kind+":maximum",
+                    v -> { var t=threshold(kind);setThreshold(kind,new AutoConfig.Threshold(t.minimumSpan(),v)); });
             rowLabels.add(label(kind));
         }
     }
@@ -88,24 +87,27 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
         return switch(kind) {
             case MOUNTAIN -> draft.thresholds.mountain;case OCEAN -> draft.thresholds.ocean;case FROZEN_OCEAN -> draft.thresholds.frozenOcean;
             case PLAIN -> draft.thresholds.plain;case FOREST -> draft.thresholds.forest;case FLOWER -> draft.thresholds.flower;
-            case DESERT -> draft.thresholds.desert;case LAKE -> draft.thresholds.lake;default -> throw new IllegalArgumentException();
+            case DESERT -> draft.thresholds.desert;case LAKE -> draft.thresholds.lake;case NORTHLAND -> draft.thresholds.northland;
+            default -> throw new IllegalArgumentException();
         };
     }
     private void setThreshold(TerrainKind kind,AutoConfig.Threshold value) {
         switch(kind) {
             case MOUNTAIN -> draft.thresholds.mountain=value;case OCEAN -> draft.thresholds.ocean=value;case FROZEN_OCEAN -> draft.thresholds.frozenOcean=value;
             case PLAIN -> draft.thresholds.plain=value;case FOREST -> draft.thresholds.forest=value;case FLOWER -> draft.thresholds.flower=value;
-            case DESERT -> draft.thresholds.desert=value;case LAKE -> draft.thresholds.lake=value;default -> throw new IllegalArgumentException();
+            case DESERT -> draft.thresholds.desert=value;case LAKE -> draft.thresholds.lake=value;case NORTHLAND -> draft.thresholds.northland=value;
+            default -> throw new IllegalArgumentException();
         }
     }
     private void globals() {
-        String[] labels={"启用所需连续跨度","所有区域最小跨度","每种群系最少区块数","地表缓存区块上限","分析间隔（秒）","山脉／广域山地跨度","广域山地最少区块数","山岭长宽比（百分比）",""};
-        String[] hints={"256～1000000 格；已记录地表须连成一片","16～100000 格；对所有类别生效","1～4096；过小的群系碎片不计入种数","4096～500000；更高上限会占用更多内存","10～600 秒；更频繁分析会增加开销","16～1000000 格；长条山地达到此跨度用山脉，宽广山地用峦","1～500000 个区块；宽广山地达到此面积用峦","110～1000；180 表示长边大于短边的 1.8 倍时视为绵延山地",""};
-        int[] values={draft.unlockSpan,draft.minimumSpan,draft.minimumBiomeChunks,draft.maximumSamples,draft.analysisIntervalSeconds,draft.mountainRangeSpan,draft.mountainMassifChunks,draft.mountainRidgeRatioPercent};
-        IntConsumer[] setters={v -> draft.unlockSpan=v,v -> draft.minimumSpan=v,v -> draft.minimumBiomeChunks=v,v -> draft.maximumSamples=v,v -> draft.analysisIntervalSeconds=v,v -> draft.mountainRangeSpan=v,v -> draft.mountainMassifChunks=v,v -> draft.mountainRidgeRatioPercent=v};
+        String[] labels={"启用所需连续跨度","所有区域最小跨度","地表缓存区块上限","分析间隔（秒）","山脉／广域山地跨度","广域山地最少区块数","山岭长宽比（百分比）",""};
+        String[] hints={"256～1000000 格；已记录地表须连成一片","16～100000 格；对所有类别生效","4096～500000；更高上限会占用更多内存","10～600 秒；更频繁分析会增加开销","16～1000000 格；长条山地达到此跨度用山脉，宽广山地用峦","1～500000 个区块；宽广山地达到此面积用峦","110～1000；180 表示长边大于短边的 1.8 倍时视为绵延山地",""};
+        int[] values={draft.unlockSpan,draft.minimumSpan,draft.maximumSamples,draft.analysisIntervalSeconds,draft.mountainRangeSpan,draft.mountainMassifChunks,draft.mountainRidgeRatioPercent};
+        IntConsumer[] setters={v -> draft.unlockSpan=v,v -> draft.minimumSpan=v,v -> draft.maximumSamples=v,v -> draft.analysisIntervalSeconds=v,v -> draft.mountainRangeSpan=v,v -> draft.mountainMassifChunks=v,v -> draft.mountainRidgeRatioPercent=v};
         for(int index=page*rows;index<Math.min(9,(page+1)*rows);index++) {
             int y=74+(index-page*rows)*24;
-            if(index==8) { rowLabels.add("自动创建区域");button(x+contentWidth-96,y,90,draft.enabled?"开启":"关闭",() -> { draft.enabled=!draft.enabled;clearAndInit(); });continue; }
+            if(index==7) { rowLabels.add("自动创建区域");button(x+contentWidth-96,y,90,draft.enabled?"开启":"关闭",() -> { draft.enabled=!draft.enabled;clearAndInit(); });continue; }
+            if(index==8) { rowLabels.add("删除保护（防重新生成）");button(x+contentWidth-96,y,90,draft.suppressDeletedRegions?"开启":"关闭",() -> { draft.suppressDeletedRegions=!draft.suppressDeletedRegions;clearAndInit(); });continue; }
             rowLabels.add(labels[index]);number(x+contentWidth-96,y,90,values[index],hints[index],"global:"+index,setters[index]);
         }
     }
@@ -143,9 +145,9 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
         ClientUi.background(this,context,mx,my,delta);super.render(context,mx,my,delta);
         context.drawCenteredTextWithShadow(textRenderer,title,width/2,8,0xffffff);
         if(tab==0) {
-            context.drawTextWithShadow(textRenderer,"类别",x,57,0xbbbbbb);int w=(contentWidth-90)/3;
-            String[] headers={"群系种数","最低跨度","跨度上限"};
-            for(int i=0;i<3;i++) context.drawTextWithShadow(textRenderer,headers[i],x+90+i*w,57,0xbbbbbb);
+            context.drawTextWithShadow(textRenderer,"类别",x,57,0xbbbbbb);int w=(contentWidth-90)/2;
+            String[] headers={"最低跨度","跨度上限"};
+            for(int i=0;i<2;i++) context.drawTextWithShadow(textRenderer,headers[i],x+90+i*w,57,0xbbbbbb);
         } else context.drawTextWithShadow(textRenderer,tab==1?"悬停输入框查看范围":"共 "+count()+" 条",x,57,0xbbbbbb);
         for(int i=0;i<rowLabels.size();i++) context.drawTextWithShadow(textRenderer,textRenderer.trimToWidth(rowLabels.get(i),tab==0?82:contentWidth-102),x,79+i*24,0xffffff);
         context.drawCenteredTextWithShadow(textRenderer,(page+1)+" / "+Math.max(1,(count()+rows-1)/rows),width/2,height-48,0xbbbbbb);
@@ -161,17 +163,18 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
         private final int index;
         private final boolean rule;
         private final Set<String> kinds=new LinkedHashSet<>();
-        private String climate="ANY",entryError="";
+        private final Set<String> climates=new LinkedHashSet<>();
+        private String entryError="";
         private TerrainKind ruleKind=TerrainKind.PLAIN;
         private TextFieldWidget text;
         private String value;
         private int left,top,w;
         EntryScreen(int index,boolean rule) {
-            super(Text.literal(rule?"群系分类规则":tab==3?"词根条目":"完整名字条目"));this.index=index;this.rule=rule;
+            super(Text.literal(rule?"群系分类规则":tab==3?"词根条目":"默认名条目"));this.index=index;this.rule=rule;
             value="";
             if(index>=0) {
                 if(rule) { var entry=draft.biomeRules.get(index);value=entry.biome();ruleKind=entry.kind(); }
-                else { var entry=names().get(index);value=entry.text();kinds.addAll(entry.kinds());climate=entry.climate(); }
+                else { var entry=names().get(index);value=entry.text();kinds.addAll(entry.kinds());climates.addAll(entry.climates()); }
             } else kinds.add("ALL");
         }
         private ButtonWidget addButton(int bx,int by,int bw,String label,Runnable action) {
@@ -179,23 +182,27 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
         }
         @Override protected void init() {
             if(text!=null) value=text.getText();
-            w=Math.min(300,width-24);left=(width-w)/2;top=Math.max(8,(height-224)/2);
+            w=Math.min(300,width-24);left=(width-w)/2;top=Math.max(8,(height-286)/2);
             text=new TextFieldWidget(textRenderer,left,top+38,w,18,Text.literal(rule?"群系 ID":"名称"));text.setMaxLength(rule?256:48);text.setText(value);addDrawableChild(text);setInitialFocus(text);
             if(rule) addButton(left,top+68,w,"分类："+label(ruleKind),() -> ruleKind=TerrainKind.values()[(ruleKind.ordinal()+1)%TerrainKind.values().length]);
             else {
-                addButton(left,top+66,w,"气候："+switch(climate){case "COLD" -> "寒冷";case "HOT" -> "炎热";case "TEMPERATE" -> "温和";default -> "不限";},() -> {
-                    List<String> options=List.of("ANY","COLD","TEMPERATE","HOT");climate=options.get((options.indexOf(climate)+1)%4);
-                });
-                addButton(left,top+92,w,(kinds.contains("ALL")?"✓ ":"")+"适用于所有地形",() -> { kinds.clear();kinds.add("ALL"); });
-                int bw=(w-6)/4;
+                int climateWidth=(w-4)/3;
+                for(int i=0;i<CLIMATES.length;i++) { String climate=CLIMATES[i];String name=switch(climate){case "COLD" -> "寒冷";case "HOT" -> "炎热";default -> "温和";};
+                    addButton(left+i*(climateWidth+2),top+66,climateWidth,(climates.contains(climate)?"✓ ":"")+name,() -> {
+                        if(!climates.remove(climate)) climates.add(climate);
+                    });
+                }
+                addButton(left,top+90,w,(climates.isEmpty()?"✓ ":"")+"不限气候",climates::clear);
+                addButton(left,top+114,w,(kinds.isEmpty()||kinds.contains("ALL")?"✓ ":"")+"适用于所有地形",() -> { kinds.clear();kinds.add("ALL"); });
+                int bw=(w-4)/3;
                 for(int i=0;i<KINDS.length;i++) { String kind=KINDS[i].name();
-                    addButton(left+(i%4)*(bw+2),top+118+(i/4)*24,bw,(kinds.contains(kind)?"✓ ":"")+LABELS[i],() -> {
+                    addButton(left+(i%3)*(bw+2),top+138+(i/3)*22,bw,(kinds.contains(kind)?"✓ ":"")+LABELS[i],() -> {
                         kinds.remove("ALL");if(!kinds.remove(kind)) kinds.add(kind);
                     });
                 }
             }
-            addButton(left,top+194,(w-6)/2,"应用到草稿",this::apply);
-            addButton(left+(w+6)/2,top+194,(w-6)/2,"取消",this::close);
+            addButton(left,top+218,(w-6)/2,"应用到草稿",this::apply);
+            addButton(left+(w+6)/2,top+218,(w-6)/2,"取消",this::close);
         }
         private void apply() {
             try {
@@ -206,8 +213,7 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
                 } else {
                     if(text.getText().isBlank()) throw new IllegalArgumentException("请输入名称");
                     if(text.getText().codePoints().anyMatch(Character::isDigit)) throw new IllegalArgumentException("名称不能包含数字");
-                    if(kinds.isEmpty()) throw new IllegalArgumentException("请至少选择一种适用地形");
-                    var entry=new AutoConfig.Name(text.getText().strip(),List.copyOf(kinds),climate);
+                    var entry=new AutoConfig.Name(text.getText().strip(),List.copyOf(kinds),List.copyOf(climates));
                     AutoConfig check=draft.copy();List<AutoConfig.Name> list=tab==3?check.roots:check.names;
                     if(index<0) list.add(entry);else list.set(index,entry);check.validate();
                     if(tab==3) draft.roots=list;else draft.names=list;
@@ -221,7 +227,8 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
             context.drawCenteredTextWithShadow(textRenderer,title,width/2,top,0xffffff);
             context.drawTextWithShadow(textRenderer,rule?"群系 ID（支持末尾 *）":"名称（不含数字）",left,top+23,0xbbbbbb);
             if(rule) context.drawTextWithShadow(textRenderer,"例：example:lavender_field",left,top+99,0xaaaaaa);
-            context.drawCenteredTextWithShadow(textRenderer,textRenderer.trimToWidth(entryError.isEmpty()?"返回后点击“保存并应用”才会写入设置":entryError,w),width/2,top+174,entryError.isEmpty()?0xaaaaaa:0xff8888);
+            else context.drawCenteredTextWithShadow(textRenderer,"偏好可多选；留空表示不限",width/2,top+244,0xaaaaaa);
+            context.drawCenteredTextWithShadow(textRenderer,textRenderer.trimToWidth(entryError.isEmpty()?"返回后点击“保存并应用”才会写入设置":entryError,w),width/2,top+260,entryError.isEmpty()?0xaaaaaa:0xff8888);
         }
     }
 }
