@@ -1,8 +1,8 @@
 package dev.herebynamed.net;
 
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.util.Identifier;
+import io.netty.buffer.Unpooled;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -10,22 +10,22 @@ import java.util.function.Consumer;
 
 /** Bounded ordered fragments keep both C2S and S2C below Minecraft's payload limits. */
 public final class Wire {
-    public static final Identifier CHANNEL = Identifier.tryParse("hereby_named:regions_v4");
+    public static final ResourceLocation CHANNEL = ResourceLocation.tryParse("hereby_named:regions_v4");
     private static final AtomicInteger IDS = new AtomicInteger();
     private static final int PART = 24_000, MAX = 8_000_000;
     private Wire() {}
-    public static void send(byte[] bytes, Consumer<PacketByteBuf> sender) {
+    public static void send(byte[] bytes, Consumer<FriendlyByteBuf> sender) {
         if (bytes.length > MAX) throw new IllegalArgumentException("同步数据过大");
         int id = IDS.incrementAndGet(), count = Math.max(1, (bytes.length + PART - 1) / PART);
         for (int i = 0; i < count; i++) {
-            PacketByteBuf packet = PacketByteBufs.create();
+            FriendlyByteBuf packet = new FriendlyByteBuf(Unpooled.buffer());
             packet.writeInt(id); packet.writeInt(i); packet.writeInt(count);
             packet.writeByteArray(Arrays.copyOfRange(bytes, i * PART, Math.min(bytes.length, (i+1)*PART)));
             sender.accept(packet);
         }
     }
     public record Fragment(int id, int index, int count, byte[] bytes) {
-        public static Fragment read(PacketByteBuf buf) {
+        public static Fragment read(FriendlyByteBuf buf) {
             int id = buf.readInt(), index = buf.readInt(), count = buf.readInt();
             byte[] bytes = buf.readByteArray(PART);
             if (count < 1 || count > (MAX + PART - 1)/PART || index < 0 || index >= count || buf.isReadable())

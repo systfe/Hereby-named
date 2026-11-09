@@ -2,12 +2,13 @@ package dev.herebynamed.client;
 
 import dev.herebynamed.domain.*;
 import dev.herebynamed.mixin.GuiMapAccessor;
-import net.fabricmc.fabric.api.client.screen.v1.Screens;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.*;
-import net.minecraft.text.Text;
+import dev.herebynamed.mixin.ScreenAccessor;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import xaero.map.gui.GuiMap;
 import java.util.*;
@@ -16,10 +17,10 @@ import java.util.function.IntConsumer;
 final class MapController {
     private final GuiMap map;
     private final GuiMapAccessor view;
-    private final MinecraftClient client = MinecraftClient.getInstance();
+    private final Minecraft client = Minecraft.getInstance();
     private final ClientRegions data = HerebyNamedClient.REGIONS;
     private final MapKnowledge knowledge;
-    private final List<ClickableWidget> controls = new ArrayList<>();
+    private final List<AbstractWidget> controls = new ArrayList<>();
     private final Map<Integer,String> remembered = new HashMap<>();
     private final RegionOverlay overlay;
     private String dimension = "", selected = "";
@@ -42,12 +43,26 @@ final class MapController {
     void close() { job = null; pressed = -1; data.exit(); }
     private String dimension() {
         var current = map.getMapProcessor().getMapWorld().getCurrentDimension();
-        return current == null ? "" : current.getDimId().getValue().toString();
+        return current == null ? "" : current.getDimId().location().toString();
     }
     private RegionBook book() { return data.book(dimension); }
     private boolean editing() { return data.editing(dimension); }
+
+    private static void removeWidgets(Screen screen, List<? extends AbstractWidget> widgets) {
+        ScreenAccessor acc = (ScreenAccessor) screen;
+        acc.hereby$getChildren().removeAll(widgets);
+        acc.hereby$getRenderables().removeAll(widgets);
+        acc.hereby$getNarratables().removeAll(widgets);
+    }
+    private static void addWidget(Screen screen, AbstractWidget widget) {
+        ScreenAccessor acc = (ScreenAccessor) screen;
+        acc.hereby$getChildren().add(widget);
+        acc.hereby$getRenderables().add(widget);
+        acc.hereby$getNarratables().add(widget);
+    }
+
     void build() {
-        Screens.getButtons(map).removeAll(controls); controls.clear(); popup = null;
+        removeWidgets(map, controls); controls.clear(); popup = null;
         String next = dimension();
         if (!dimension.equals(next)) {
             if (!dimension.isEmpty()) data.exit();
@@ -103,7 +118,7 @@ final class MapController {
             rebuildOverlay();
         } else build();
     }
-    private void chooseLayer(ButtonWidget button, boolean displayOnly) {
+    private void chooseLayer(Button button, boolean displayOnly) {
         List<Integer> layers = book().state().layers().stream().sorted().toList();
         openPopup(button,layers.stream().map(i -> "图层 "+i).toList(),i -> {
             if (displayOnly) displayLayer = layers.get(i);
@@ -111,7 +126,7 @@ final class MapController {
             build();
         });
     }
-    private void openPopup(ButtonWidget source, List<String> names, IntConsumer select) {
+    private void openPopup(Button source, List<String> names, IntConsumer select) {
         if (names.isEmpty()) { data.message("此图层尚无区域，请先新建"); return; }
         popup = new Popup(source.getX(),source.getY()+21,names,select);
     }
@@ -119,18 +134,18 @@ final class MapController {
     private void place(int[] cursor,int width) {
         if(cursor[0]+width>map.width-24 && cursor[0]>24) { cursor[0]=24; cursor[1]+=22; }
     }
-    private ButtonWidget tool(int[] cursor,int icon,String hint,ButtonWidget.PressAction action) {
+    private Button tool(int[] cursor,int icon,String hint,Button.OnPress action) {
         place(cursor,20);
-        ButtonWidget button=icon(cursor[0],cursor[1],icon,hint,action); cursor[0]+=21; return button;
+        Button button=icon(cursor[0],cursor[1],icon,hint,action); cursor[0]+=21; return button;
     }
-    private void select(int[] cursor,String value,int width,String hint,int color,ButtonWidget.PressAction action) {
+    private void select(int[] cursor,String value,int width,String hint,int color,Button.OnPress action) {
         place(cursor,width);
         add(MapTools.selector(cursor[0],cursor[1],width,value,hint,color,() -> popup==null,action)); cursor[0]+=width+3;
     }
-    private ButtonWidget icon(int x,int y,int icon,String hint,ButtonWidget.PressAction action) {
-        ButtonWidget button=MapTools.icon(x,y,icon,hint,() -> popup==null,action); add(button); return button;
+    private Button icon(int x,int y,int icon,String hint,Button.OnPress action) {
+        Button button=MapTools.icon(x,y,icon,hint,() -> popup==null,action); add(button); return button;
     }
-    private void add(ButtonWidget button) { controls.add(button); Screens.getButtons(map).add(button); }
+    private void add(Button button) { controls.add(button); addWidget(map, button); }
     private List<RegionBook.Region> currentRegions() { return book().regions().stream().filter(r -> r.layer()==layer).toList(); }
     private void edit(RegionEdit.Action action, String name, int color, Set<ChunkCell> cells) {
         if (job != null || data.busy()) return;
@@ -140,13 +155,14 @@ final class MapController {
         data.edit(dimension,action,layer,selected,name,color,cells);
     }
     private ChunkCell cellAt(double x, double y) {
-        double guiScale = client.getWindow().getScaleFactor(), scale = Math.max(0.000001,view.hereby$scale());
-        int bx = (int)Math.floor(view.hereby$cameraX() + (x*guiScale-client.getWindow().getFramebufferWidth()/2.0)/scale);
-        int bz = (int)Math.floor(view.hereby$cameraZ() + (y*guiScale-client.getWindow().getFramebufferHeight()/2.0)/scale);
+        double guiScale = client.getWindow().getGuiScale(), scale = Math.max(0.000001,view.hereby$scale());
+        int bx = (int)Math.floor(view.hereby$cameraX() + (x*guiScale-client.getWindow().getWidth()/2.0)/scale);
+        int bz = (int)Math.floor(view.hereby$cameraZ() + (y*guiScale-client.getWindow().getHeight()/2.0)/scale);
         return new ChunkCell(bx>>4,bz>>4);
     }
     private boolean onControl(double x,double y) {
-        return Screens.getButtons(map).stream().anyMatch(w -> w.visible && w.isMouseOver(x,y));
+        ScreenAccessor acc = (ScreenAccessor) map;
+        return acc.hereby$getChildren().stream().anyMatch(w -> w instanceof AbstractWidget aw && aw.visible && aw.isMouseOver(x,y));
     }
     boolean mouseDown(double x,double y,int button) {
         if (popup != null) { popup.click(x,y,button); return false; }
@@ -198,7 +214,7 @@ final class MapController {
         if(visibility!=2) overlay.tick();
         if (!editing()) { job=null; pressed=-1; return; }
         if (pressed>=0 && gesture==2 && !triggered && System.nanoTime()-downAt>=500_000_000L) {
-            double x=client.mouse.getX()/client.getWindow().getScaleFactor(), y=client.mouse.getY()/client.getWindow().getScaleFactor();
+            double x=client.mouseHandler.xpos()/client.getWindow().getGuiScale(), y=client.mouseHandler.ypos()/client.getWindow().getGuiScale();
             if (Math.hypot(x-downX,y-downY)<=4) { triggered=true; begin(start,start,true,pressed==0); }
             else { downAt=System.nanoTime(); downX=x; downY=y; start=cellAt(x,y); }
         }
@@ -233,28 +249,28 @@ final class MapController {
         Integer shown=visibility==1?(editing()?layer:displayLayer):null;
         overlay.update(dimension,book().regions(),shown);
     }
-    void render(DrawContext context,int mouseX,int mouseY) {
+    void render(GuiGraphics context,int mouseX,int mouseY) {
         if (dimension.isEmpty() || GuiMap.hiddenUI) return;
         drawOverlay(context);
-        context.getMatrices().push(); context.getMatrices().translate(0,0,500);
+        context.pose().pushPose(); context.pose().translate(0,0,500);
         List<String> names=book().namesAtBlock(view.hereby$mouseX(),view.hereby$mouseZ());
         for(int i=0;i<names.size();i++) {
-            String name=client.textRenderer.trimToWidth(names.get(i),Math.max(30,map.width-160));
-            int width=client.textRenderer.getWidth(name), y=24+i*11;
+            String name=client.font.plainSubstrByWidth(names.get(i),Math.max(30,map.width-160));
+            int width=client.font.width(name), y=24+i*11;
             context.fill(map.width/2-width/2-3,y-1,map.width/2+width/2+3,y+10,0x99000000);
-            context.drawCenteredTextWithShadow(client.textRenderer,name,map.width/2,y,0xffffff);
+            context.drawCenteredString(client.font,name,map.width/2,y,0xffffff);
         }
-        for(ClickableWidget control:controls) control.render(context,mouseX,mouseY,0);
+        for(AbstractWidget control:controls) control.render(context,mouseX,mouseY,0);
         if (editing() && (job!=null || data.busy())) {
             String status=job!=null?"正在选择 "+job.size()+" 个区块 · Esc 取消":"正在同步…";
-            context.drawCenteredTextWithShadow(client.textRenderer,status,map.width/2,map.height-23,0xffffff);
+            context.drawCenteredString(client.font,status,map.width/2,map.height-23,0xffffff);
         }
         if(popup!=null) popup.render(context,mouseX,mouseY);
-        context.getMatrices().pop();
+        context.pose().popPose();
     }
-    private void drawOverlay(DrawContext context) {
+    private void drawOverlay(GuiGraphics context) {
         if (visibility==2 || view.hereby$scale()<=0) return;
-        double scale=view.hereby$scale()/client.getWindow().getScaleFactor();
+        double scale=view.hereby$scale()/client.getWindow().getGuiScale();
         RegionMesh mesh=overlay.mesh();
         double halfWidth=map.width/(2*scale),halfHeight=map.height/(2*scale);
         RegionMesh.View visible=mesh.inView((view.hereby$cameraX()-halfWidth-1)/16,(view.hereby$cameraZ()-halfHeight-1)/16,
@@ -273,17 +289,17 @@ final class MapController {
             if(x2<0 || y2<0 || x>map.width || y>map.height) continue;
             context.fill(Math.max(0,x),Math.max(0,y),Math.min(map.width,Math.max(x+1,x2)),Math.min(map.height,Math.max(y+1,y2)),0xdd000000|edge.color());
         }
-        context.getMatrices().push(); context.getMatrices().translate(0,0,10);
+        context.pose().pushPose(); context.pose().translate(0,0,10);
         for(var label:mesh.labels()) {
             int x=screenX(label.x(),scale), y=screenZ(label.z(),scale);
-            int width=client.textRenderer.getWidth(label.name());
+            int width=client.font.width(label.name());
             float textScale=label.textScale(width,scale*16,map.width);
             if(textScale<0.6 || x+width*textScale/2<0 || x-width*textScale/2>map.width || y+9*textScale<0 || y-9*textScale>map.height) continue;
-            context.getMatrices().push(); context.getMatrices().translate(x,y,0); context.getMatrices().scale(textScale,textScale,1);
-            context.drawCenteredTextWithShadow(client.textRenderer,label.name(),0,-4,0xffffff);
-            context.getMatrices().pop();
+            context.pose().pushPose(); context.pose().translate(x,y,0); context.pose().scale(textScale,textScale,1);
+            context.drawCenteredString(client.font,label.name(),0,-4,0xffffff);
+            context.pose().popPose();
         }
-        context.getMatrices().pop();
+        context.pose().popPose();
         context.disableScissor();
     }
     private int screenX(double chunk,double scale) { return (int)Math.floor(map.width/2.0+(chunk*16-view.hereby$cameraX())*scale); }
@@ -294,7 +310,7 @@ final class MapController {
         final IntConsumer selected;
         int offset;
         Popup(int x,int y,List<String> names,IntConsumer selected) {
-            width=Math.min(Math.max(96,names.stream().mapToInt(client.textRenderer::getWidth).max().orElse(60)+16),Math.min(160,map.width-28));
+            width=Math.min(Math.max(96,names.stream().mapToInt(client.font::width).max().orElse(60)+16),Math.min(160,map.width-28));
             this.x=Math.min(x,Math.max(0,map.width-width-4)); this.y=y; this.names=names; this.selected=selected;
             rows=Math.max(1,Math.min(names.size(),Math.min(9,(map.height-y-34)/16)));
         }
@@ -309,14 +325,14 @@ final class MapController {
             }
             if(popup==current) popup=null;
         }
-        void render(DrawContext context,int mx,int my) {
+        void render(GuiGraphics context,int mx,int my) {
             context.fill(x-1,y-1,x+width+1,y+rows*16+(names.size()>rows?17:1),0xcc000000);
             for(int i=0;i<rows && i+offset<names.size();i++) {
                 boolean hover=mx>=x&&mx<x+width&&my>=y+i*16&&my<y+(i+1)*16;
                 context.fill(x,y+i*16,x+width,y+(i+1)*16,hover?0x66555555:0x66000000);
-                context.drawTextWithShadow(client.textRenderer,client.textRenderer.trimToWidth(names.get(i+offset),width-8),x+4,y+i*16+4,0xffffff);
+                context.drawString(client.font,client.font.plainSubstrByWidth(names.get(i+offset),width-8),x+4,y+i*16+4,0xffffff);
             }
-            if(names.size()>rows) context.drawTextWithShadow(client.textRenderer,"下一页 ▾",x+4,y+rows*16+4,0xffffff);
+            if(names.size()>rows) context.drawString(client.font,"下一页 ▾",x+4,y+rows*16+4,0xffffff);
         }
     }
 }

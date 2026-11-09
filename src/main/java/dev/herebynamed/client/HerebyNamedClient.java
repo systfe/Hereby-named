@@ -1,13 +1,11 @@
 package dev.herebynamed.client;
 
 import dev.herebynamed.HerebyNamed;
-import dev.herebynamed.net.Wire;
+import dev.herebynamed.platform.PlatformHelper;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.*;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 public final class HerebyNamedClient implements ClientModInitializer {
     public static final ClientRegions REGIONS = new ClientRegions();
@@ -17,14 +15,15 @@ public final class HerebyNamedClient implements ClientModInitializer {
     private String lastDimension="";
     private dev.herebynamed.domain.RegionBook lastBook;
     @Override public void onInitializeClient() {
+        dev.herebynamed.platform.PlatformHelper.init(new dev.herebynamed.platform.FabricPlatformHelper());
         ClientTransport.initialize(REGIONS::receive);
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> reset());
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> reset());
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             REGIONS.busy();
             if(AUTOMATIC!=null) AUTOMATIC.tick();
-            if (client.world != null && client.player != null) {
-                String dim = client.world.getRegistryKey().getValue().toString();
+            if (client.level != null && client.player != null) {
+                String dim = client.level.dimension().location().toString();
                 var cell=new dev.herebynamed.domain.ChunkCell(client.player.getBlockX()>>4,client.player.getBlockZ()>>4);
                 var book=REGIONS.book(dim);var names=book.namesAt(cell);
                 if(dim.equals(lastDimension) && dev.herebynamed.domain.TitleQueue.automaticCreationAround(lastBook,book,lastCell,cell))
@@ -33,7 +32,7 @@ public final class HerebyNamedClient implements ClientModInitializer {
             }
         });
         ClientUi.registerTitles(titles);
-        if (FabricLoader.getInstance().isModLoaded("xaeroworldmap")) { AUTOMATIC=new AutomaticRegions();MapIntegration.initialize(); }
+        if (dev.herebynamed.platform.PlatformHelper.get().isModLoaded("xaeroworldmap")) { AUTOMATIC=new AutomaticRegions();MapIntegration.initialize(); }
         else HerebyNamed.LOG.warn("Xaero's World Map absent: shared regions remain available, map editing is disabled");
     }
     private void reset() {

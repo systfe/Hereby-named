@@ -4,16 +4,17 @@ import dev.herebynamed.HerebyNamed;
 import dev.herebynamed.domain.*;
 import dev.herebynamed.net.*;
 import dev.herebynamed.auto.AutoWork;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.storage.LevelResource;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 
 public final class ClientRegions {
-    private final MinecraftClient client = MinecraftClient.getInstance();
+    private final Minecraft client = Minecraft.getInstance();
     private final Map<String, Snapshot> shared = new HashMap<>();
     private final Map<String, RegionBook> local = new HashMap<>();
     private final Set<String> failed = new HashSet<>();
@@ -31,7 +32,7 @@ public final class ClientRegions {
     private AutoWork.Session writes=new AutoWork.Session();
     public long generation;
 
-    public boolean shared() { return client.getNetworkHandler() != null && ClientTransport.canSend(); }
+    public boolean shared() { return client.getConnection() != null && ClientTransport.canSend(); }
     public void reset() {
         writes.close();writes=new AutoWork.Session();
         shared.clear(); local.clear(); failed.clear(); requested.clear(); store = null;
@@ -59,7 +60,7 @@ public final class ClientRegions {
             }
             if (snapshot.dimension().equals(editing) && (!mine(snapshot.holder()) || !snapshot.authorized())) editing = null;
     }
-    private boolean mine(UUID holder) { return client.player != null && client.player.getUuid().equals(holder); }
+    private boolean mine(UUID holder) { return client.player != null && client.player.getUUID().equals(holder); }
     public RegionBook book(String dimension) {
         if (shared()) {
             Snapshot snapshot = shared.get(dimension);
@@ -74,10 +75,10 @@ public final class ClientRegions {
     }
     private RegionStore store() {
         if (store == null) {
-            String identity = client.getServer() != null ? "single:" + client.getServer().getSavePath(net.minecraft.util.WorldSavePath.ROOT).toAbsolutePath()
-                    : "server:" + (client.getCurrentServerEntry() == null ? "unknown" : client.getCurrentServerEntry().address.toLowerCase(Locale.ROOT));
+            String identity = client.getSingleplayerServer() != null ? "single:" + client.getSingleplayerServer().getWorldPath(LevelResource.ROOT).toAbsolutePath()
+                    : "server:" + (client.getCurrentServer() == null ? "unknown" : client.getCurrentServer().ip.toLowerCase(Locale.ROOT));
             String key = UUID.nameUUIDFromBytes(identity.getBytes(StandardCharsets.UTF_8)).toString();
-            Path root = client.runDirectory.toPath().resolve("hereby-named").resolve("local").resolve(key);
+            Path root = client.gameDirectory.toPath().resolve("hereby-named").resolve("local").resolve(key);
             store = new RegionStore(root);
         }
         return store;
@@ -101,8 +102,8 @@ public final class ClientRegions {
                 }));
             }
         }
-        if(resync && incoming.isEmpty() && client.world!=null) {
-            resync=false;requested.clear();request(client.world.getRegistryKey().getValue().toString());
+        if(resync && incoming.isEmpty() && client.level!=null) {
+            resync=false;requested.clear();request(client.level.dimension().location().toString());
         }
         if(automaticSaving) return true;
         if (pendingSince != 0 && System.nanoTime() - pendingSince > 10_000_000_000L) {
@@ -188,5 +189,5 @@ public final class ClientRegions {
             message("无法发送区域请求"); HerebyNamed.LOG.error("Region send failed", ex);
         }
     }
-    public void message(String text) { if (client.player != null) client.player.sendMessage(Text.literal("此地名曰：" + text), false); }
+    public void message(String text) { if (client.player != null) client.player.displayClientMessage(Component.literal("此地名曰：" + text), false); }
 }

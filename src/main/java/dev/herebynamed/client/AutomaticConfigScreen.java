@@ -1,13 +1,16 @@
 package dev.herebynamed.client;
 
 import dev.herebynamed.auto.*;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.*;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.*;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.screens.ConfirmScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import java.util.*;
 import java.util.function.IntConsumer;
 
@@ -32,18 +35,18 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
     private String error = "";
     private String biomeSearch = "";
     private boolean filterOnlyOverridden = false;
-    private TextFieldWidget searchInput;
+    private EditBox searchInput;
 
     AutomaticConfigScreen(Screen parent, AutomaticRegions automatic, int tab) {
-        super(Text.literal("自动区域设置"));
+        super(Component.literal("自动区域设置"));
         this.parent = parent;
         this.automatic = automatic;
         this.tab = tab;
         this.draft = automatic.settingsDraft();
     }
 
-    private ButtonWidget button(int bx, int by, int w, String text, Runnable action) {
-        return addDrawableChild(ButtonWidget.builder(Text.literal(text), b -> action.run()).dimensions(bx, by, w, 20).build());
+    private Button button(int bx, int by, int w, String text, Runnable action) {
+        return addRenderableWidget(Button.builder(Component.literal(text), b -> action.run()).bounds(bx, by, w, 20).build());
     }
 
     static String label(TerrainKind kind) {
@@ -55,10 +58,10 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
     private void refreshBiomeList() {
         if (allBiomes.isEmpty()) {
             Set<String> set = new TreeSet<>();
-            if (client != null && client.world != null) {
+            if (minecraft != null && minecraft.level != null) {
                 try {
-                    var reg = client.world.getRegistryManager().get(RegistryKeys.BIOME);
-                    for (var key : reg.getKeys()) set.add(key.getValue().toString());
+                    var reg = minecraft.level.registryAccess().registryOrThrow(Registries.BIOME);
+                    for (var key : reg.keySet()) set.add(key.toString());
                 } catch (Exception ignored) { }
             }
             if (draft.biomeOverrides != null) set.addAll(draft.biomeOverrides.keySet());
@@ -117,8 +120,8 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
         button(x, height - 54, 62, "上一页", () -> navigate(tab, page - 1)).active = page > 0;
         button(x + contentWidth - 62, height - 54, 62, "下一页", () -> navigate(tab, page + 1)).active = page + 1 < pages;
         button(x, height - 28, (contentWidth - 6) / 2, "保存并应用", this::save);
-        button(x + (contentWidth + 6) / 2, height - 28, (contentWidth - 6) / 2, "取消", this::close);
-        if (saving) for (var child : children()) if (child instanceof ClickableWidget widget) widget.active = false;
+        button(x + (contentWidth + 6) / 2, height - 28, (contentWidth - 6) / 2, "取消", this::onClose);
+        if (saving) for (var child : children()) if (child instanceof AbstractWidget widget) widget.active = false;
     }
 
     private int count() {
@@ -133,7 +136,7 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
         tab = nextTab;
         page = Math.max(0, nextPage);
         error = "";
-        clearAndInit();
+        rebuildWidgets();
     }
 
     private boolean read() {
@@ -149,16 +152,16 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
         }
     }
 
-    private TextFieldWidget number(int bx, int by, int w, int value, String hint, String key, IntConsumer writer) {
-        TextFieldWidget input = new TextFieldWidget(textRenderer, bx, by, w, 18, Text.literal(hint));
+    private EditBox number(int bx, int by, int w, int value, String hint, String key, IntConsumer writer) {
+        EditBox input = new EditBox(font, bx, by, w, 18, Component.literal(hint));
         fieldWriters.put(key, writer);
         rawFields.putIfAbsent(key, Integer.toString(value));
         input.setMaxLength(7);
-        input.setTextPredicate(s -> s.matches("[0-9]*"));
-        input.setText(rawFields.get(key));
-        input.setChangedListener(text -> rawFields.put(key, text));
-        input.setTooltip(Tooltip.of(Text.literal(hint)));
-        addDrawableChild(input);
+        input.setFilter(s -> s.matches("[0-9]*"));
+        input.setValue(rawFields.get(key));
+        input.setResponder(text -> rawFields.put(key, text));
+        input.setTooltip(Tooltip.create(Component.literal(hint)));
+        addRenderableWidget(input);
         return input;
     }
 
@@ -215,12 +218,12 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
             int y = 74 + (index - page * rows) * 24;
             if (index == 7) {
                 rowLabels.add("自动创建区域");
-                button(x + contentWidth - 96, y, 90, draft.enabled ? "开启" : "关闭", () -> { draft.enabled = !draft.enabled; clearAndInit(); });
+                button(x + contentWidth - 96, y, 90, draft.enabled ? "开启" : "关闭", () -> { draft.enabled = !draft.enabled; rebuildWidgets(); });
                 continue;
             }
             if (index == 8) {
                 rowLabels.add("删除保护（防重新生成）");
-                button(x + contentWidth - 96, y, 90, draft.suppressDeletedRegions ? "开启" : "关闭", () -> { draft.suppressDeletedRegions = !draft.suppressDeletedRegions; clearAndInit(); });
+                button(x + contentWidth - 96, y, 90, draft.suppressDeletedRegions ? "开启" : "关闭", () -> { draft.suppressDeletedRegions = !draft.suppressDeletedRegions; rebuildWidgets(); });
                 continue;
             }
             rowLabels.add(labels[index]);
@@ -230,54 +233,60 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
 
     private void lists() {
         button(x + contentWidth - 58, 51, 58, "新增", () -> openEntry(-1));
-        button(x + contentWidth - 126, 51, 64, "恢复默认", () -> client.setScreen(new Confirm(this, "用默认名称替换当前草稿中的白名单？", () -> {
-            try {
-                if (tab == 3) draft.roots = AutoConfig.defaultNames(true);
-                else draft.names = AutoConfig.defaultNames(false);
-                error = "";
-            } catch (java.io.IOException ex) {
-                error = "读取默认名单失败";
-            }
-            page = 0;
-        })));
+        button(x + contentWidth - 126, 51, 64, "恢复默认", () -> {
+            if (minecraft != null) minecraft.setScreen(new Confirm(this, "用默认名称替换当前草稿中的白名单？", () -> {
+                try {
+                    if (tab == 3) draft.roots = AutoConfig.defaultNames(true);
+                    else draft.names = AutoConfig.defaultNames(false);
+                    error = "";
+                } catch (java.io.IOException ex) {
+                    error = "读取默认名单失败";
+                }
+                page = 0;
+            }));
+        });
         for (int index = page * rows; index < Math.min(count(), (page + 1) * rows); index++) {
             int y = 74 + (index - page * rows) * 24, i = index;
             rowLabels.add(names().get(i).text());
             button(x + contentWidth - 86, y, 40, "编辑", () -> openEntry(i));
-            button(x + contentWidth - 42, y, 40, "删除", () -> client.setScreen(new Confirm(this, "从草稿中删除“" + rowLabels.get(i - page * rows) + "”？", () -> {
-                names().remove(i);
-            })));
+            button(x + contentWidth - 42, y, 40, "删除", () -> {
+                if (minecraft != null) minecraft.setScreen(new Confirm(this, "从草稿中删除“" + rowLabels.get(i - page * rows) + "”？", () -> {
+                    names().remove(i);
+                }));
+            });
         }
     }
 
     private void biomes() {
         // Search bar
         int searchW = contentWidth - 140;
-        searchInput = new TextFieldWidget(textRenderer, x, 51, searchW, 18, Text.literal("搜索群系 ID"));
-        searchInput.setText(biomeSearch);
-        searchInput.setChangedListener(s -> {
+        searchInput = new EditBox(font, x, 51, searchW, 18, Component.literal("搜索群系 ID"));
+        searchInput.setValue(biomeSearch);
+        searchInput.setResponder(s -> {
             biomeSearch = s;
             refreshBiomeList();
             page = 0;
-            clearAndInit();
+            rebuildWidgets();
         });
-        addDrawableChild(searchInput);
+        addRenderableWidget(searchInput);
 
         // Filter button: All vs Modified
         button(x + searchW + 4, 50, 64, filterOnlyOverridden ? "仅看已改" : "全部群系", () -> {
             filterOnlyOverridden = !filterOnlyOverridden;
             refreshBiomeList();
             page = 0;
-            clearAndInit();
+            rebuildWidgets();
         });
 
         // Reset all button
-        button(x + searchW + 72, 50, 64, "恢复全部", () -> client.setScreen(new Confirm(this, "清除所有自定义群系分类，恢复默认推断？", () -> {
-            if (draft.biomeOverrides != null) draft.biomeOverrides.clear();
-            refreshBiomeList();
-            page = 0;
-            clearAndInit();
-        })));
+        button(x + searchW + 72, 50, 64, "恢复全部", () -> {
+            if (minecraft != null) minecraft.setScreen(new Confirm(this, "清除所有自定义群系分类，恢复默认推断？", () -> {
+                if (draft.biomeOverrides != null) draft.biomeOverrides.clear();
+                refreshBiomeList();
+                page = 0;
+                rebuildWidgets();
+            }));
+        });
 
         int startY = 76;
         for (int index = page * rows; index < Math.min(filteredBiomes.size(), (page + 1) * rows); index++) {
@@ -295,55 +304,55 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
                 if (draft.biomeOverrides == null) draft.biomeOverrides = new LinkedHashMap<>();
                 int nextIdx = (currentKind.ordinal() + 1) % KINDS.length;
                 draft.biomeOverrides.put(biomeId, KINDS[nextIdx].name());
-                clearAndInit();
+                rebuildWidgets();
             });
 
             // Single item reset button if overridden
             if (overridden) {
                 button(x + contentWidth - 36, y, 34, "重置", () -> {
                     draft.biomeOverrides.remove(biomeId);
-                    clearAndInit();
+                    rebuildWidgets();
                 });
             }
         }
     }
 
     private void openEntry(int index) {
-        client.setScreen(new EntryScreen(index));
+        if (minecraft != null) minecraft.setScreen(new EntryScreen(index));
     }
 
     private void save() {
         if (saving || !read()) return;
         try { draft.validate(); } catch (IllegalArgumentException ex) { error = ex.getMessage(); return; }
         saving = true;
-        clearAndInit();
-        var connection = client.getNetworkHandler();
-        var world = client.world;
+        rebuildWidgets();
+        var connection = minecraft != null ? minecraft.getConnection() : null;
+        var world = minecraft != null ? minecraft.level : null;
         automatic.saveSettings(draft, message -> {
             saving = false;
-            if (client.currentScreen != this || client.getNetworkHandler() != connection || client.world != world) return;
-            if (message.isEmpty()) client.setScreen(parent);
-            else { error = message; clearAndInit(); }
+            if (minecraft == null || minecraft.screen != this || minecraft.getConnection() != connection || minecraft.level != world) return;
+            if (message.isEmpty()) minecraft.setScreen(parent);
+            else { error = message; rebuildWidgets(); }
         });
     }
 
-    @Override public void close() { if (!saving) client.setScreen(parent); }
+    @Override public void onClose() { if (!saving && minecraft != null) minecraft.setScreen(parent); }
 
-    @Override public void render(DrawContext context, int mx, int my, float delta) {
+    @Override public void render(GuiGraphics context, int mx, int my, float delta) {
         ClientUi.background(this, context, mx, my, delta);
         super.render(context, mx, my, delta);
-        context.drawCenteredTextWithShadow(textRenderer, title, width / 2, 8, 0xffffff);
+        context.drawCenteredString(font, title, width / 2, 8, 0xffffff);
 
         if (tab == 0) {
-            context.drawTextWithShadow(textRenderer, "类别", x, 57, 0xbbbbbb);
+            context.drawString(font, "类别", x, 57, 0xbbbbbb);
             int w = (contentWidth - 90) / 2;
             String[] headers = {"最低跨度", "跨度上限"};
-            for (int i = 0; i < 2; i++) context.drawTextWithShadow(textRenderer, headers[i], x + 90 + i * w, 57, 0xbbbbbb);
+            for (int i = 0; i < 2; i++) context.drawString(font, headers[i], x + 90 + i * w, 57, 0xbbbbbb);
         } else if (tab == 4) {
-            String status = client != null && client.world != null ? "共 " + count() + " 个群系" : "主界面模式（进存档可显示模组群系）";
-            context.drawTextWithShadow(textRenderer, status, x, 38, 0x888888);
+            String status = minecraft != null && minecraft.level != null ? "共 " + count() + " 个群系" : "主界面模式（进存档可显示模组群系）";
+            context.drawString(font, status, x, 38, 0x888888);
         } else {
-            context.drawTextWithShadow(textRenderer, tab == 1 ? "悬停输入框查看范围" : "共 " + count() + " 条", x, 57, 0xbbbbbb);
+            context.drawString(font, tab == 1 ? "悬停输入框查看范围" : "共 " + count() + " 条", x, 57, 0xbbbbbb);
         }
 
         int maxLabelW = tab == 0 ? 82 : tab == 4 ? contentWidth - 104 : contentWidth - 102;
@@ -354,18 +363,18 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
             if (tab == 4 && draft.biomeOverrides != null && draft.biomeOverrides.containsKey(text)) {
                 color = 0x88ff88; // Modified entries highlighted in soft green
             }
-            context.drawTextWithShadow(textRenderer, textRenderer.trimToWidth(text, maxLabelW), x, startY + i * 24, color);
+            context.drawString(font, font.plainSubstrByWidth(text, maxLabelW), x, startY + i * 24, color);
         }
 
-        context.drawCenteredTextWithShadow(textRenderer, (page + 1) + " / " + Math.max(1, (count() + rows - 1) / rows), width / 2, height - 48, 0xbbbbbb);
+        context.drawCenteredString(font, (page + 1) + " / " + Math.max(1, (count() + rows - 1) / rows), width / 2, height - 48, 0xbbbbbb);
         String message = saving ? "正在保存…" : error.isEmpty() ? "保存后生效；取消不会修改现有设置" : error;
-        context.drawCenteredTextWithShadow(textRenderer, textRenderer.trimToWidth(message, contentWidth), width / 2, height - 68, error.isEmpty() ? 0xaaaaaa : 0xff8888);
+        context.drawCenteredString(font, font.plainSubstrByWidth(message, contentWidth), width / 2, height - 68, error.isEmpty() ? 0xaaaaaa : 0xff8888);
     }
 
     private static final class Confirm extends ConfirmScreen implements EditorDialog {
         Confirm(AutomaticConfigScreen parent, String question, Runnable action) {
-            super(yes -> { if (yes) action.run(); MinecraftClient.getInstance().setScreen(parent); },
-                    Text.literal("确认操作"), Text.literal(question), Text.literal("确认"), Text.literal("取消"));
+            super(yes -> { if (yes) action.run(); Minecraft.getInstance().setScreen(parent); },
+                    Component.literal("确认操作"), Component.literal(question), Component.literal("确认"), Component.literal("取消"));
         }
     }
 
@@ -374,12 +383,12 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
         private final Set<String> kinds = new LinkedHashSet<>();
         private final Set<String> climates = new LinkedHashSet<>();
         private String entryError = "";
-        private TextFieldWidget text;
+        private EditBox text;
         private String value;
         private int left, top, w;
 
         EntryScreen(int index) {
-            super(Text.literal(tab == 3 ? "词根条目" : "默认名条目"));
+            super(Component.literal(tab == 3 ? "词根条目" : "默认名条目"));
             this.index = index;
             this.value = "";
             if (index >= 0) {
@@ -392,24 +401,24 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
             }
         }
 
-        private ButtonWidget addButton(int bx, int by, int bw, String label, Runnable action) {
-            return addDrawableChild(ButtonWidget.builder(Text.literal(label), b -> {
-                value = text.getText();
+        private Button addButton(int bx, int by, int bw, String label, Runnable action) {
+            return addRenderableWidget(Button.builder(Component.literal(label), b -> {
+                value = text.getValue();
                 action.run();
-                if (client.currentScreen == this) clearAndInit();
-            }).dimensions(bx, by, bw, 20).build());
+                if (minecraft != null && minecraft.screen == this) rebuildWidgets();
+            }).bounds(bx, by, bw, 20).build());
         }
 
         @Override protected void init() {
-            if (text != null) value = text.getText();
+            if (text != null) value = text.getValue();
             w = Math.min(300, width - 24);
             left = (width - w) / 2;
             top = Math.max(8, (height - 286) / 2);
 
-            text = new TextFieldWidget(textRenderer, left, top + 38, w, 18, Text.literal("名称"));
+            text = new EditBox(font, left, top + 38, w, 18, Component.literal("名称"));
             text.setMaxLength(48);
-            text.setText(value);
-            addDrawableChild(text);
+            text.setValue(value);
+            addRenderableWidget(text);
             setInitialFocus(text);
 
             int climateWidth = (w - 4) / 3;
@@ -435,14 +444,14 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
             }
 
             addButton(left, top + 218, (w - 6) / 2, "应用到草稿", this::apply);
-            addButton(left + (w + 6) / 2, top + 218, (w - 6) / 2, "取消", this::close);
+            addButton(left + (w + 6) / 2, top + 218, (w - 6) / 2, "取消", this::onClose);
         }
 
         private void apply() {
             try {
-                if (text.getText().isBlank()) throw new IllegalArgumentException("请输入名称");
-                if (text.getText().codePoints().anyMatch(Character::isDigit)) throw new IllegalArgumentException("名称不能包含数字");
-                var entry = new AutoConfig.Name(text.getText().strip(), List.copyOf(kinds), List.copyOf(climates));
+                if (text.getValue().isBlank()) throw new IllegalArgumentException("请输入名称");
+                if (text.getValue().codePoints().anyMatch(Character::isDigit)) throw new IllegalArgumentException("名称不能包含数字");
+                var entry = new AutoConfig.Name(text.getValue().strip(), List.copyOf(kinds), List.copyOf(climates));
                 AutoConfig check = draft.copy();
                 List<AutoConfig.Name> list = tab == 3 ? check.roots : check.names;
                 if (index < 0) list.add(entry);
@@ -450,21 +459,21 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
                 check.validate();
                 if (tab == 3) draft.roots = list;
                 else draft.names = list;
-                close();
+                onClose();
             } catch (IllegalArgumentException ex) {
                 entryError = ex.getMessage();
             }
         }
 
-        @Override public void close() { client.setScreen(AutomaticConfigScreen.this); }
+        @Override public void onClose() { if (minecraft != null) minecraft.setScreen(AutomaticConfigScreen.this); }
 
-        @Override public void render(DrawContext context, int mx, int my, float delta) {
+        @Override public void render(GuiGraphics context, int mx, int my, float delta) {
             ClientUi.background(this, context, mx, my, delta);
             super.render(context, mx, my, delta);
-            context.drawCenteredTextWithShadow(textRenderer, title, width / 2, top, 0xffffff);
-            context.drawTextWithShadow(textRenderer, "名称（不含数字）", left, top + 23, 0xbbbbbb);
-            context.drawCenteredTextWithShadow(textRenderer, "偏好可多选；留空表示不限", width / 2, top + 244, 0xaaaaaa);
-            context.drawCenteredTextWithShadow(textRenderer, textRenderer.trimToWidth(entryError.isEmpty() ? "返回后点击“保存并应用”才会写入设置" : entryError, w), width / 2, top + 260, entryError.isEmpty() ? 0xaaaaaa : 0xff8888);
+            context.drawCenteredString(font, title, width / 2, top, 0xffffff);
+            context.drawString(font, "名称（不含数字）", left, top + 23, 0xbbbbbb);
+            context.drawCenteredString(font, "偏好可多选；留空表示不限", width / 2, top + 244, 0xaaaaaa);
+            context.drawCenteredString(font, font.plainSubstrByWidth(entryError.isEmpty() ? "返回后点击“保存并应用”才会写入设置" : entryError, w), width / 2, top + 260, entryError.isEmpty() ? 0xaaaaaa : 0xff8888);
         }
     }
 }

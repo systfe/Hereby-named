@@ -3,10 +3,11 @@ package dev.herebynamed.client;
 import dev.herebynamed.HerebyNamed;
 import dev.herebynamed.auto.*;
 import dev.herebynamed.domain.*;
-import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.registry.*;
-import net.minecraft.util.Identifier;
+import dev.herebynamed.platform.PlatformHelper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import xaero.map.*;
 import java.nio.file.Path;
 import java.nio.charset.StandardCharsets;
@@ -19,9 +20,9 @@ public final class AutomaticRegions {
     private record Observation(ChunkCell cell,TerrainSample sample) { }
     private record Output(int samples,boolean unlocked,int unnamed,List<RegionEdit> proposals) { }
     private static final String DIMENSION="minecraft:overworld";
-    private final MinecraftClient client=MinecraftClient.getInstance();
+    private final Minecraft client=Minecraft.getInstance();
     private final ClientRegions regions=HerebyNamedClient.REGIONS;
-    private final Path configDirectory=FabricLoader.getInstance().getConfigDir().resolve("hereby-named");
+    private final Path configDirectory=PlatformHelper.get().configDir().resolve("hereby-named");
     private final Map<String,BiomeInfo> biomeInfo=new HashMap<>();
     private final ArrayDeque<RegionEdit> proposals=new ArrayDeque<>();
     private final ArrayDeque<ChunkCell> nearby=new ArrayDeque<>();
@@ -91,13 +92,13 @@ public final class AutomaticRegions {
             catch(RuntimeException ex) { HerebyNamed.LOG.error("Automatic configuration unavailable",ex);status="配置读取失败；修正文件后重新加载"; }
             loadingConfig=null;
         }
-        if(config==null || !config.enabled || client.world==null || client.player==null) return;
-        if(!client.world.getRegistryKey().getValue().toString().equals(DIMENSION)) { status="仅处理主世界地表";return; }
+        if(config==null || !config.enabled || client.level==null || client.player==null) return;
+        if(!client.level.dimension().location().toString().equals(DIMENSION)) { status="仅处理主世界地表";return; }
         if(!regions.automaticAllowed()) { status="等待区域编辑结束或共享编辑授权";return; }
         WorldMapSession session=WorldMapSession.getCurrentSession();
         MapProcessor next=session==null?null:session.getMapProcessor();
         if(next==null || next.getMapWorld()==null || next.getMapWorld().getCurrentDimension()==null
-                || !next.getMapWorld().getCurrentDimension().getDimId().getValue().toString().equals(DIMENSION)) return;
+                || !next.getMapWorld().getCurrentDimension().getDimId().location().toString().equals(DIMENSION)) return;
         String identity=next.getCurrentWorldId()+"/"+next.getCurrentMWId();
         if(processor!=next || !mapIdentity.equals(identity)) {
             reset();processor=next;knowledge=new MapKnowledge(next);mapIdentity=identity;
@@ -164,10 +165,10 @@ public final class AutomaticRegions {
         catch(Exception ex) { HerebyNamed.LOG.warn("Discarding unreadable disposable surface cache",ex); }
     }
     private BiomeInfo biome(String id) {
-        var registry=client.world.getRegistryManager().get(RegistryKeys.BIOME);
-        var key=Identifier.tryParse(id);if(key==null) return null;
-        var entry=registry.getEntry(RegistryKey.of(RegistryKeys.BIOME,key));
-        return entry.map(value -> new BiomeInfo(value.value().getTemperature(),value.streamTags().map(t -> t.id().toString()).collect(java.util.stream.Collectors.toUnmodifiableSet()))).orElse(null);
+        var registry=client.level.registryAccess().registryOrThrow(Registries.BIOME);
+        var key=ResourceLocation.tryParse(id);if(key==null) return null;
+        var entry=registry.getHolder(ResourceKey.create(Registries.BIOME,key));
+        return entry.map(value -> new BiomeInfo(value.value().getBaseTemperature(),value.tags().map(t -> t.location().toString()).collect(java.util.stream.Collectors.toUnmodifiableSet()))).orElse(null);
     }
     private static Output process(WorkerState state,List<Observation> batch,RegionBook book,AutoConfig config,boolean force) throws Exception {
         for(Observation o:batch) if(state.samples.size()<config.maximumSamples || state.samples.containsKey(o.cell())) {

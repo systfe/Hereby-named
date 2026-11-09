@@ -1,16 +1,17 @@
 package dev.herebynamed.client;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import org.lwjgl.glfw.GLFW;
 import java.util.function.IntConsumer;
 
 /** Saturation/brightness, hue, and ready-to-use swatches; no color code required. */
-final class RegionColorPicker extends ClickableWidget {
+final class RegionColorPicker extends AbstractWidget {
     private static final int[] SWATCHES = {0xe85d5d,0xf4a340,0xf1d54c,0x82c95b,0x3fb88c,
             0x66bbdd,0x5b83dd,0x9a71d6,0xdc80b5,0xe8e8e8,0x666666};
     private float hue, saturation, brightness;
@@ -19,7 +20,7 @@ final class RegionColorPicker extends ClickableWidget {
     private int dragging = -1;
 
     RegionColorPicker(int x,int y,int width,int color,IntConsumer changed) {
-        super(x,y,width,100,Text.literal("标记颜色：方向键调整饱和度和明暗，Shift 加方向键调整色相"));
+        super(x,y,width,100,Component.literal("标记颜色：方向键调整饱和度和明暗，Shift 加方向键调整色相"));
         this.changed=changed;
         setColor(color);
     }
@@ -35,16 +36,15 @@ final class RegionColorPicker extends ClickableWidget {
             hue=(component/6+1)%1;
         }
     }
-    // Widget render entrypoint was renamed in 1.20.2. Both delegate to the same drawing code.
-    protected void renderWidget(DrawContext context,int mouseX,int mouseY,float delta) { renderButton(context,mouseX,mouseY,delta); }
-    protected void renderButton(DrawContext context,int mouseX,int mouseY,float delta) {
+    @Override
+    protected void renderWidget(GuiGraphics context,int mouseX,int mouseY,float delta) {
         int x=getX(),y=getY(),sw=squareWidth();
         for(int col=0;col<sw;col++) {
-            int top=0xff000000|MathHelper.hsvToRgb(hue,col/(float)(sw-1),1);
+            int top=0xff000000|Mth.hsvToRgb(hue,col/(float)(sw-1),1);
             context.fillGradient(x+col,y,x+col+1,y+64,top,0xff000000);
         }
         for(int row=0;row<64;row++) {
-            int color=0xff000000|MathHelper.hsvToRgb(row/64f,1,1);
+            int color=0xff000000|Mth.hsvToRgb(row/64f,1,1);
             context.fill(x+width-16,y+row,x+width,y+row+1,color);
         }
         int markerX=x+Math.round(saturation*(sw-1)),markerY=y+Math.round((1-brightness)*63);
@@ -61,7 +61,7 @@ final class RegionColorPicker extends ClickableWidget {
         }
         if(isFocused()) border(context,x-2,y-2,width+4,68,0xffaaaaaa);
     }
-    private static void border(DrawContext context,int x,int y,int width,int height,int color) {
+    private static void border(GuiGraphics context,int x,int y,int width,int height,int color) {
         context.fill(x,y,x+width,y+1,color); context.fill(x,y+height-1,x+width,y+height,color);
         context.fill(x,y,x+1,y+height,color); context.fill(x+width-1,y,x+width,y+height,color);
     }
@@ -70,7 +70,7 @@ final class RegionColorPicker extends ClickableWidget {
         double x=mouseX-getX(),y=mouseY-getY();
         if(y>=76&&y<93) {
             int swatch=(int)x/20;
-            if(swatch<SWATCHES.length&&x%20<17) { setColor(SWATCHES[swatch]); changed.accept(color()); playDownSound(net.minecraft.client.MinecraftClient.getInstance().getSoundManager()); }
+            if(swatch<SWATCHES.length&&x%20<17) { setColor(SWATCHES[swatch]); changed.accept(color()); playDownSound(Minecraft.getInstance().getSoundManager()); }
             return true;
         }
         dragging=y<64?(x<squareWidth()?0:x>=width-16?1:-1):-1;
@@ -78,11 +78,11 @@ final class RegionColorPicker extends ClickableWidget {
     }
     private void update(double mouseX,double mouseY) {
         if(dragging==0) {
-            saturation=MathHelper.clamp((float)(mouseX-getX())/(squareWidth()-1),0,1);
-            brightness=1-MathHelper.clamp((float)(mouseY-getY())/63,0,1);
-        } else if(dragging==1) hue=MathHelper.clamp((float)(mouseY-getY())/64,0,0.99999f);
+            saturation=Mth.clamp((float)(mouseX-getX())/(squareWidth()-1),0,1);
+            brightness=1-Mth.clamp((float)(mouseY-getY())/63,0,1);
+        } else if(dragging==1) hue=Mth.clamp((float)(mouseY-getY())/64,0,0.99999f);
         else return;
-        rgb=MathHelper.hsvToRgb(hue,saturation,brightness)&0xffffff;
+        rgb=Mth.hsvToRgb(hue,saturation,brightness)&0xffffff;
         changed.accept(color());
     }
     @Override public boolean mouseDragged(double mouseX,double mouseY,int button,double deltaX,double deltaY) {
@@ -97,10 +97,10 @@ final class RegionColorPicker extends ClickableWidget {
         if(!isFocused()||key<GLFW.GLFW_KEY_RIGHT||key>GLFW.GLFW_KEY_UP) return false;
         float step=(key==GLFW.GLFW_KEY_RIGHT||key==GLFW.GLFW_KEY_UP)?0.02f:-0.02f;
         if(Screen.hasShiftDown()) hue=(hue+step+1)%1;
-        else if(key==GLFW.GLFW_KEY_LEFT||key==GLFW.GLFW_KEY_RIGHT) saturation=MathHelper.clamp(saturation+step,0,1);
-        else brightness=MathHelper.clamp(brightness+step,0,1);
-        rgb=MathHelper.hsvToRgb(hue,saturation,brightness)&0xffffff;
+        else if(key==GLFW.GLFW_KEY_LEFT||key==GLFW.GLFW_KEY_RIGHT) saturation=Mth.clamp(saturation+step,0,1);
+        else brightness=Mth.clamp(brightness+step,0,1);
+        rgb=Mth.hsvToRgb(hue,saturation,brightness)&0xffffff;
         changed.accept(color()); return true;
     }
-    @Override protected void appendClickableNarrations(NarrationMessageBuilder builder) { appendDefaultNarrations(builder); }
+    @Override protected void updateWidgetNarration(NarrationElementOutput builder) { defaultButtonNarrationText(builder); }
 }

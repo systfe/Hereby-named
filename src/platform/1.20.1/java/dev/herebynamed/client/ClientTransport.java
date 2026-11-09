@@ -3,7 +3,7 @@ package dev.herebynamed.client;
 import dev.herebynamed.HerebyNamed;
 import dev.herebynamed.net.Wire;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import java.util.function.Consumer;
 
 final class ClientTransport {
@@ -14,6 +14,6 @@ final class ClientTransport {
         });
     }
     static boolean canSend() { return ClientPlayNetworking.canSend(Wire.CHANNEL); }
-    static void send(PacketByteBuf packet) { ClientPlayNetworking.send(Wire.CHANNEL,packet); }
+    static void send(FriendlyByteBuf packet) { ClientPlayNetworking.send(Wire.CHANNEL,packet); }
     private ClientTransport() {}
 }

@@ -20,7 +20,7 @@ repositories { mavenCentral() }
 
 dependencies {
     minecraft "com.mojang:minecraft:${mc}"
-    mappings "net.fabricmc:yarn:${mc}+build.${modern ? '3' : '10'}:v2"
+    mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${modern ? '0.19.3' : '0.17.2'}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${modern ? '0.116.13+1.21.1' : '0.92.6+1.20.1'}"
     modCompileOnly files("${localLibs}/xaeroworldmap-${mapVersion}.jar")

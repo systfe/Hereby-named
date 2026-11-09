@@ -1,8 +1,8 @@
 package dev.herebynamed.net;
 
 import io.netty.buffer.Unpooled;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import org.junit.jupiter.api.Test;
 import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,12 +15,12 @@ class RegionPayloadTest {
         Wire.send(original,packet -> {
             try {
                 RegionPayload payload=new RegionPayload(Wire.Fragment.read(packet));
-                RegistryByteBuf buffer=new RegistryByteBuf(Unpooled.buffer(),DynamicRegistryManager.EMPTY);
+                RegistryFriendlyByteBuf buffer=new RegistryFriendlyByteBuf(Unpooled.buffer(),RegistryAccess.EMPTY);
                 try {
                     RegionPayload.CODEC.encode(buffer,payload);
                     assertTrue(buffer.readableBytes()<32767);
                     RegionPayload decoded=RegionPayload.CODEC.decode(buffer);
-                    assertEquals(RegionPayload.ID,decoded.getId());
+                    assertEquals(RegionPayload.TYPE,decoded.type());
                     assembler.accept(decoded.fragment()).ifPresent(results::add);
                 } finally { buffer.release(); }
             } finally { packet.release(); }
@@ -28,7 +28,7 @@ class RegionPayloadTest {
         assertEquals(1,results.size()); assertArrayEquals(original,results.getFirst());
     }
     @Test void modernPayloadRejectsInvalidFragmentCounts() {
-        RegistryByteBuf buffer=new RegistryByteBuf(Unpooled.buffer(),DynamicRegistryManager.EMPTY);
+        RegistryFriendlyByteBuf buffer=new RegistryFriendlyByteBuf(Unpooled.buffer(),RegistryAccess.EMPTY);
         try {
             buffer.writeInt(1); buffer.writeInt(0); buffer.writeInt(0); buffer.writeByteArray(new byte[]{1});
             assertThrows(IllegalArgumentException.class,() -> RegionPayload.CODEC.decode(buffer));

@@ -18,7 +18,7 @@ final class MapIntegration {
             ScreenKeyboardEvents.allowKeyPress(screen).register((s,key,scan,mods) -> controller.key(key,mods));
         });
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (active != null && client.currentScreen != active.screen() && !(client.currentScreen instanceof EditorDialog)) {
+            if (active != null && client.screen != active.screen() && !(client.screen instanceof EditorDialog)) {
                 active.close(); active = null;
             }
         });
