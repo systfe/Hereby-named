@@ -1,66 +1,7 @@
 plugins {
-    id 'fabric-loom' version '1.9.2'
+    id 'base'
 }
 
-def mc = providers.gradleProperty('minecraft_version').getOrElse('1.20.1')
-if (!(mc in ['1.20.1', '1.21.1'])) throw new GradleException('Supported targets: 1.20.1, 1.21.1')
-def modern = mc == '1.21.1'
-def javaRelease = modern ? 21 : 17
-def mapVersion = modern ? '1.44.2' : '1.47.0'
-def libVersion = modern ? '1.7.1' : '1.7.3'
-def localLibs = modern ? 'libs/1.21.1' : 'libs'
-def modVersion = providers.gradleProperty('mod_version').getOrElse('0.3.1')
-version = "${modVersion}+${mc}"
-group = 'dev.herebynamed'
-layout.buildDirectory = file("build/${mc}")
-sourceSets.main.java.srcDir("src/platform/${mc}/java")
-sourceSets.test.java.srcDir("src/platform/${mc}/test")
-
-repositories { mavenCentral() }
-
-dependencies {
-    minecraft "com.mojang:minecraft:${mc}"
-    mappings loom.officialMojangMappings()
-    modImplementation "net.fabricmc:fabric-loader:${modern ? '0.19.3' : '0.17.2'}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${modern ? '0.116.13+1.21.1' : '0.92.6+1.20.1'}"
-    modCompileOnly files("${localLibs}/xaeroworldmap-${mapVersion}.jar")
-    modCompileOnly files("${localLibs}/xaerolib-${libVersion}.jar")
-    testImplementation platform('org.junit:junit-bom:5.11.4')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-}
-
-java {
-    sourceCompatibility = JavaVersion.toVersion(javaRelease)
-    targetCompatibility = JavaVersion.toVersion(javaRelease)
-    withSourcesJar()
-}
-tasks.withType(JavaCompile).configureEach {
-    options.release = javaRelease
-    options.encoding = 'UTF-8'
-}
-// On Windows, Java @argfiles use the system code page while Gradle writes UTF-8.
-// An ASCII pathing jar with escaped file URLs keeps tests runnable in Chinese paths.
-def testRuntimeJar = tasks.register('testRuntimeJar', Jar) {
-    dependsOn tasks.testClasses
-    archiveFileName = "test-runtime-${mc}.jar"
-    destinationDirectory = file("${gradle.gradleUserHomeDir}/hereby-named/${Integer.toHexString(projectDir.absolutePath.hashCode())}")
-    inputs.files(sourceSets.test.runtimeClasspath)
-    doFirst {
-        manifest.attributes('Class-Path': sourceSets.test.runtimeClasspath.files.collect { it.toURI().toASCIIString() }.join(' '))
-    }
-}
-test {
-    useJUnitPlatform()
-    dependsOn testRuntimeJar
-    classpath = files(testRuntimeJar.flatMap { it.archiveFile })
-}
-processResources {
-    inputs.property 'version', project.version
-    inputs.property 'minecraft_version', mc
-    inputs.property 'java_version', javaRelease
-    inputs.property 'xaero_version', mapVersion
-    filesMatching('fabric.mod.json') {
-        expand version: project.version, minecraft_version: mc, java_version: javaRelease, xaero_version: mapVersion
-    }
+allprojects {
+    group = 'dev.herebynamed'
 }

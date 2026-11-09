@@ -1,0 +1,81 @@
+plugins {
+    id 'fabric-loom' version '1.9.2'
+}
+
+def mc = providers.gradleProperty('minecraft_version').getOrElse('1.20.1')
+if (!(mc in ['1.20.1', '1.21.1'])) throw new GradleException('Supported targets: 1.20.1, 1.21.1')
+def modern = mc == '1.21.1'
+def javaRelease = modern ? 21 : 17
+def mapVersion = modern ? '1.44.2' : '1.47.0'
+def libVersion = modern ? '1.7.1' : '1.7.3'
+def localLibs = modern ? "${rootDir}/libs/1.21.1" : "${rootDir}/libs"
+def modVersion = providers.gradleProperty('mod_version').getOrElse('0.3.1')
+
+version = "${modVersion}+${mc}-fabric"
+group = 'dev.herebynamed'
+archivesBaseName = 'hereby-named'
+layout.buildDirectory = file("build/${mc}")
+
+sourceSets.main.java.srcDirs += project(':common').sourceSets.main.java.srcDirs
+sourceSets.main.java.srcDir("src/platform/${mc}/java")
+sourceSets.main.resources.srcDirs += project(':common').sourceSets.main.resources.srcDirs
+sourceSets.test.java.srcDir("src/platform/${mc}/test")
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${mc}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${modern ? '0.19.3' : '0.17.2'}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${modern ? '0.116.13+1.21.1' : '0.92.6+1.20.1'}"
+    compileOnly 'org.spongepowered:mixin:0.8.5'
+    modCompileOnly files("${localLibs}/xaeroworldmap-${mapVersion}.jar")
+    modCompileOnly files("${localLibs}/xaerolib-${libVersion}.jar")
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+java {
+    sourceCompatibility = JavaVersion.toVersion(javaRelease)
+    targetCompatibility = JavaVersion.toVersion(javaRelease)
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = javaRelease
+    options.encoding = 'UTF-8'
+}
+
+def testRuntimeJar = tasks.register('testRuntimeJar', Jar) {
+    dependsOn tasks.testClasses
+    archiveFileName = "test-runtime-fabric-${mc}.jar"
+    destinationDirectory = file("${gradle.gradleUserHomeDir}/hereby-named/${Integer.toHexString(projectDir.absolutePath.hashCode())}")
+    inputs.files(sourceSets.test.runtimeClasspath)
+    doFirst {
+        manifest.attributes('Class-Path': sourceSets.test.runtimeClasspath.files.collect { it.toURI().toASCIIString() }.join(' '))
+    }
+}
+
+test {
+    useJUnitPlatform()
+    dependsOn testRuntimeJar
+    classpath = files(testRuntimeJar.flatMap { it.archiveFile })
+}
+
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'minecraft_version', mc
+    inputs.property 'java_version', javaRelease
+    inputs.property 'xaero_version', mapVersion
+    filesMatching('fabric.mod.json') {
+        expand([
+            'version': project.version,
+            'minecraft_version': mc,
+            'java_version': javaRelease,
+            'xaero_version': mapVersion
+        ])
+    }
+}

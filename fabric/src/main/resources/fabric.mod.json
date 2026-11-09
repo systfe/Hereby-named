@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "hereby_named",
+  "version": "${version}",
+  "name": "Xaero的世界地图 | 此地名曰 (Xaero's World Map | Hereby Named)",
+  "description": "Xaero的世界地图 | 此地名曰 — layered, shared names for places you explore.",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["dev.herebynamed.fabric.HerebyNamedFabric"],
+    "client": ["dev.herebynamed.fabric.HerebyNamedFabricClient"]
+  },
+  "mixins": ["hereby_named.mixins.json"],
+  "depends": {"fabricloader": ">=0.16.0", "minecraft": "${minecraft_version}", "java": ">=${java_version}", "fabric-api": "*"},
+  "suggests": {"xaeroworldmap": "${xaero_version}", "travelerstitles": "*"},
+  "license": "MIT"
+}

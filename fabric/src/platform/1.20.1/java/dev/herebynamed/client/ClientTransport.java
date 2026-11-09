@@ -1,0 +1,19 @@
+package dev.herebynamed.client;
+
+import dev.herebynamed.HerebyNamed;
+import dev.herebynamed.net.Wire;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.network.FriendlyByteBuf;
+import java.util.function.Consumer;
+
+public final class ClientTransport {
+    public static void initialize(Consumer<Wire.Fragment> receiver) {
+        ClientPlayNetworking.registerGlobalReceiver(Wire.CHANNEL,(client,handler,buf,response) -> {
+            try { Wire.Fragment fragment=Wire.Fragment.read(buf); client.execute(() -> receiver.accept(fragment)); }
+            catch(RuntimeException ex) { HerebyNamed.LOG.warn("Invalid region snapshot fragment",ex); }
+        });
+    }
+    public static boolean canSend() { return ClientPlayNetworking.canSend(Wire.CHANNEL); }
+    public static void send(FriendlyByteBuf packet) { ClientPlayNetworking.send(Wire.CHANNEL,packet); }
+    private ClientTransport() {}
+}

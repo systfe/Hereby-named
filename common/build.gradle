@@ -1,0 +1,50 @@
+plugins {
+    id 'fabric-loom' version '1.9.2'
+}
+
+def mc = '1.20.1'
+def mapVersion = '1.47.0'
+def libVersion = '1.7.3'
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${mc}"
+    mappings loom.officialMojangMappings()
+    modCompileOnly "net.fabricmc:fabric-loader:0.17.2"
+    compileOnly 'org.spongepowered:mixin:0.8.5'
+    modCompileOnly files("${rootDir}/libs/xaeroworldmap-${mapVersion}.jar")
+    modCompileOnly files("${rootDir}/libs/xaerolib-${libVersion}.jar")
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+    options.encoding = 'UTF-8'
+}
+
+def testRuntimeJar = tasks.register('testRuntimeJar', Jar) {
+    dependsOn tasks.testClasses
+    archiveFileName = "test-runtime-common.jar"
+    destinationDirectory = file("${gradle.gradleUserHomeDir}/hereby-named/${Integer.toHexString(projectDir.absolutePath.hashCode())}")
+    inputs.files(sourceSets.test.runtimeClasspath)
+    doFirst {
+        manifest.attributes('Class-Path': sourceSets.test.runtimeClasspath.files.collect { it.toURI().toASCIIString() }.join(' '))
+    }
+}
+
+test {
+    useJUnitPlatform()
+    dependsOn testRuntimeJar
+    classpath = files(testRuntimeJar.flatMap { it.archiveFile })
+}

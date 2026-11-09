@@ -1,0 +1,23 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+
+[[mods]]
+modId="hereby_named"
+version="${version}"
+displayName="Xaero's World Map | Hereby Named"
+description='''Xaero's World Map | Hereby Named — layered, shared names for places you explore.'''
+
+[[dependencies.hereby_named]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.hereby_named]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.20.2)"
+    ordering="NONE"
+    side="BOTH"

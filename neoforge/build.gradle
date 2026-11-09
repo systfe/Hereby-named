@@ -1,0 +1,72 @@
+plugins {
+    id 'net.neoforged.moddev'
+}
+
+def mc = '1.21.1'
+def neoforgeVersion = '21.1.77'
+def mapVersion = '1.44.2'
+def libVersion = '1.7.1'
+def modVersion = providers.gradleProperty('mod_version').getOrElse('0.3.1')
+
+version = "${modVersion}+${mc}-neoforge"
+group = 'dev.herebynamed'
+archivesBaseName = 'hereby-named'
+
+neoForge {
+    version = neoforgeVersion
+    validateAccessTransformers = false
+    mods {
+        "hereby_named" {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+sourceSets.main.java.srcDirs += project(':common').sourceSets.main.java.srcDirs
+sourceSets.main.resources.srcDirs += project(':common').sourceSets.main.resources.srcDirs
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.neoforged.net/releases' }
+    maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+    maven { url = 'https://chocolateminecraft.com/maven' }
+}
+
+dependencies {
+    compileOnly "xaero.map:xaeroworldmap-neoforge-1.21.1:1.44.2"
+    compileOnly "xaero.lib:xaerolib-neoforge-1.21.1:1.7.1"
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
+    options.encoding = 'UTF-8'
+}
+
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'minecraft_version', mc
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand([
+            'version': project.version,
+            'minecraft_version': mc
+        ])
+    }
+}
+
+jar {
+    manifest {
+        attributes([
+            'Specification-Title': 'hereby_named',
+            'Specification-Vendor': 'herebynamed',
+            'Specification-Version': '1',
+            'Implementation-Title': 'hereby_named',
+            'Implementation-Version': project.version,
+            'Implementation-Vendor': 'herebynamed'
+        ])
+    }
+}

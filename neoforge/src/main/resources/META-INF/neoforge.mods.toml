@@ -1,0 +1,26 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT"
+
+[[mods]]
+modId="hereby_named"
+version="${version}"
+displayName="Xaero's World Map | Hereby Named"
+description='''Xaero's World Map | Hereby Named — layered, shared names for places you explore.'''
+
+[[mixins]]
+config="hereby_named.mixins.json"
+
+[[dependencies.hereby_named]]
+    modId="neoforge"
+    type="required"
+    versionRange="[21.1.0,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.hereby_named]]
+    modId="minecraft"
+    type="required"
+    versionRange="[1.21.1,1.21.2)"
+    ordering="NONE"
+    side="BOTH"
