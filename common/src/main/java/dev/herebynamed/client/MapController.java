@@ -240,8 +240,25 @@ public final class MapController {
         Integer shown=visibility==1?(editing()?layer:displayLayer):null;
         overlay.update(dimension,book().regions(),shown);
     }
+    private static final java.lang.invoke.MethodHandle HIDDEN_UI_GETTER = findHiddenUiGetter();
+    private static java.lang.invoke.MethodHandle findHiddenUiGetter() {
+        try {
+            var field = GuiMap.class.getField("hiddenUI");
+            return java.lang.invoke.MethodHandles.publicLookup().unreflectGetter(field);
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+    private static boolean isHiddenUi() {
+        if (HIDDEN_UI_GETTER != null) {
+            try { return (boolean) HIDDEN_UI_GETTER.invokeExact(); }
+            catch (Throwable ignored) {}
+        }
+        return false;
+    }
+
     public void render(GuiGraphics context,int mouseX,int mouseY) {
-        if (dimension.isEmpty() || GuiMap.hiddenUI) return;
+        if (dimension.isEmpty() || isHiddenUi()) return;
         drawOverlay(context);
         context.pose().pushPose(); context.pose().translate(0,0,500);
         List<String> names=book().namesAtBlock(view.hereby$mouseX(),view.hereby$mouseZ());
