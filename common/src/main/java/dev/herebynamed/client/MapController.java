@@ -258,12 +258,8 @@ public final class MapController {
         }
         if(popup!=null) popup.render(context,mouseX,mouseY);
         else for(Button control:controls) {
-            if(control.isHovered() && control instanceof xaero.lib.client.gui.widget.ITooltipHaver th) {
-                var supplier=th.getXaero_tooltip();
-                if(supplier!=null) {
-                    var tooltip=supplier.get();
-                    if(tooltip!=null) tooltip.drawBox(context,mouseX,mouseY,map.width,map.height);
-                }
+            if(control.isHovered() && control instanceof MapTools.HintedWidget hw && hw.showHint()) {
+                MapTools.drawTooltip(context, client.font, hw.hint(), mouseX, mouseY, map.width, map.height);
             }
         }
         context.pose().popPose();
