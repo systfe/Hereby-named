@@ -2,6 +2,7 @@ package dev.herebynamed.auto;
 
 import dev.herebynamed.domain.*;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.random.RandomGenerator;
 
 public final class AutoNames {
@@ -9,9 +10,10 @@ public final class AutoNames {
     private AutoNames() { }
 
     public static Optional<String> choose(TerrainAnalysis.Candidate candidate,RegionBook book,AutoConfig config) {
-        return choose(candidate,book,config,RandomGenerator.getDefault());
+        return choose(candidate,book,config,ThreadLocalRandom.current());
     }
     public static Optional<String> choose(TerrainAnalysis.Candidate candidate,RegionBook book,AutoConfig config,RandomGenerator random) {
+        if(random == null) random = ThreadLocalRandom.current();
         var existing=book.regions().stream().filter(r -> r.layer()==1 && r.automatic()!=null
                 && TerrainKind.matches(r.automatic().classification(),candidate.kind())
                 && !Collections.disjoint(r.cells(),candidate.cells()))
