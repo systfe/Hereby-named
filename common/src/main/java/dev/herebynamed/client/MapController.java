@@ -165,9 +165,6 @@ public final class MapController {
         return gesture==0 && button==0;
     }
     public boolean mouseUp(double x,double y,int button) {
-        for (Button control : controls) {
-            if (control.mouseReleased(x,y,button)) return false;
-        }
         if (pressed != button) return true;
         int previousGesture=gesture; pressed=-1;
         if (editing() && !triggered) {
