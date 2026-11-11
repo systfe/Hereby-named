@@ -39,7 +39,7 @@ public final class MapController {
 
     public MapController(GuiMap map) { this.map = map; this.view = (GuiMapAccessor)map; knowledge = new MapKnowledge(map.getMapProcessor()); overlay=new RegionOverlay(knowledge); }
     public GuiMap screen() { return map; }
-    public void close() { job = null; pressed = -1; data.exit(); }
+    public void close() { job = null; pressed = -1; controls.clear(); data.exit(); }
     private String dimension() {
         var current = map.getMapProcessor().getMapWorld().getCurrentDimension();
         return current == null ? "" : current.getDimId().location().toString();
@@ -47,15 +47,8 @@ public final class MapController {
     private RegionBook book() { return data.book(dimension); }
     private boolean editing() { return data.editing(dimension); }
 
-    private static void removeWidgets(GuiMap screen, List<Button> widgets) {
-        widgets.forEach(screen::removeWidget);
-    }
-    private static void addWidget(GuiMap screen, Button widget) {
-        screen.addButton(widget);
-    }
-
     public void build() {
-        removeWidgets(map, controls); controls.clear(); popup = null;
+        controls.clear(); popup = null;
         String next = dimension();
         if (!dimension.equals(next)) {
             if (!dimension.isEmpty()) data.exit();
@@ -138,7 +131,7 @@ public final class MapController {
     private Button icon(int x,int y,int icon,String hint,Button.OnPress action) {
         Button button=MapTools.icon(x,y,icon,hint,() -> popup==null,action); add(button); return button;
     }
-    private void add(Button button) { controls.add(button); addWidget(map, button); }
+    private void add(Button button) { controls.add(button); }
     private List<RegionBook.Region> currentRegions() { return book().regions().stream().filter(r -> r.layer()==layer).toList(); }
     private void edit(RegionEdit.Action action, String name, int color, Set<ChunkCell> cells) {
         if (job != null || data.busy()) return;
@@ -158,6 +151,9 @@ public final class MapController {
     }
     public boolean mouseDown(double x,double y,int button) {
         if (popup != null) { popup.click(x,y,button); return false; }
+        for (Button control : controls) {
+            if (control.mouseClicked(x,y,button)) return false;
+        }
         if (!editing() || onControl(x,y) || button>1) return true;
         if (job != null || data.busy()) return false;
         if (selected.isEmpty()) {
@@ -169,6 +165,9 @@ public final class MapController {
         return gesture==0 && button==0;
     }
     public boolean mouseUp(double x,double y,int button) {
+        for (Button control : controls) {
+            if (control.mouseReleased(x,y,button)) return false;
+        }
         if (pressed != button) return true;
         int previousGesture=gesture; pressed=-1;
         if (editing() && !triggered) {
@@ -258,6 +257,15 @@ public final class MapController {
             context.drawCenteredString(client.font,status,map.width/2,map.height-23,0xffffff);
         }
         if(popup!=null) popup.render(context,mouseX,mouseY);
+        else for(Button control:controls) {
+            if(control.isHovered() && control instanceof xaero.lib.client.gui.widget.ITooltipHaver th) {
+                var supplier=th.getXaero_tooltip();
+                if(supplier!=null) {
+                    var tooltip=supplier.get();
+                    if(tooltip!=null) tooltip.drawBox(context,mouseX,mouseY,map.width,map.height);
+                }
+            }
+        }
         context.pose().popPose();
     }
     private void drawOverlay(GuiGraphics context) {
