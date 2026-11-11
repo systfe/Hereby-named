@@ -2,7 +2,6 @@ package dev.herebynamed.client;
 
 import dev.herebynamed.domain.*;
 import dev.herebynamed.mixin.GuiMapAccessor;
-import dev.herebynamed.mixin.ScreenAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -20,7 +19,7 @@ public final class MapController {
     private final Minecraft client = Minecraft.getInstance();
     private final ClientRegions data = HerebyNamedClient.REGIONS;
     private final MapKnowledge knowledge;
-    private final List<AbstractWidget> controls = new ArrayList<>();
+    private final List<Button> controls = new ArrayList<>();
     private final Map<Integer,String> remembered = new HashMap<>();
     private final RegionOverlay overlay;
     private String dimension = "", selected = "";
@@ -48,17 +47,11 @@ public final class MapController {
     private RegionBook book() { return data.book(dimension); }
     private boolean editing() { return data.editing(dimension); }
 
-    private static void removeWidgets(Screen screen, List<? extends AbstractWidget> widgets) {
-        ScreenAccessor acc = (ScreenAccessor) screen;
-        acc.hereby$getChildren().removeAll(widgets);
-        acc.hereby$getRenderables().removeAll(widgets);
-        acc.hereby$getNarratables().removeAll(widgets);
+    private static void removeWidgets(GuiMap screen, List<Button> widgets) {
+        widgets.forEach(screen::removeWidget);
     }
-    private static void addWidget(Screen screen, AbstractWidget widget) {
-        ScreenAccessor acc = (ScreenAccessor) screen;
-        acc.hereby$getChildren().add(widget);
-        acc.hereby$getRenderables().add(widget);
-        acc.hereby$getNarratables().add(widget);
+    private static void addWidget(GuiMap screen, Button widget) {
+        screen.addButton(widget);
     }
 
     public void build() {
@@ -161,8 +154,7 @@ public final class MapController {
         return new ChunkCell(bx>>4,bz>>4);
     }
     private boolean onControl(double x,double y) {
-        ScreenAccessor acc = (ScreenAccessor) map;
-        return acc.hereby$getChildren().stream().anyMatch(w -> w instanceof AbstractWidget aw && aw.visible && aw.isMouseOver(x,y));
+        return map.getChildAt(x,y).filter(w -> w instanceof AbstractWidget aw && aw.visible).isPresent();
     }
     public boolean mouseDown(double x,double y,int button) {
         if (popup != null) { popup.click(x,y,button); return false; }
@@ -260,7 +252,7 @@ public final class MapController {
             context.fill(map.width/2-width/2-3,y-1,map.width/2+width/2+3,y+10,0x99000000);
             context.drawCenteredString(client.font,name,map.width/2,y,0xffffff);
         }
-        for(AbstractWidget control:controls) control.render(context,mouseX,mouseY,0);
+        for(Button control:controls) control.render(context,mouseX,mouseY,0);
         if (editing() && (job!=null || data.busy())) {
             String status=job!=null?"正在选择 "+job.size()+" 个区块 · Esc 取消":"正在同步…";
             context.drawCenteredString(client.font,status,map.width/2,map.height-23,0xffffff);
