@@ -49,11 +49,21 @@ public final class RegionTitles {
         Minecraft client = Minecraft.getInstance();
         int alpha = (int)(Math.min(1.0, Math.min((100 - remaining)/10.0, remaining/20.0))*255);
         if (alpha < 8) return;
+        net.minecraft.resources.ResourceLocation fontLoc = net.minecraft.resources.ResourceLocation.tryParse("hereby_named:map_font");
+        if (HerebyNamedClient.AUTOMATIC != null && HerebyNamedClient.AUTOMATIC.config() != null) {
+            String custom = HerebyNamedClient.AUTOMATIC.config().mapFont;
+            if (custom != null && !custom.isBlank()) {
+                net.minecraft.resources.ResourceLocation parsed = net.minecraft.resources.ResourceLocation.tryParse(custom);
+                if (parsed != null) fontLoc = parsed;
+            }
+        }
+        net.minecraft.network.chat.Style fontStyle = net.minecraft.network.chat.Style.EMPTY.withFont(fontLoc);
         for (int i = 0; i < displayed.size(); i++) {
             float scale = i == 0 ? 2.0f : 1.25f;
             context.pose().pushPose(); context.pose().scale(scale, scale, 1);
-            context.drawCenteredString(client.font, displayed.get(i),
-                    (int)(context.guiWidth()/2f/scale), (int)((context.guiHeight()/2f-45+i*30)/scale), (alpha<<24)|0xffffff);
+            Component comp = Component.literal(displayed.get(i)).withStyle(fontStyle);
+            int w = client.font.width(comp);
+            context.drawString(client.font, comp, (int)(context.guiWidth()/2f/scale - w/2), (int)((context.guiHeight()/2f-45+i*30)/scale), (alpha<<24)|0xffffff, true);
             context.pose().popPose();
         }
     }
@@ -90,8 +100,17 @@ public final class RegionTitles {
         void show(List<String> names) {
             try {
                 copyStyle(dimensionOriginal, first); copyStyle(biomeOriginal, second);
-                display.invoke(first, Component.literal(names.get(0)), null);
-                if (names.size() > 1) display.invoke(second, Component.literal(names.get(1)), null); else clear.invoke(second);
+                net.minecraft.resources.ResourceLocation fontLoc = net.minecraft.resources.ResourceLocation.tryParse("hereby_named:map_font");
+                if (HerebyNamedClient.AUTOMATIC != null && HerebyNamedClient.AUTOMATIC.config() != null) {
+                    String custom = HerebyNamedClient.AUTOMATIC.config().mapFont;
+                    if (custom != null && !custom.isBlank()) {
+                        net.minecraft.resources.ResourceLocation parsed = net.minecraft.resources.ResourceLocation.tryParse(custom);
+                        if (parsed != null) fontLoc = parsed;
+                    }
+                }
+                net.minecraft.network.chat.Style fontStyle = net.minecraft.network.chat.Style.EMPTY.withFont(fontLoc);
+                display.invoke(first, Component.literal(names.get(0)).withStyle(fontStyle), null);
+                if (names.size() > 1) display.invoke(second, Component.literal(names.get(1)).withStyle(fontStyle), null); else clear.invoke(second);
             } catch (ReflectiveOperationException ex) { HerebyNamed.LOG.warn("Could not display region title", ex); }
         }
         private void copyStyle(Object from, Object to) throws ReflectiveOperationException {

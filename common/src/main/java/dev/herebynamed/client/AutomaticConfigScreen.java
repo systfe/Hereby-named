@@ -126,7 +126,7 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
     }
 
     private int count() {
-        return tab == 0 ? 9 : tab == 1 ? 9 : tab == 4 ? filteredBiomes.size() : names().size();
+        return tab == 0 ? 9 : tab == 1 ? 10 : tab == 4 ? filteredBiomes.size() : names().size();
     }
 
     private List<AutoConfig.Name> names() {
@@ -215,7 +215,7 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
         String[] hints = {"256～1000000 格；已记录地表须连成一片", "16～100000 格；对所有类别生效", "4096～500000；更高上限会占用更多内存", "10～600 秒；更频繁分析会增加开销", "16～1000000 格；长条山地达到此跨度用山脉，宽广山地用峦", "1～500000 个区块；宽广山地达到此面积用峦", "110～1000；180 表示长边大于短边的 1.8 倍时视为绵延山地", ""};
         int[] values = {draft.unlockSpan, draft.minimumSpan, draft.maximumSamples, draft.analysisIntervalSeconds, draft.mountainRangeSpan, draft.mountainMassifChunks, draft.mountainRidgeRatioPercent};
         IntConsumer[] setters = {v -> draft.unlockSpan = v, v -> draft.minimumSpan = v, v -> draft.maximumSamples = v, v -> draft.analysisIntervalSeconds = v, v -> draft.mountainRangeSpan = v, v -> draft.mountainMassifChunks = v, v -> draft.mountainRidgeRatioPercent = v};
-        for (int index = page * rows; index < Math.min(9, (page + 1) * rows); index++) {
+        for (int index = page * rows; index < Math.min(10, (page + 1) * rows); index++) {
             int y = 74 + (index - page * rows) * 24;
             if (index == 7) {
                 rowLabels.add("自动创建区域");
@@ -225,6 +225,17 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
             if (index == 8) {
                 rowLabels.add("删除保护（防重新生成）");
                 button(x + contentWidth - 96, y, 90, draft.suppressDeletedRegions ? "开启" : "关闭", () -> { draft.suppressDeletedRegions = !draft.suppressDeletedRegions; rebuildWidgets(); });
+                continue;
+            }
+            if (index == 9) {
+                rowLabels.add("地图显示字体");
+                String fontBtnText = (draft.mapFont == null || draft.mapFont.isBlank() || "hereby_named:map_font".equals(draft.mapFont))
+                        ? "地图衬线体" : "minecraft:default".equals(draft.mapFont) ? "原版字体" : "自定义";
+                button(x + contentWidth - 96, y, 90, fontBtnText, () -> {
+                    if (draft.mapFont == null || "hereby_named:map_font".equals(draft.mapFont)) draft.mapFont = "minecraft:default";
+                    else draft.mapFont = "hereby_named:map_font";
+                    rebuildWidgets();
+                });
                 continue;
             }
             rowLabels.add(labels[index]);

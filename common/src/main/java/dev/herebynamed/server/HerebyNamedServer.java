@@ -45,7 +45,7 @@ public final class HerebyNamedServer {
     }
 
     private static ServerData data(MinecraftServer server) {
-        return SERVERS.computeIfAbsent(server, s -> new ServerData(s.getWorldPath(LevelResource.ROOT).resolve("hereby-named")));
+        return SERVERS.computeIfAbsent(server, s -> new ServerData(s.getWorldPath(LevelResource.ROOT).resolve("hereby-named"), s));
     }
 
     public static void onJoin(MinecraftServer server, ServerPlayer player) {
@@ -301,12 +301,8 @@ public final class HerebyNamedServer {
         String dim = player.serverLevel().dimension().location().toString();
         ChunkCell cell = new ChunkCell(chunkX, chunkZ);
         Claim claim = d.claimManager.getClaimAt(dim, cell);
-        if (claim == null) {
-            source.sendFailure(Component.literal("§c该区块 (" + chunkX + ", " + chunkZ + ") 不属于任何领地！"));
-            return 0;
-        }
-        if (!player.getUUID().equals(claim.owner()) && !player.hasPermissions(2)) {
-            source.sendFailure(Component.literal("§c只有领主可以配置常加载！")); return 0;
+        if (claim != null && !player.getUUID().equals(claim.owner()) && !player.hasPermissions(2)) {
+            source.sendFailure(Component.literal("§c该区块属于他人领地，只有领主可以配置常加载！")); return 0;
         }
         boolean isCurrentlyLoaded = dev.herebynamed.claim.ChunkLoaderManager.isForceLoaded(player.getUUID(), dim, cell);
         boolean targetVal = "toggle".equalsIgnoreCase(valStr) ? !isCurrentlyLoaded : Boolean.parseBoolean(valStr);
@@ -317,6 +313,10 @@ public final class HerebyNamedServer {
         }
 
         if (targetVal) {
+            if (!d.economyConfig.forceLoad().enabled() && !player.hasPermissions(2)) {
+                source.sendFailure(Component.literal("§c常加载功能已被服务器禁用！"));
+                return 0;
+            }
             int playerLoaded = dev.herebynamed.claim.ChunkLoaderManager.getPlayerLoadedCount(player.getUUID());
             if (playerLoaded >= d.economyConfig.limits().maxForceLoadedChunksPerPlayer() && !player.hasPermissions(2)) {
                 source.sendFailure(Component.literal("§c你的常加载区块配额已达上限 (" + d.economyConfig.limits().maxForceLoadedChunksPerPlayer() + ")"));
@@ -336,10 +336,15 @@ public final class HerebyNamedServer {
             }
         }
         dev.herebynamed.claim.ChunkLoaderManager.setForceLoaded(player.serverLevel(), player.getUUID(), cell, targetVal);
-        Claim updated = claim.withForceLoaded(targetVal);
-        d.claimManager.registerClaim(dim, updated);
-        d.claimStore.save(d.claimManager, d.claimManager.getDimensions());
-        syncClaimToBook(source.getServer(), dim, updated);
+        dev.herebynamed.claim.ChunkLoaderManager.save(d.root);
+        if (claim != null) {
+            Claim updated = claim.withForceLoaded(targetVal);
+            d.claimManager.registerClaim(dim, updated);
+            d.claimStore.save(d.claimManager, d.claimManager.getDimensions());
+            syncClaimToBook(source.getServer(), dim, updated);
+        } else {
+            syncWildForceLoadsToBook(source.getServer(), dim, player.getUUID());
+        }
         source.sendSuccess(() -> Component.literal("§a已" + (targetVal ? "开启" : "关闭") + "区块 (" + chunkX + ", " + chunkZ + ") 常加载！"), true);
         return 1;
     }
@@ -464,6 +469,42 @@ public final class HerebyNamedServer {
             broadcast(server, dim);
         } catch (Exception ex) {
             LOG.error("Failed to remove claim from book", ex);
+        }
+    }
+
+    public static void syncWildForceLoadsToBook(MinecraftServer server, String dim, UUID playerUuid) {
+        if (server == null || dim == null || playerUuid == null) return;
+        ServerData d = data(server);
+        try {
+            RegionBook book = d.book(dim);
+            String regionId = "loader-" + playerUuid.toString();
+            Set<ChunkCell> allPlayerCells = dev.herebynamed.claim.ChunkLoaderManager.getPlayerCells(playerUuid, dim);
+            Set<ChunkCell> wildCells = new HashSet<>();
+            for (ChunkCell c : allPlayerCells) {
+                if (d.claimManager.getClaimAt(dim, c) == null) {
+                    wildCells.add(c);
+                }
+            }
+            if (wildCells.isEmpty()) {
+                book.deleteRegion(regionId, false);
+            } else {
+                String playerName = d.claimManager.resolvePlayerName(server, playerUuid);
+                String title = "常加载区块 [玩家: " + playerName + "]";
+                int color = 0x00bcd4;
+                var existing = book.region(regionId);
+                if (existing.isPresent()) {
+                    book.renameRegion(regionId, title, color);
+                    book.paint(regionId, wildCells, true);
+                } else {
+                    List<RegionBook.Region> regs = new ArrayList<>(book.regions());
+                    regs.add(new RegionBook.Region(regionId, 1, title, color, wildCells, null));
+                    book.replace(new RegionBook.State(book.state().highestLayer(), book.state().layers(), regs, book.state().suppressed()));
+                }
+            }
+            d.revisions.put(dim, d.revisions.getOrDefault(dim, 0L) + 1);
+            broadcast(server, dim);
+        } catch (Exception ex) {
+            LOG.error("Failed to sync wild chunkloaders to book", ex);
         }
     }
 
@@ -672,12 +713,16 @@ public final class HerebyNamedServer {
         final Map<Delivery, Outgoing> outgoing = new LinkedHashMap<>();
         final Map<UUID, ArrayDeque<Incoming>> incoming = new LinkedHashMap<>();
         boolean stopping, pumping, retryScheduled;
-        ServerData(Path root) {
+        ServerData(Path root, MinecraftServer server) {
             this.root = root;
             this.store = new RegionStore(root.resolve("regions"));
             this.claimStore = new dev.herebynamed.claim.ClaimStore(root);
             this.claimStore.load(this.claimManager);
             this.economyConfig = this.claimStore.loadConfig();
+            dev.herebynamed.claim.ChunkLoaderManager.load(root, server);
+            if (!this.economyConfig.forceLoad().onlyWhileOnline()) {
+                dev.herebynamed.claim.ChunkLoaderManager.activateAll(server);
+            }
             Path file = root.resolve("editors.txt");
             if (Files.exists(file)) try { for (String line : Files.readAllLines(file)) authorized.add(UUID.fromString(line)); }
             catch (Exception ex) { LOG.error("Cannot read region editor grants", ex); }

@@ -95,7 +95,7 @@ public final class MapController {
                 client.setScreen(new DeleteDialog(map,"删除图层 "+layer+" 及其 "+count+" 个区域？",() -> edit(RegionEdit.Action.DELETE_LAYER,"",0,Set.of())));
             });
             tool(cursor,visibilityIcon(),visibilityText(),b -> cycleVisibility());
-            tool(cursor, chunkLoaderMode ? 0 : 3, chunkLoaderMode ? "常加载模式已激活 (点击区块切换常加载；再次点击退出)" : "设置为常加载区块 (点击后点击区块切换常加载)", b -> {
+            tool(cursor, chunkLoaderMode ? 0 : 3, chunkLoaderMode ? "常加载模式已激活 (点击任意区块切换常加载；再次点击退出)" : "设置为常加载区块 (点击后点击任意区块切换常加载)", b -> {
                 chunkLoaderMode = !chunkLoaderMode;
                 build();
             });
@@ -296,7 +296,7 @@ public final class MapController {
         }
         for(Button control:controls) control.render(context,mouseX,mouseY,0);
         if (chunkLoaderMode) {
-            context.drawCenteredString(client.font, "§b[常加载模式] 点击领地区块即可设置或取消常加载", map.width / 2, map.height - 35, 0x55ffff);
+            context.drawCenteredString(client.font, "§b[常加载模式] 点击任意区块即可设置或取消常加载", map.width / 2, map.height - 35, 0x55ffff);
         }
         if (editing() && (job!=null || data.busy())) {
             String status=job!=null?"正在选择 "+job.size()+" 个区块 · Esc 取消":"正在同步…";
@@ -312,13 +312,18 @@ public final class MapController {
             if (!onControl(mouseX, mouseY) && mouseX >= 0 && mouseX < map.width && mouseY >= 0 && mouseY < map.height) {
                 ChunkCell hoverCell = cellAt(mouseX, mouseY);
                 if (hoverCell != null) {
-                    List<String> hoverNames = book().namesAt(hoverCell);
-                    for (String hn : hoverNames) {
-                        if (hn.contains("[领主:")) {
-                            String tip = "§6[私人领地] §f" + hn + "\n§7区块坐标: (" + hoverCell.x() + ", " + hoverCell.z() + ")"
-                                    + "\n§e可使用常加载按钮配置，或在控制台使用 /claim 管理";
-                            MapTools.drawTooltip(context, client.font, tip, mouseX, mouseY, map.width, map.height);
-                            break;
+                    if (chunkLoaderMode) {
+                        String tip = "§b[常加载模式] §7区块坐标: (" + hoverCell.x() + ", " + hoverCell.z() + ")\n§f点击切换该区块的常加载状态";
+                        MapTools.drawTooltip(context, client.font, tip, mouseX, mouseY, map.width, map.height);
+                    } else {
+                        List<String> hoverNames = book().namesAt(hoverCell);
+                        for (String hn : hoverNames) {
+                            if (hn.contains("[领主:") || hn.contains("[玩家:")) {
+                                String tip = (hn.contains("[领主:") ? "§6[私人领地] §f" : "§b[常加载区块] §f") + hn + "\n§7区块坐标: (" + hoverCell.x() + ", " + hoverCell.z() + ")"
+                                        + "\n§e可使用常加载按钮配置，或在控制台使用 /claim 管理";
+                                MapTools.drawTooltip(context, client.font, tip, mouseX, mouseY, map.width, map.height);
+                                break;
+                            }
                         }
                     }
                 }
@@ -360,7 +365,8 @@ public final class MapController {
         Style fontStyle = Style.EMPTY.withFont(fontLoc);
 
         for(var label:mesh.labels()) {
-            int width = client.font.width(label.name());
+            FormattedCharSequence seq = FormattedCharSequence.forward(label.name(), fontStyle);
+            int width = client.font.width(seq);
             float textScale = label.textScale(width, scale * 16, map.width);
             if (textScale < 0.5f) continue; // LOD culling
             float alpha = textScale < 0.7f ? Math.max(0.0f, (textScale - 0.5f) / 0.2f) : 1.0f;
@@ -374,9 +380,7 @@ public final class MapController {
                 context.pose().mulPose(com.mojang.math.Axis.ZP.rotation(label.angleRad()));
             }
             context.pose().scale(textScale, textScale, 1);
-            FormattedCharSequence seq = FormattedCharSequence.forward(label.name(), fontStyle);
-            int w = client.font.width(seq);
-            context.drawString(client.font, seq, -w / 2, -4, fgColor, true);
+            context.drawString(client.font, seq, -width / 2, -4, fgColor, true);
             context.pose().popPose();
         }
         context.pose().popPose();

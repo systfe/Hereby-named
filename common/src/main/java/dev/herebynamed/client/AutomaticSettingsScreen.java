@@ -30,7 +30,15 @@ final class AutomaticSettingsScreen extends Screen implements EditorDialog {
         button(x,top+146,116,"重新分析",() -> confirm("重新分析已探索地表？手动区域与删除保护会保留。",automatic::reanalyze));
         button(x+124,top+146,116,"允许删除处重建",() -> confirm("解除全部已删除自动区域的重建保护？此操作不会删除现有区域。",automatic::allowAgain))
                 .active=HerebyNamedClient.REGIONS.automaticAllowed();
-        button(x,top+194,240,"完成",this::onClose);
+        button(x,top+170,240,"地图字体设置：" + fontSummary(), () -> { if(minecraft!=null) minecraft.setScreen(new FontSettingsScreen(this,automatic)); }).active=wasReady;
+        button(x,top+196,240,"完成",this::onClose);
+    }
+    private String fontSummary() {
+        if (automatic == null || automatic.config() == null) return "地图衬线体";
+        String f = automatic.config().mapFont;
+        if (f == null || f.isBlank() || "hereby_named:map_font".equals(f)) return "欧陆/钢四风格";
+        if ("minecraft:default".equals(f)) return "原版字体";
+        return f;
     }
     @Override public void tick() {
         HerebyNamedClient.REGIONS.busy();automatic.tick();
@@ -46,7 +54,7 @@ final class AutomaticSettingsScreen extends Screen implements EditorDialog {
         context.drawCenteredString(font,"仅主世界地表 · 在游戏内编辑设置",width/2,top+20,0xbbbbbb);
         context.drawCenteredString(font,font.plainSubstrByWidth(automatic.status(),Math.max(60,width-30)),width/2,top+35,0xc6dfcc);
         context.drawCenteredString(font,"已记录 "+automatic.sampleCount()+" 区块 · 待命名 "+automatic.unnamedCount(),width/2,top+49,0xbbbbbb);
-        context.drawCenteredString(font,"在设置中保存即可生效，无需打开配置文件。",width/2,top+177,0xaaaaaa);
+        context.drawCenteredString(font,"在设置中保存即可生效，无需打开配置文件。",width/2,top+220,0xaaaaaa);
     }
     @Override public void onClose() { if(minecraft!=null) minecraft.setScreen(parent); }
     private static final class Confirmation extends ConfirmScreen implements EditorDialog {

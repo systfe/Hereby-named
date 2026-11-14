@@ -8,6 +8,13 @@
       "oversample": 2.5
     },
     {
+      "type": "ttf",
+      "file": "hereby_named:noto_serif_sc.ttf",
+      "shift": [0.0, 0.0],
+      "size": 15.0,
+      "oversample": 2.5
+    },
+    {
       "type": "reference",
       "id": "minecraft:include/space"
     },
