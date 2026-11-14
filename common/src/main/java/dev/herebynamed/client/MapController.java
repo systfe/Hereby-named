@@ -326,7 +326,6 @@ public final class MapController {
         }
         context.pose().popPose();
     }
-    private static final int[][] HALO_OFFSETS = {{-1,0}, {1,0}, {0,-1}, {0,1}, {-1,-1}, {1,-1}, {-1,1}, {1,1}};
 
     private void drawOverlay(GuiGraphics context) {
         if (visibility==2 || view.hereby$scale()<=0) return;
@@ -365,59 +364,20 @@ public final class MapController {
             float textScale = label.textScale(width, scale * 16, map.width);
             if (textScale < 0.5f) continue; // LOD culling
             float alpha = textScale < 0.7f ? Math.max(0.0f, (textScale - 0.5f) / 0.2f) : 1.0f;
-            int haloColor = ((int)(0xDD * alpha) << 24) | 0x111111;
             int fgColor = ((int)(0xFF * alpha) << 24) | 0xFFFBF0;
 
-            if (label.glyphs().isEmpty()) {
-                int x = screenX(label.x(), scale), y = screenZ(label.z(), scale);
-                if (x + width * textScale / 2 < 0 || x - width * textScale / 2 > map.width || y + 9 * textScale < 0 || y - 9 * textScale > map.height) continue;
-                context.pose().pushPose();
-                context.pose().translate(x, y, 0);
-                if (Math.abs(label.angleRad()) > 0.001f) {
-                    context.pose().mulPose(com.mojang.math.Axis.ZP.rotation(label.angleRad()));
-                }
-                context.pose().scale(textScale, textScale, 1);
-                FormattedCharSequence seq = FormattedCharSequence.forward(label.name(), fontStyle);
-                int w = client.font.width(seq);
-                for (int[] off : HALO_OFFSETS) {
-                    context.drawString(client.font, seq, -w / 2 + off[0], -4 + off[1], haloColor, false);
-                }
-                context.drawString(client.font, seq, -w / 2, -4, fgColor, false);
-                context.pose().popPose();
-            } else {
-                // Pass 1: 8-directional halo outline for all glyphs
-                for (var g : label.glyphs()) {
-                    int gx = screenX(g.x(), scale), gy = screenZ(g.z(), scale);
-                    if (gx < -40 || gx > map.width + 40 || gy < -40 || gy > map.height + 40) continue;
-                    context.pose().pushPose();
-                    context.pose().translate(gx, gy, 0);
-                    if (Math.abs(g.angleRad()) > 0.001f) {
-                        context.pose().mulPose(com.mojang.math.Axis.ZP.rotation(g.angleRad()));
-                    }
-                    context.pose().scale(textScale, textScale, 1);
-                    FormattedCharSequence seq = FormattedCharSequence.forward(String.valueOf(g.ch()), fontStyle);
-                    int w = client.font.width(seq);
-                    for (int[] off : HALO_OFFSETS) {
-                        context.drawString(client.font, seq, -w / 2 + off[0], -4 + off[1], haloColor, false);
-                    }
-                    context.pose().popPose();
-                }
-                // Pass 2: Foreground core text for all glyphs
-                for (var g : label.glyphs()) {
-                    int gx = screenX(g.x(), scale), gy = screenZ(g.z(), scale);
-                    if (gx < -40 || gx > map.width + 40 || gy < -40 || gy > map.height + 40) continue;
-                    context.pose().pushPose();
-                    context.pose().translate(gx, gy, 0);
-                    if (Math.abs(g.angleRad()) > 0.001f) {
-                        context.pose().mulPose(com.mojang.math.Axis.ZP.rotation(g.angleRad()));
-                    }
-                    context.pose().scale(textScale, textScale, 1);
-                    FormattedCharSequence seq = FormattedCharSequence.forward(String.valueOf(g.ch()), fontStyle);
-                    int w = client.font.width(seq);
-                    context.drawString(client.font, seq, -w / 2, -4, fgColor, false);
-                    context.pose().popPose();
-                }
+            int x = screenX(label.x(), scale), y = screenZ(label.z(), scale);
+            if (x + width * textScale / 2 < 0 || x - width * textScale / 2 > map.width || y + 9 * textScale < 0 || y - 9 * textScale > map.height) continue;
+            context.pose().pushPose();
+            context.pose().translate(x, y, 0);
+            if (Math.abs(label.angleRad()) > 0.001f) {
+                context.pose().mulPose(com.mojang.math.Axis.ZP.rotation(label.angleRad()));
             }
+            context.pose().scale(textScale, textScale, 1);
+            FormattedCharSequence seq = FormattedCharSequence.forward(label.name(), fontStyle);
+            int w = client.font.width(seq);
+            context.drawString(client.font, seq, -w / 2, -4, fgColor, true);
+            context.pose().popPose();
         }
         context.pose().popPose();
         context.disableScissor();
