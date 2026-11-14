@@ -154,6 +154,23 @@ public final class HerebyNamedServer {
                         .executes(ctx -> addMember(ctx.getSource(), StringArgumentType.getString(ctx, "player")))))
                     .then(Commands.literal("remove").then(Commands.argument("player", StringArgumentType.word())
                         .executes(ctx -> removeMember(ctx.getSource(), StringArgumentType.getString(ctx, "player"))))))
+                .then(Commands.literal("config")
+                    .then(Commands.literal("reload")
+                        .executes(ctx -> reloadClaimConfig(ctx.getSource())))
+                    .then(Commands.literal("cost")
+                        .then(Commands.argument("amount", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0))
+                            .executes(ctx -> setClaimCost(ctx.getSource(), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "amount"), "minecraft:emerald"))
+                            .then(Commands.argument("item", StringArgumentType.word())
+                                .executes(ctx -> setClaimCost(ctx.getSource(),
+                                        com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "amount"),
+                                        StringArgumentType.getString(ctx, "item"))))))
+                    .then(Commands.literal("forceload_cost")
+                        .then(Commands.argument("amount", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0))
+                            .executes(ctx -> setForceLoadCost(ctx.getSource(), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "amount"), "minecraft:diamond"))
+                            .then(Commands.argument("item", StringArgumentType.word())
+                                .executes(ctx -> setForceLoadCost(ctx.getSource(),
+                                        com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "amount"),
+                                        StringArgumentType.getString(ctx, "item")))))))
         );
     }
 
@@ -238,8 +255,12 @@ public final class HerebyNamedServer {
         String dim = player.serverLevel().dimension().location().toString();
         ChunkCell cell = new ChunkCell(player.getBlockX() >> 4, player.getBlockZ() >> 4);
         Claim claim = mgr.getClaimAt(dim, cell);
+        ServerData d = data(source.getServer());
         if (claim == null) {
-            source.sendSuccess(() -> Component.literal("§7当前所在位置属于无主荒野 (区块: " + cell.x() + ", " + cell.z() + ")"), false);
+            String costMsg = d.economyConfig.claimCost().enabled()
+                    ? ("§e圈地/扩张费用: §f每区块 " + d.economyConfig.claimCost().amountPerChunk() + " 个 " + d.economyConfig.claimCost().item())
+                    : "§7圈地费用: §a免费";
+            source.sendSuccess(() -> Component.literal("§7当前所在位置属于无主荒野 (区块: " + cell.x() + ", " + cell.z() + ") · " + costMsg), false);
             return 1;
         }
         String ownerName = mgr.resolvePlayerName(source.getServer(), claim.owner());
@@ -248,6 +269,64 @@ public final class HerebyNamedServer {
         source.sendSuccess(() -> Component.literal("§e涵盖区块: §f" + claim.chunks().size() + " §7| §e信任成员: §f" + claim.members().size()), false);
         source.sendSuccess(() -> Component.literal("§e访客权限: §7" + formatFlags(claim.visitorFlags())), false);
         source.sendSuccess(() -> Component.literal("§e常加载: §f" + (claim.forceLoaded() ? "§a开启" : "§c关闭")), false);
+        return 1;
+    }
+
+    private static int reloadClaimConfig(CommandSourceStack source) {
+        if (!source.hasPermission(2)) {
+            source.sendFailure(Component.literal("§c只有管理员可以重载领地经济配置！"));
+            return 0;
+        }
+        ServerData d = data(source.getServer());
+        d.economyConfig = d.claimStore.loadConfig();
+        source.sendSuccess(() -> Component.literal("§a已从 claims_config.json 重新加载领地与经济配置！"), true);
+        return 1;
+    }
+
+    private static int setClaimCost(CommandSourceStack source, int amount, String itemId) {
+        if (!source.hasPermission(2)) {
+            source.sendFailure(Component.literal("§c只有管理员可以修改圈地费用！"));
+            return 0;
+        }
+        ServerData d = data(source.getServer());
+        boolean enabled = amount > 0;
+        dev.herebynamed.claim.model.ClaimEconomyConfig.ClaimCost nextCost = new dev.herebynamed.claim.model.ClaimEconomyConfig.ClaimCost(
+                enabled,
+                itemId,
+                amount,
+                d.economyConfig.claimCost().adminBypass(),
+                d.economyConfig.claimCost().refundOnUnclaim()
+        );
+        d.economyConfig = new dev.herebynamed.claim.model.ClaimEconomyConfig(
+                nextCost,
+                d.economyConfig.limits(),
+                d.economyConfig.forceLoad()
+        );
+        d.claimStore.saveConfig(d.economyConfig);
+        source.sendSuccess(() -> Component.literal("§a已将领地圈地/扩张费用设置为每个区块 " + amount + " 个 " + itemId + (enabled ? "（已启用）" : "（已禁用）")), true);
+        return 1;
+    }
+
+    private static int setForceLoadCost(CommandSourceStack source, int amount, String itemId) {
+        if (!source.hasPermission(2)) {
+            source.sendFailure(Component.literal("§c只有管理员可以修改常加载费用！"));
+            return 0;
+        }
+        ServerData d = data(source.getServer());
+        boolean enabled = amount > 0;
+        dev.herebynamed.claim.model.ClaimEconomyConfig.ForceLoad nextForce = new dev.herebynamed.claim.model.ClaimEconomyConfig.ForceLoad(
+                enabled,
+                itemId,
+                amount,
+                d.economyConfig.forceLoad().onlyWhileOnline()
+        );
+        d.economyConfig = new dev.herebynamed.claim.model.ClaimEconomyConfig(
+                d.economyConfig.claimCost(),
+                d.economyConfig.limits(),
+                nextForce
+        );
+        d.claimStore.saveConfig(d.economyConfig);
+        source.sendSuccess(() -> Component.literal("§a已将常加载费用设置为每个区块 " + amount + " 个 " + itemId + (enabled ? "（已启用）" : "（已禁用）")), true);
         return 1;
     }
 
@@ -699,7 +778,7 @@ public final class HerebyNamedServer {
         final Path root;
         final RegionStore store;
         final dev.herebynamed.claim.ClaimStore claimStore;
-        final dev.herebynamed.claim.model.ClaimEconomyConfig economyConfig;
+        volatile dev.herebynamed.claim.model.ClaimEconomyConfig economyConfig;
         final EditAuthority authority = new EditAuthority();
         final ClaimManager claimManager = new ClaimManager();
         final Set<UUID> authorized = new HashSet<>();

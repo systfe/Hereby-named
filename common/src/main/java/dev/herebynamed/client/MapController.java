@@ -380,7 +380,7 @@ public final class MapController {
                 context.pose().mulPose(com.mojang.math.Axis.ZP.rotation(label.angleRad()));
             }
             context.pose().scale(textScale, textScale, 1);
-            context.drawString(client.font, seq, -width / 2, -4, fgColor, true);
+            context.drawString(client.font, seq, -width / 2, -4, fgColor, false);
             context.pose().popPose();
         }
         context.pose().popPose();
