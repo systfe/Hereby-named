@@ -1,14 +1,12 @@
 # 此地名曰 (Hereby Named)
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.20.1%20%7C%201.21.1-brightgreen.svg)](https://fabricmc.net/)
-[![Fabric](https://img.shields.io/badge/Mod%20Loader-Fabric-blue.svg)](https://fabricmc.net/)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.20.1%20%7C%201.21.1-brightgreen.svg)](https://minecraft.net/)
+[![Mod Loaders](https://img.shields.io/badge/Mod%20Loader-Fabric%20%7C%20Forge%20%7C%20NeoForge-blue.svg)](https://github.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+**此地名曰 (Hereby Named)** 是一款专为 **Xaero's World Map** 设计的跨平台 Minecraft 地理命名与领地管理模组（全端支持 **Fabric 1.20.1 / 1.21.1**、**Forge 1.20.1** 及 **NeoForge 1.21.1**）。
 
-**此地名曰 (Hereby Named)** 是一款专为 **Xaero's World Map** 设计的 Minecraft Fabric 附属模组。
-
-在广袤的方块世界中，你是否曾希望那些跨越数千格的雄伟山脉、浩瀚大洋、广袤原野与幽深森林拥有属于自己的名字？本模组能在 Xaero 世界地图中为地理区域提供**自动宏观识别与命名**、**手动多图层圈地绘制**、**踏足新领地时的沉浸式大标题**，以及**多人联机共享与权限管理**。
-在广袤的方块世界中，你是否曾希望那些跨越数千格的雄伟山脉、浩瀚大洋、广袤原野与幽深森林拥有属于自己的名字？本模组能在 Xaero 世界地图中为地理区域提供**自动宏观识别与命名**、**手动多图层圈地绘制**、**踏足新领地时的沉浸式大标题**，以及**多人联机共享与权限管理**。
+在广袤的方块世界中，你是否曾希望那些跨越数千格的雄伟山脉、浩瀚大洋、广袤原野与幽深森林拥有属于自己的名字？本模组能在 Xaero 世界地图中为地理区域提供**自动宏观地貌识别与命名**、**随地形曲率排版**、**手动多图层圈地绘制与区块常加载**、**踏足新领地时的电影级效果**，以及**多人联机共享与权限配置**。
 
 ---
 
@@ -16,74 +14,38 @@
 
 - 🌍 **探索地貌自动命名**
   - **群系斑块拓扑分析**：以宏观生物群系连通块为图单元，快速识别大洋、山脉、森林、平原、沙漠、北地冻土与封闭湖泊；
-  - **自然地理过渡与包容**：微小杂乱群系斑块自动被周围主导地貌吞没，消除地图孔洞,保证地区完整；
-  - **群系斑块拓扑分析**：以宏观生物群系连通块为图单元，快速识别大洋、山脉、森林、平原、沙漠、北地冻土与封闭湖泊；
-  - **自然地理过渡与包容**：微小杂乱群系斑块自动被周围主导地貌吞没，消除地图孔洞,保证地区完整；
-  - **山地动态演变**：山地随探索不断扩张，长条山地演化为“山脉”，广袤山体演化为“峦”，最多自动进阶改名一次。
-  - **群系支持**：已支持识别以下模组中的群系:
+  - **山地动态演变**：山地随探索不断扩张，长条山地演化为“山脉”，广袤山体演化为“峦”，最多自动进阶改名一次；
+  - **广泛模组群系兼容**：原生识别 Terralith、Biomes O' Plenty、Biomes We've Gone (BWG)、Regions Unexplored、Nature's Spirit、Mystic's Biomes、William Wythers' Overhauled Overworld (WWOO) 等。
 
-   Terralith、Biomes O' Plenty、Biomes We've Gone(BWG)、RegionsUnexplored、Nature's Spirit、Mystic's Biomes、William Wythers' Overhauled Overworld (WWOO) 
+- 📜 **欧陆风云 (EU4) 风格曲率自适应排版**
+  - 地图名称文字自动根据地形走势拟合二次样条曲率曲线，单字符沿切线角度自然旋转排布；
+  - 内置字符间距防重叠保护算法，即使在狭长垂直或多变地形下，字符之间依然保持严谨正向间距。
 
-  - **群系支持**：已支持识别以下模组中的群系:
+- 🔤 **高清汉字与可调透明度**
+  - 内置精选商用开源高清字体 **思源宋体 (Noto Serif SC)** 与古典英文字体 **Cinzel**；
+  - 支持游戏内**滑块实时拖拽调节文字不透明度**（默认 80%），文字自然沉浸融入地表纹理。
 
-   Terralith、Biomes O' Plenty、Biomes We've Gone(BWG)、RegionsUnexplored、Nature's Spirit、Mystic's Biomes、William Wythers' Overhauled Overworld (WWOO) 
+- 🎬 **电影级入界体验**
+  - 踏入新领地时，屏幕上下平滑淡入宽银幕黑边（Letterbox），伴随独特音效；
+  - 兼容 **Traveler's Titles** 模组，槽位发生冲突时智能让位，未安装时无缝启用内置平滑 HUD 渲染。
 
+- 🏰 **多图层圈地与独立区块常加载 (Chunk Loader)**
+  - 支持 256 个图层，分层管理领地；
+  - 普通单击、`Shift + 拖动` 矩形框选、`Ctrl + 长按` 连续群系漫延选取；
+  - 可对野外任意区块开启常加载，地图上清晰呈现青色边缘标记；
+  - 丰富的撤销重做（`Ctrl+Z` / `Ctrl+Y`，保留 32 步历史）。
 
-- 📜 **命名库**
-  - **随机默认名**：可自定义命名池；
-  - **单字词根随机组合**：基于数十个自然字素（寒、霜、月、风、龙、星、岩、林等），结合地形与冷暖气候偏好自然衍生组合命名；
-- 📜 **命名库**
-  - **随机默认名**：可自定义命名池；
-  - **单字词根随机组合**：基于数十个自然字素（寒、霜、月、风、龙、星、岩、林等），结合地形与冷暖气候偏好自然衍生组合命名；
-
-- 🎨 **强大直观的地图编辑体验**
-
-![编辑和使用界面](docs\编辑和使用界面.png)
-  - **多图层体系**：支持 256 个图层，分层管理地区；
-  - **多种选取工具**：普通单区块点击、`Shift + 拖动` 矩形大选区、`Ctrl + 长按` 快速选取同种连续群系；
-  - **全功能调色盘与撤销**：RGB 色轮与饱和度面板、常用色板、实时预览以及 `Ctrl+Z` / `Ctrl+Y` 多步历史撤销；
-  - **地图无缝矢量呈现**：平滑半透明渲染，外边缘与孔洞自动描边，区域名称居中并随缩放智能调整字号。
-
-- 🏰 **跨入领地沉浸式标题**
-  - 支持兼容 **Traveler's Titles** 模组,行至新区域稳定 1 秒后触发进入标题提示；未安装时自动使用内置平滑 HUD 渲染。
-
-- ⚙️ **设置界面**
-  - 支持兼容 **Traveler's Titles** 模组,行至新区域稳定 1 秒后触发进入标题提示；未安装时自动使用内置平滑 HUD 渲染。
-
-- ⚙️ **设置界面**
-
-![设置界面](docs\设置界面.png)
-  - **全群系分类浏览器**：动态扫描游戏已加载的所有生物群系，支持按 ID 快速搜索、按分类过滤、点击循环修改其地形分类；
-  - **增量覆盖持久化**：仅保存玩家自定义修改的群系映射，保持模组版本更新的长期兼容性。
-
-
+- ⚡ **多线程防卡死引擎**
+  - 网络快照压缩与编解码由独立的 `Hereby Named sync` 线程调度，彻底杜绝大地图分析和磁盘 I/O 阻塞。
 
 ---
 
-## 📦 安装与前置要求
-
-将对应 Minecraft 版本的模组 jar 文件放入客户端（或服务器）的 `mods` 目录下即可。
-
-| Minecraft 版本 | 必需前置模组 | 推荐/可选模组 |
-| :--- | :--- | :--- |
-| **1.20.1** | [Fabric Loader](https://fabricmc.net/) $\ge 0.16.0$<br>[Fabric API](https://curseforge.com/minecraft/mc-mods/fabric-api)<br>[Xaero's World Map](https://curseforge.com/minecraft/mc-mods/xaeros-world-map) $\ge 1.47.0$ | [Traveler's Titles](https://curseforge.com/minecraft/mc-mods/travelers-titles) 4.0.2 |
-| **1.21.1** | [Fabric Loader](https://fabricmc.net/) $\ge 0.16.0$<br>[Fabric API](https://curseforge.com/minecraft/mc-mods/fabric-api)<br>[Xaero's World Map](https://curseforge.com/minecraft/mc-mods/xaeros-world-map) $\ge 1.44.2$ | [Traveler's Titles](https://curseforge.com/minecraft/mc-mods/travelers-titles) 5.1.3 |
-| Minecraft 版本 | 必需前置模组 | 推荐/可选模组 |
-| :--- | :--- | :--- |
-| **1.20.1** | [Fabric Loader](https://fabricmc.net/) $\ge 0.16.0$<br>[Fabric API](https://curseforge.com/minecraft/mc-mods/fabric-api)<br>[Xaero's World Map](https://curseforge.com/minecraft/mc-mods/xaeros-world-map) $\ge 1.47.0$ | [Traveler's Titles](https://curseforge.com/minecraft/mc-mods/travelers-titles) 4.0.2 |
-| **1.21.1** | [Fabric Loader](https://fabricmc.net/) $\ge 0.16.0$<br>[Fabric API](https://curseforge.com/minecraft/mc-mods/fabric-api)<br>[Xaero's World Map](https://curseforge.com/minecraft/mc-mods/xaeros-world-map) $\ge 1.44.2$ | [Traveler's Titles](https://curseforge.com/minecraft/mc-mods/travelers-titles) 5.1.3 |
-
-
-
----
-
-## 🎮 操作与快捷键指南
-
-打开 Xaero's World Map 全屏地图界面：
+## 🎮 地图界面常用快捷操作
 
 | 快捷操作 | 功能说明 |
 | :--- | :--- |
 | **点击左侧铅笔图标** | 进入 / 退出区域编辑模式 |
+| **点击左侧漏斗图标** | 切换区块常加载 (Chunk Loader) 绘制工具 |
 | **点击左侧齿轮图标** | 打开自动区域设置面板（门槛、全局参数、白名单、群系分类） |
 | **普通左键 / 右键** | 单击将光标所在区块**添加进** / **移出**当前选中区域 |
 | **Shift + 左键 / 右键拖拽** | 矩形框选批量**添加** / **移除**大片区块 |
@@ -94,32 +56,138 @@
 
 ---
 
-## 🛠️ 高级配置与自定义
 
-绝大多数设置均可在游戏内直接点击齿轮完成。对于整合包作者或服务器管理员，配置文件保存在 `.minecraft/config/hereby-named/` 目录下：
+## 📦 安装与版本支持
 
-- **`automatic.json`**：各类地貌最低跨度门槛、连续探索解锁距离、分析间隔、删除保护开关，以及玩家自定义的群系分类映射（`biomeOverrides`）；
-- **`names.json`**：默认名白名单（支持配置适用的地形类别与冷暖气候限制）；
-- **`roots.json`**：词根白名单（支持配置各字素的独立地形与气候倾向）。
+将对应平台与 Minecraft 版本的模组 jar 文件放入客户端（或服务器）的 `mods` 目录下即可。
+
+| 模组端 / 平台 | 支持版本 | 必需依赖 | 推荐搭配 |
+| :--- | :--- | :--- | :--- |
+| **Fabric** | 1.20.1 / 1.21.1 | [Fabric API](https://curseforge.com/minecraft/mc-mods/fabric-api)<br>[Xaero's World Map](https://curseforge.com/minecraft/mc-mods/xaeros-world-map) | [Traveler's Titles](https://curseforge.com/minecraft/mc-mods/travelers-titles) |
+| **Forge** | 1.20.1 | [Xaero's World Map](https://curseforge.com/minecraft/mc-mods/xaeros-world-map) | [Traveler's Titles](https://curseforge.com/minecraft/mc-mods/travelers-titles) |
+| **NeoForge** | 1.21.1 | [Xaero's World Map](https://curseforge.com/minecraft/mc-mods/xaeros-world-map) | [Traveler's Titles](https://curseforge.com/minecraft/mc-mods/travelers-titles) |
+
+---
+
+## 📖 常用配置指南
+
+### 1. 字体更换与透明度调节
+
+#### 游戏内图形化配置（推荐）
+1. 按 `M` 打开 Xaero's World Map 全屏地图；
+2. 点击右上角设置图标中,选择 **“字体设置”**；
+3. **字体选择**：
+   - 点击 **“预设：思源宋体 / Cinzel (默认)”**：应用 `hereby_named:map_font`，呈现高清衬线效果；
+   - 点击 **“预设：原版默认像素字体”**：切换回原版像素字体 `minecraft:default`；
+   - 或在输入框中输入任意资源包或第三方模组的字体 ResourceLocation（例：`my_pack:custom_font`）；
+4. **透明度调节**：直接拖拽 **“文字不透明度”滑块**（范围 0%～100%，默认 80%），拖动至满意的透明度后点击“保存并应用”。
+
+#### 配置文件修改
+配置文件位于 `.minecraft/config/hereby-named/automatic.json`：
+```json
+{
+  "mapFont": "hereby_named:map_font",
+  "mapFontOpacityPercent": 80
+}
+```
+
+---
+
+### 2. 领地扩张费用与常加载费用设置
+
+服务器管理员或单人游戏开启作弊后，可直接在游戏聊天栏使用管理员指令设置费用，也可以修改服务器配置文件。
+
+#### 游戏内指令配置
+- **查询当前费用配置**：
+  ```
+  /claim config
+  ```
+- **设置圈地/扩张区块费用**（支持指定任意物品，缺省为绿宝石）：
+  ```
+  /claim config cost <数量> [物品ID]
+  ```
+  *示例 1（设置每圈一个区块消耗 50 个绿宝石）：*
+  ```
+  /claim config cost 50 minecraft:emerald
+  ```
+  *示例 2（设置每圈一个区块消耗 1 个下界合金锭）：*
+  ```
+  /claim config cost 1 minecraft:netherite_ingot
+  ```
+  *示例 3（设为免费）：*
+  ```
+  /claim config cost 0
+  ```
+- **设置常加载区块费用**：
+  ```
+  /claim config forceload_cost <数量> [物品ID]
+  ```
+  *示例（设置常加载一个区块消耗 64 个青金石）：*
+  ```
+  /claim config forceload_cost 64 minecraft:lapis_lazuli
+  ```
+- **重载配置文件**：
+  ```
+  /claim config reload
+  ```
+
+#### 配置文件修改
+配置文件位于 `.minecraft/config/hereby-named/claim_config.json`（服务端或单人存档目录）：
+```json
+{
+  "costPerChunk": 50,
+  "costItem": "minecraft:emerald",
+  "forceloadCostPerChunk": 0,
+  "forceloadCostItem": "minecraft:emerald"
+}
+```
+
+---
+
+### 3. 区块常加载 (Chunk Loader) 使用方法
+
+- **地图工具栏操作**：打开 Xaero 全屏地图，在左侧工具栏点击漏斗形状的“区块常加载”按钮，点击地图上任意区块即可切换常加载状态；
+- **指令切换**：
+  ```
+  /claim forceload toggle <X坐标> <Z坐标>
+  ```
+  被常加载的区块在地图上会以青色边框（`#00BCD4`）高亮标识，并在服务端自动持久化保存于 `chunk_loaders.json`。
+
+---
+
+### 4. 视听沉浸感配置（宽银幕黑边与入界音效）
+
+首次运行后会自动在 `.minecraft/config/hereby-named/` 下生成配置文件：
+- **`title-sound.json`**：
+  - `enabled`: 是否启用踏入区域音效（默认 `true`）；
+  - `category`: 音效通道（默认 `"ambient"`）；
+  - `layers`: 音效合成层（默认合成羊皮纸翻页声与地图师羽毛笔手绘声，支持自由添加原版或模组音效 ID 与音量/音调/延迟）；
+  - `pitchJitter`: 随机微小音调偏移，防止重复穿梭显得机械化。
+- **`title-visuals.json`**：
+  - `letterboxPercent`: 宽银幕黑边屏幕占比（默认 `8.0%`）；
+  - `letterboxMs`: 黑边滑入滑出耗时（默认 `1300ms`）；
+  - `curve`: 缓动曲线类型（`"brake"`、`"cubic"`、`"quartic"`）；
+  - `repeatCooldownMs`: 同一区域重复进入防刷屏冷却时间（默认 `15000ms`）；
+  - `switchCooldownMs`: 相邻区域边界横跳防刷屏冷却时间（默认 `5000ms`）。
 
 ---
 
 ## 🏗️ 从源码构建
 
-本项目采用标准 Gradle 构建系统，双版本共用领域逻辑与架构代码：
+本项目采用多架构（Multi-Loader：Common + Fabric + Forge + NeoForge）Gradle 构建系统：
 
 ```powershell
-# 准备依赖（指定 Xaero 地图 Jar 路径）
-./scripts/prepare-dependencies.ps1 -MapJar "路径/xaeroworldmap-fabric-1.20.1.jar"
+# 运行单元测试
+./gradlew.bat :common:test
 
-# 构建 1.20.1 版本
-./gradlew.bat build
+# 单独构建指定平台
+./gradlew.bat -Pminecraft_version=1.20.1 :fabric:remapJar
+./gradlew.bat -Pminecraft_version=1.21.1 :fabric:remapJar
+./gradlew.bat :forge:jar
+./gradlew.bat :neoforge:jar
 
-# 构建 1.21.1 版本（需 JDK 21）
-./gradlew.bat -Pminecraft_version=1.21.1 build
-
-# 自动化全量发布导出（自动构建并测试 1.20.1 与 1.21.1，输出至 dist/）
-./scripts/export-release.ps1 -Version 0.3.1
+# 自动化全平台发布构建（输出至 dist/ 目录）
+powershell -ExecutionPolicy Bypass -File ./scripts/export-release.ps1 -Version 0.4.0
 ```
 
 ---
