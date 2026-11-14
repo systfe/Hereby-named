@@ -36,7 +36,7 @@ final class AutomaticSettingsScreen extends Screen implements EditorDialog {
     private String fontSummary() {
         if (automatic == null || automatic.config() == null) return "地图衬线体";
         String f = automatic.config().mapFont;
-        if (f == null || f.isBlank() || "hereby_named:map_font".equals(f)) return "欧陆/钢四风格";
+        if (f == null || f.isBlank() || "hereby_named:map_font".equals(f)) return "思源宋体 / Cinzel";
         if ("minecraft:default".equals(f)) return "原版字体";
         return f;
     }

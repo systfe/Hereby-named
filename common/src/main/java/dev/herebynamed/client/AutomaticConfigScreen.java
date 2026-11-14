@@ -230,7 +230,7 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
             if (index == 9) {
                 rowLabels.add("地图显示字体");
                 String fontBtnText = (draft.mapFont == null || draft.mapFont.isBlank() || "hereby_named:map_font".equals(draft.mapFont))
-                        ? "地图衬线体" : "minecraft:default".equals(draft.mapFont) ? "原版字体" : "自定义";
+                        ? "思源宋体" : "minecraft:default".equals(draft.mapFont) ? "原版字体" : "自定义";
                 button(x + contentWidth - 96, y, 90, fontBtnText, () -> {
                     if (draft.mapFont == null || "hereby_named:map_font".equals(draft.mapFont)) draft.mapFont = "minecraft:default";
                     else draft.mapFont = "hereby_named:map_font";

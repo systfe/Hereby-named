@@ -24,9 +24,12 @@ public final class RegionMesh {
     public record Fill(int x1,int z1,int x2,int z2,int color) implements Shape {}
     public record Edge(int x1,int z1,int x2,int z2,int color) implements Shape {}
     public record GlyphPlacement(char ch, double x, double z, float angleRad) {}
-    public record Label(String name, double x, double z, double span, float angleRad, List<GlyphPlacement> glyphs) {
+    public record Label(String name, double x, double z, double span, float angleRad, List<GlyphPlacement> glyphs, float curvature) {
+        public Label(String name, double x, double z, double span, float angleRad, List<GlyphPlacement> glyphs) {
+            this(name, x, z, span, angleRad, glyphs, 0f);
+        }
         public Label(String name, double x, double z, double span) {
-            this(name, x, z, span, 0f, List.of());
+            this(name, x, z, span, 0f, List.of(), 0f);
         }
         public float textScale(int textWidth, double pixelsPerChunk, int viewportWidth) {
             return (float)Math.max(0, Math.min(3, Math.min(span * pixelsPerChunk, viewportWidth * 0.8) / Math.max(1, textWidth)));
@@ -117,7 +120,7 @@ public final class RegionMesh {
             double defaultSpan = Math.min(Math.sqrt(count) * 0.9, (maxX - minX + 1) * 0.85);
             if (name.isEmpty() || count <= 1) {
                 return new Label(name, anchorX, anchorZ, defaultSpan, 0f,
-                        name.isEmpty() ? List.of() : List.of(new GlyphPlacement(name.charAt(0), anchorX, anchorZ, 0f)));
+                        name.isEmpty() ? List.of() : List.of(new GlyphPlacement(name.charAt(0), anchorX, anchorZ, 0f)), 0f);
             }
 
             double meanX = (double) sumX / count + 0.5;
@@ -139,20 +142,29 @@ public final class RegionMesh {
 
             double cos = Math.cos(theta), sin = Math.sin(theta);
             double minU = Double.POSITIVE_INFINITY, maxU = Double.NEGATIVE_INFINITY;
+            double sumU2V = 0.0, sumU4 = 0.0;
             for (ChunkCell c : cells) {
                 double dx = (c.x() + 0.5) - meanX;
                 double dz = (c.z() + 0.5) - meanZ;
                 double u = dx * cos + dz * sin;
+                double v = -dx * sin + dz * cos;
                 minU = Math.min(minU, u);
                 maxU = Math.max(maxU, u);
+                sumU2V += v * u * u;
+                sumU4 += u * u * u * u;
             }
             double longSpan = Math.max(1.0, maxU - minU);
             double span = Math.max(defaultSpan, longSpan * 0.75);
 
+            double curvature = sumU4 > 1e-4 ? (sumU2V / sumU4) : 0.0;
+            double maxSlope = 0.65;
+            double maxA = maxSlope / (2.0 * Math.max(1.0, Math.max(Math.abs(minU), Math.abs(maxU))));
+            curvature = Math.max(-maxA, Math.min(maxA, curvature));
+
             int n = name.length();
             if (n == 1) {
                 return new Label(name, anchorX, anchorZ, span, (float)theta,
-                        List.of(new GlyphPlacement(name.charAt(0), anchorX, anchorZ, (float)theta)));
+                        List.of(new GlyphPlacement(name.charAt(0), anchorX, anchorZ, (float)theta)), 0f);
             }
 
             double maxCharSpread = Character.UnicodeScript.of(name.charAt(0)) == Character.UnicodeScript.HAN ? 2.0 : 3.2;
@@ -198,7 +210,7 @@ public final class RegionMesh {
                 glyphs.add(new GlyphPlacement(name.charAt(i), gx[i], gz[i], (float)glyphAngle));
             }
 
-            return new Label(name, anchorX, anchorZ, span, (float)theta, List.copyOf(glyphs));
+            return new Label(name, anchorX, anchorZ, span, (float)theta, List.copyOf(glyphs), (float)curvature);
         }
     }
 }

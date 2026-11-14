@@ -365,23 +365,75 @@ public final class MapController {
         Style fontStyle = Style.EMPTY.withFont(fontLoc);
 
         for(var label:mesh.labels()) {
-            FormattedCharSequence seq = FormattedCharSequence.forward(label.name(), fontStyle);
-            int width = client.font.width(seq);
-            float textScale = label.textScale(width, scale * 16, map.width);
-            if (textScale < 0.5f) continue; // LOD culling
-            float alpha = textScale < 0.7f ? Math.max(0.0f, (textScale - 0.5f) / 0.2f) : 1.0f;
+            String name = label.name();
+            int n = name.length();
+            if (n == 0) continue;
+
+            int[] charWidths = new int[n];
+            int totalCharWidth = 0;
+            for (int i = 0; i < n; i++) {
+                charWidths[i] = client.font.width(FormattedCharSequence.forward(String.valueOf(name.charAt(i)), fontStyle));
+                totalCharWidth += charWidths[i];
+            }
+
+            float regionScreenSpan = (float)(label.span() * scale * 16.0);
+            float targetSpan = Math.min(regionScreenSpan * 0.75f, map.width * 0.8f);
+            float baseScale = targetSpan / Math.max(1.0f, totalCharWidth * 1.35f);
+            float textScale = Math.max(0.0f, Math.min(3.0f, baseScale));
+            if (textScale < 0.45f) continue; // LOD culling
+            float alpha = textScale < 0.7f ? Math.max(0.0f, (textScale - 0.45f) / 0.25f) : 1.0f;
             int fgColor = ((int)(0xFF * alpha) << 24) | 0xFFFBF0;
 
-            int x = screenX(label.x(), scale), y = screenZ(label.z(), scale);
-            if (x + width * textScale / 2 < 0 || x - width * textScale / 2 > map.width || y + 9 * textScale < 0 || y - 9 * textScale > map.height) continue;
-            context.pose().pushPose();
-            context.pose().translate(x, y, 0);
-            if (Math.abs(label.angleRad()) > 0.001f) {
-                context.pose().mulPose(com.mojang.math.Axis.ZP.rotation(label.angleRad()));
+            float spacingFactor = (float)Math.max(1.25, Math.min(2.5, (regionScreenSpan * 0.65) / Math.max(1.0, totalCharWidth * textScale)));
+
+            double[] uPositions = new double[n];
+            if (n > 1) {
+                double curU = 0.0;
+                double[] relU = new double[n];
+                relU[0] = 0.0;
+                for (int i = 0; i < n - 1; i++) {
+                    double stepScreen = (charWidths[i] + charWidths[i+1]) * 0.5 * textScale * spacingFactor;
+                    double stepChunk = stepScreen / Math.max(0.001, scale * 16.0);
+                    curU += stepChunk;
+                    relU[i + 1] = curU;
+                }
+                double halfU = curU / 2.0;
+                for (int i = 0; i < n; i++) {
+                    uPositions[i] = relU[i] - halfU;
+                }
             }
-            context.pose().scale(textScale, textScale, 1);
-            context.drawString(client.font, seq, -width / 2, -4, fgColor, false);
-            context.pose().popPose();
+
+            double cosTheta = Math.cos(label.angleRad());
+            double sinTheta = Math.sin(label.angleRad());
+            double curv = label.curvature();
+
+            int anchorScreenX = screenX(label.x(), scale);
+            int anchorScreenZ = screenZ(label.z(), scale);
+            if (anchorScreenX < -200 || anchorScreenX > map.width + 200 || anchorScreenZ < -200 || anchorScreenZ > map.height + 200) continue;
+
+            for (int i = 0; i < n; i++) {
+                double u = uPositions[i];
+                double v = curv * u * u;
+                double xi = label.x() + (u * cosTheta - v * sinTheta);
+                double zi = label.z() + (u * sinTheta + v * cosTheta);
+
+                int sx = screenX(xi, scale);
+                int sz = screenZ(zi, scale);
+                if (sx < -40 || sx > map.width + 40 || sz < -40 || sz > map.height + 40) continue;
+
+                float localAngle = (float)(label.angleRad() + Math.atan(2.0 * curv * u));
+
+                context.pose().pushPose();
+                context.pose().translate(sx, sz, 0);
+                if (Math.abs(localAngle) > 0.001f) {
+                    context.pose().mulPose(com.mojang.math.Axis.ZP.rotation(localAngle));
+                }
+                context.pose().scale(textScale, textScale, 1.0f);
+                FormattedCharSequence charSeq = FormattedCharSequence.forward(String.valueOf(name.charAt(i)), fontStyle);
+                int cw = charWidths[i];
+                context.drawString(client.font, charSeq, -cw / 2, -4, fgColor, false);
+                context.pose().popPose();
+            }
         }
         context.pose().popPose();
         context.disableScissor();

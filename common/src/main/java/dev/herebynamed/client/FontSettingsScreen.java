@@ -34,11 +34,11 @@ final class FontSettingsScreen extends Screen implements EditorDialog {
         fontInput.setValue(curFont);
         addRenderableWidget(fontInput);
 
-        addRenderableWidget(Button.builder(Component.literal("预设：地图衬线体 (欧陆/钢四风格)"), b -> {
+        addRenderableWidget(Button.builder(Component.literal("预设：思源宋体 / Cinzel (默认)"), b -> {
             fontInput.setValue("hereby_named:map_font");
         }).bounds(x, top + 78, 240, 20).build());
 
-        addRenderableWidget(Button.builder(Component.literal("预设：原版默认像素字体"), b -> {
+        addRenderableWidget(Button.builder(Component.literal("预设：原版默认像素字体 (minecraft:default)"), b -> {
             fontInput.setValue("minecraft:default");
         }).bounds(x, top + 104, 240, 20).build());
 
