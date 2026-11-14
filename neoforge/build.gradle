@@ -6,7 +6,7 @@ def mc = '1.21.1'
 def neoforgeVersion = '21.1.77'
 def mapVersion = '1.44.2'
 def libVersion = '1.7.1'
-def modVersion = providers.gradleProperty('mod_version').getOrElse('0.3.1')
+def modVersion = providers.gradleProperty('mod_version').getOrElse('0.3.2')
 
 version = "${modVersion}+${mc}-neoforge"
 group = 'dev.herebynamed'

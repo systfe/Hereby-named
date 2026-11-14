@@ -6,7 +6,7 @@ def mc = '1.20.1'
 def forgeVersion = '1.20.1-47.3.0'
 def mapVersion = '1.47.0'
 def libVersion = '1.7.3'
-def modVersion = providers.gradleProperty('mod_version').getOrElse('0.3.1')
+def modVersion = providers.gradleProperty('mod_version').getOrElse('0.3.2')
 
 version = "${modVersion}+${mc}-forge"
 group = 'dev.herebynamed'
