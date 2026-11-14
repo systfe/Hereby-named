@@ -149,10 +149,16 @@ public final class MapController {
         data.edit(dimension,action,layer,selected,name,color,cells);
     }
     private ChunkCell cellAt(double x, double y) {
-        double guiScale = client.getWindow().getGuiScale(), scale = Math.max(0.000001,view.hereby$scale());
-        int bx = (int)Math.floor(view.hereby$cameraX() + (x*guiScale-client.getWindow().getWidth()/2.0)/scale);
-        int bz = (int)Math.floor(view.hereby$cameraZ() + (y*guiScale-client.getWindow().getHeight()/2.0)/scale);
-        return new ChunkCell(bx>>4,bz>>4);
+        if (x < -10000 || x > 10000 || y < -10000 || y > 10000) return null;
+        double guiScale = client.getWindow().getGuiScale(), scale = Math.max(0.000001, view.hereby$scale());
+        double dx = (x * guiScale - client.getWindow().getWidth() / 2.0) / scale;
+        double dz = (y * guiScale - client.getWindow().getHeight() / 2.0) / scale;
+        if (Double.isNaN(dx) || Double.isNaN(dz) || Math.abs(dx) > 1e8 || Math.abs(dz) > 1e8) return null;
+        long bx = (long) Math.floor(view.hereby$cameraX() + dx);
+        long bz = (long) Math.floor(view.hereby$cameraZ() + dz);
+        long cx = bx >> 4, cz = bz >> 4;
+        if (Math.abs(cx) > ChunkCell.MAX_COORDINATE || Math.abs(cz) > ChunkCell.MAX_COORDINATE) return null;
+        return new ChunkCell((int) cx, (int) cz);
     }
     private boolean onControl(double x,double y) {
         return map.getChildAt(x,y).filter(w -> w instanceof AbstractWidget aw && aw.visible).isPresent();
@@ -164,7 +170,7 @@ public final class MapController {
         }
         if (chunkLoaderMode && button == 0 && !onControl(x, y)) {
             ChunkCell target = cellAt(x, y);
-            if (client.getConnection() != null) {
+            if (target != null && client.getConnection() != null) {
                 client.getConnection().sendCommand("claim forceload toggle " + target.x() + " " + target.z());
             }
             return false;
@@ -175,16 +181,21 @@ public final class MapController {
             if (button == 0 && !Screen.hasShiftDown() && !Screen.hasControlDown()) return true;
             data.message("请先新增选区"); return false;
         }
-        pressed=button; downX=x; downY=y; downAt=System.nanoTime(); start=cellAt(x,y); triggered=false;
+        start = cellAt(x, y);
+        if (start == null) return true;
+        pressed=button; downX=x; downY=y; downAt=System.nanoTime(); triggered=false;
         gesture = Screen.hasControlDown()?2:Screen.hasShiftDown()?1:0;
         return gesture==0 && button==0;
     }
     public boolean mouseUp(double x,double y,int button) {
         if (pressed != button) return true;
         int previousGesture=gesture; pressed=-1;
-        if (editing() && !triggered) {
-            if (previousGesture==1) begin(start,cellAt(x,y),false,button==0);
-            else if (previousGesture==0 && Math.hypot(x-downX,y-downY)<=4) begin(start,start,false,button==0);
+        if (editing() && !triggered && start != null) {
+            ChunkCell to = cellAt(x, y);
+            if (to != null) {
+                if (previousGesture==1) begin(start,to,false,button==0);
+                else if (previousGesture==0 && Math.hypot(x-downX,y-downY)<=4) begin(start,start,false,button==0);
+            }
         }
         return previousGesture==0 && button==0;
     }
@@ -219,7 +230,10 @@ public final class MapController {
         if (pressed>=0 && gesture==2 && !triggered && System.nanoTime()-downAt>=500_000_000L) {
             double x=client.mouseHandler.xpos()/client.getWindow().getGuiScale(), y=client.mouseHandler.ypos()/client.getWindow().getGuiScale();
             if (Math.hypot(x-downX,y-downY)<=4) { triggered=true; begin(start,start,true,pressed==0); }
-            else { downAt=System.nanoTime(); downX=x; downY=y; start=cellAt(x,y); }
+            else {
+                ChunkCell c = cellAt(x, y);
+                if (c != null) { downAt=System.nanoTime(); downX=x; downY=y; start=c; }
+            }
         }
         if (job!=null) try {
             if (job.advance()) {
@@ -295,15 +309,17 @@ public final class MapController {
                     MapTools.drawTooltip(context, client.font, hw.hint(), mouseX, mouseY, map.width, map.height);
                 }
             }
-            if (!onControl(mouseX, mouseY)) {
+            if (!onControl(mouseX, mouseY) && mouseX >= 0 && mouseX < map.width && mouseY >= 0 && mouseY < map.height) {
                 ChunkCell hoverCell = cellAt(mouseX, mouseY);
-                List<String> hoverNames = book().namesAt(hoverCell);
-                for (String hn : hoverNames) {
-                    if (hn.contains("[领主:")) {
-                        String tip = "§6[私人领地] §f" + hn + "\n§7区块坐标: (" + hoverCell.x() + ", " + hoverCell.z() + ")"
-                                + "\n§e可使用常加载按钮配置，或在控制台使用 /claim 管理";
-                        MapTools.drawTooltip(context, client.font, tip, mouseX, mouseY, map.width, map.height);
-                        break;
+                if (hoverCell != null) {
+                    List<String> hoverNames = book().namesAt(hoverCell);
+                    for (String hn : hoverNames) {
+                        if (hn.contains("[领主:")) {
+                            String tip = "§6[私人领地] §f" + hn + "\n§7区块坐标: (" + hoverCell.x() + ", " + hoverCell.z() + ")"
+                                    + "\n§e可使用常加载按钮配置，或在控制台使用 /claim 管理";
+                            MapTools.drawTooltip(context, client.font, tip, mouseX, mouseY, map.width, map.height);
+                            break;
+                        }
                     }
                 }
             }
