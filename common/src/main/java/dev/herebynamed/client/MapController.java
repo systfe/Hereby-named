@@ -27,6 +27,7 @@ public final class MapController {
     private final RegionOverlay overlay;
     private String dimension = "", selected = "";
     private int layer = 1, visibility, displayLayer = 1;
+    private boolean chunkLoaderMode;
     private long generation = -1;
     private SelectionJob job;
     private int pressed = -1, gesture;
@@ -75,6 +76,10 @@ public final class MapController {
             build();
         });
         if(HerebyNamedClient.AUTOMATIC!=null) icon(0,80,11,"自动创建区域设置",b -> client.setScreen(new AutomaticSettingsScreen(map,HerebyNamedClient.AUTOMATIC)));
+        icon(0,100,chunkLoaderMode ? 1 : 10, chunkLoaderMode ? "常加载模式已激活 (点击区块切换常加载)" : "切换区块常加载模式", b -> {
+            chunkLoaderMode = !chunkLoaderMode;
+            build();
+        });
         if (editing()) {
             int[] cursor = {Math.max(24,(map.width-299)/2), 48};
             RegionBook.Region current = book.region(selected).orElse(null);
@@ -156,6 +161,13 @@ public final class MapController {
         if (popup != null) { popup.click(x,y,button); return false; }
         for (Button control : controls) {
             if (control.mouseClicked(x,y,button)) return false;
+        }
+        if (chunkLoaderMode && button == 0 && !onControl(x, y)) {
+            ChunkCell target = cellAt(x, y);
+            if (client.getConnection() != null) {
+                client.getConnection().sendCommand("claim forceload toggle " + target.x() + " " + target.z());
+            }
+            return false;
         }
         if (!editing() || onControl(x,y) || button>1) return true;
         if (job != null || data.busy()) return false;
@@ -269,14 +281,31 @@ public final class MapController {
             context.drawCenteredString(client.font,name,map.width/2,y,0xffffff);
         }
         for(Button control:controls) control.render(context,mouseX,mouseY,0);
+        if (chunkLoaderMode) {
+            context.drawCenteredString(client.font, "§b[常加载模式] 点击领地区块即可设置或取消常加载", map.width / 2, map.height - 35, 0x55ffff);
+        }
         if (editing() && (job!=null || data.busy())) {
             String status=job!=null?"正在选择 "+job.size()+" 个区块 · Esc 取消":"正在同步…";
             context.drawCenteredString(client.font,status,map.width/2,map.height-23,0xffffff);
         }
         if(popup!=null) popup.render(context,mouseX,mouseY);
-        else for(Button control:controls) {
-            if(control.isHovered() && control instanceof MapTools.HintedWidget hw && hw.showHint()) {
-                MapTools.drawTooltip(context, client.font, hw.hint(), mouseX, mouseY, map.width, map.height);
+        else {
+            for(Button control:controls) {
+                if(control.isHovered() && control instanceof MapTools.HintedWidget hw && hw.showHint()) {
+                    MapTools.drawTooltip(context, client.font, hw.hint(), mouseX, mouseY, map.width, map.height);
+                }
+            }
+            if (!onControl(mouseX, mouseY)) {
+                ChunkCell hoverCell = cellAt(mouseX, mouseY);
+                List<String> hoverNames = book().namesAt(hoverCell);
+                for (String hn : hoverNames) {
+                    if (hn.contains("[领主:")) {
+                        String tip = "§6[私人领地] §f" + hn + "\n§7区块坐标: (" + hoverCell.x() + ", " + hoverCell.z() + ")"
+                                + "\n§e可使用常加载按钮配置，或在控制台使用 /claim 管理";
+                        MapTools.drawTooltip(context, client.font, tip, mouseX, mouseY, map.width, map.height);
+                        break;
+                    }
+                }
             }
         }
         context.pose().popPose();

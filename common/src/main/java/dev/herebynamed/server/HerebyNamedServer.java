@@ -1,8 +1,15 @@
 package dev.herebynamed.server;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import dev.herebynamed.auto.AutoWork;
+import dev.herebynamed.claim.ClaimManager;
+import dev.herebynamed.claim.ChunkLoaderManager;
+import dev.herebynamed.claim.PlayerClaimBorderTracker;
+import dev.herebynamed.claim.model.Claim;
+import dev.herebynamed.claim.model.ClaimFlag;
+import dev.herebynamed.claim.model.ClaimRole;
 import dev.herebynamed.domain.*;
 import dev.herebynamed.net.Snapshot;
 import dev.herebynamed.net.Wire;
@@ -24,15 +31,31 @@ public final class HerebyNamedServer {
     public static final Logger LOG = LoggerFactory.getLogger("hereby_named");
     private static final Map<MinecraftServer, ServerData> SERVERS = new IdentityHashMap<>();
 
+    public static ClaimManager getClaimManager(MinecraftServer server) {
+        if (server == null) return null;
+        ServerData d = SERVERS.get(server);
+        return d != null ? d.claimManager : null;
+    }
+
+    public static ClaimManager getActiveClaimManager() {
+        for (ServerData d : SERVERS.values()) {
+            if (d != null && d.claimManager != null) return d.claimManager;
+        }
+        return null;
+    }
+
     private static ServerData data(MinecraftServer server) {
         return SERVERS.computeIfAbsent(server, s -> new ServerData(s.getWorldPath(LevelResource.ROOT).resolve("hereby-named")));
     }
 
     public static void onJoin(MinecraftServer server, ServerPlayer player) {
+        ChunkLoaderManager.onPlayerReconnect(server, player.getUUID());
         send(server, player, player.serverLevel().dimension().location().toString(), "");
     }
 
     public static void onDisconnect(MinecraftServer server, ServerPlayer player) {
+        PlayerClaimBorderTracker.onPlayerDisconnect(player.getUUID());
+        ChunkLoaderManager.onPlayerDisconnect(server, player.getUUID());
         ServerData d = data(server);
         d.assemblers.remove(player.getUUID());
         d.readAt.remove(player.getUUID());
@@ -51,6 +74,8 @@ public final class HerebyNamedServer {
         if (d != null) {
             d.writes.close();
             d.stopping = true;
+            d.claimStore.save(d.claimManager, d.claimManager.getDimensions());
+            ChunkLoaderManager.clearAll();
         }
     }
 
@@ -59,7 +84,13 @@ public final class HerebyNamedServer {
     }
 
     public static void onServerTick(MinecraftServer server) {
-        pump(server, SERVERS.get(server));
+        ServerData d = SERVERS.get(server);
+        if (d != null) {
+            pump(server, d);
+            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                PlayerClaimBorderTracker.onPlayerTick(player, d.claimManager);
+            }
+        }
     }
 
     public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -69,6 +100,8 @@ public final class HerebyNamedServer {
                     .executes(ctx -> authorize(ctx.getSource(), StringArgumentType.getString(ctx, "player"), true))))
                 .then(Commands.literal("revoke").then(Commands.argument("player", StringArgumentType.word())
                     .executes(ctx -> authorize(ctx.getSource(), StringArgumentType.getString(ctx, "player"), false)))));
+
+        registerClaimCommands(dispatcher);
     }
 
     private static int authorize(CommandSourceStack source, String name, boolean grant) {
@@ -90,6 +123,348 @@ public final class HerebyNamedServer {
             for (String dim : List.copyOf(d.books.keySet())) send(source.getServer(), player, dim, "编辑权限已更新");
             source.sendSuccess(() -> Component.literal("此地名曰：已" + (grant ? "授权 " : "撤销授权 ") + name), true); return 1;
         } catch (IOException ex) { LOG.error("Cannot persist region editors", ex); source.sendFailure(Component.literal("授权保存失败")); return 0; }
+    }
+
+    private static void registerClaimCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
+            Commands.literal("claim")
+                .then(Commands.literal("create").then(Commands.argument("name", StringArgumentType.greedyString())
+                    .executes(ctx -> createClaim(ctx.getSource(), StringArgumentType.getString(ctx, "name")))))
+                .then(Commands.literal("claim")
+                    .executes(ctx -> claimCurrentChunk(ctx.getSource())))
+                .then(Commands.literal("info")
+                    .executes(ctx -> claimInfo(ctx.getSource())))
+                .then(Commands.literal("remove")
+                    .executes(ctx -> removeClaim(ctx.getSource())))
+                .then(Commands.literal("forceload")
+                    .then(Commands.argument("value", StringArgumentType.word())
+                        .executes(ctx -> toggleForceLoad(ctx.getSource(), StringArgumentType.getString(ctx, "value")))
+                        .then(Commands.argument("x", com.mojang.brigadier.arguments.IntegerArgumentType.integer())
+                            .then(Commands.argument("z", com.mojang.brigadier.arguments.IntegerArgumentType.integer())
+                                .executes(ctx -> toggleForceLoadCoord(ctx.getSource(),
+                                        StringArgumentType.getString(ctx, "value"),
+                                        com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "x"),
+                                        com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "z")))))))
+                .then(Commands.literal("flag")
+                    .then(Commands.argument("flag", StringArgumentType.word())
+                        .then(Commands.argument("value", BoolArgumentType.bool())
+                            .executes(ctx -> toggleFlag(ctx.getSource(), StringArgumentType.getString(ctx, "flag"), BoolArgumentType.getBool(ctx, "value"))))))
+                .then(Commands.literal("member")
+                    .then(Commands.literal("add").then(Commands.argument("player", StringArgumentType.word())
+                        .executes(ctx -> addMember(ctx.getSource(), StringArgumentType.getString(ctx, "player")))))
+                    .then(Commands.literal("remove").then(Commands.argument("player", StringArgumentType.word())
+                        .executes(ctx -> removeMember(ctx.getSource(), StringArgumentType.getString(ctx, "player"))))))
+        );
+    }
+
+    private static int createClaim(CommandSourceStack source, String name) {
+        ServerPlayer player = source.getPlayer();
+        if (player == null) { source.sendFailure(Component.literal("仅玩家可执行此命令")); return 0; }
+        ServerData d = data(source.getServer());
+        ClaimManager mgr = d.claimManager;
+        String dim = player.serverLevel().dimension().location().toString();
+        ChunkCell cell = new ChunkCell(player.getBlockX() >> 4, player.getBlockZ() >> 4);
+        if (mgr.getClaimAt(dim, cell) != null) {
+            source.sendFailure(Component.literal("§c该区块已有领地归属！"));
+            return 0;
+        }
+        int playerChunks = mgr.getClaimsByOwner(player.getUUID()).stream().mapToInt(c -> c.chunks().size()).sum();
+        if (playerChunks >= d.economyConfig.limits().maxClaimChunksPerPlayer() && !player.hasPermissions(2)) {
+            source.sendFailure(Component.literal("§c你的领地区块总数已达上限 (" + d.economyConfig.limits().maxClaimChunksPerPlayer() + ")"));
+            return 0;
+        }
+        if (!dev.herebynamed.claim.ClaimEconomyHelper.checkAndDeduct(player, 1, d.economyConfig.claimCost())) {
+            return 0;
+        }
+        Claim claim = Claim.create(player.getUUID(), name, 0x33aa33, Set.of(cell));
+        boolean success = mgr.registerClaim(dim, claim);
+        if (success) {
+            d.claimStore.save(mgr, mgr.getDimensions());
+            syncClaimToBook(source.getServer(), dim, claim);
+            source.sendSuccess(() -> Component.literal("§a成功创建领地: §f" + name + " §7(区块: " + cell.x() + ", " + cell.z() + ")"), true);
+            return 1;
+        } else {
+            dev.herebynamed.claim.ClaimEconomyHelper.refund(player, 1, d.economyConfig.claimCost());
+            source.sendFailure(Component.literal("§c领地创建失败：区块已被占用"));
+            return 0;
+        }
+    }
+
+    private static int claimCurrentChunk(CommandSourceStack source) {
+        ServerPlayer player = source.getPlayer();
+        if (player == null) { source.sendFailure(Component.literal("仅玩家可执行此命令")); return 0; }
+        ServerData d = data(source.getServer());
+        String dim = player.serverLevel().dimension().location().toString();
+        ChunkCell cell = new ChunkCell(player.getBlockX() >> 4, player.getBlockZ() >> 4);
+        if (d.claimManager.getClaimAt(dim, cell) != null) {
+            source.sendFailure(Component.literal("§c该区块已有领地归属！"));
+            return 0;
+        }
+        List<Claim> playerClaims = d.claimManager.getClaimsByOwner(player.getUUID());
+        if (playerClaims.isEmpty()) {
+            source.sendFailure(Component.literal("§c你尚未创建任何领地，请先使用 /claim create <名称>"));
+            return 0;
+        }
+        Claim targetClaim = playerClaims.get(playerClaims.size() - 1);
+        int totalLoaded = playerClaims.stream().mapToInt(c -> c.chunks().size()).sum();
+        if (totalLoaded >= d.economyConfig.limits().maxClaimChunksPerPlayer() && !player.hasPermissions(2)) {
+            source.sendFailure(Component.literal("§c你拥有的领地区块总数已达上限 (" + d.economyConfig.limits().maxClaimChunksPerPlayer() + ")"));
+            return 0;
+        }
+        if (!dev.herebynamed.claim.ClaimEconomyHelper.checkAndDeduct(player, 1, d.economyConfig.claimCost())) {
+            return 0;
+        }
+        Set<ChunkCell> newChunks = new HashSet<>(targetClaim.chunks());
+        newChunks.add(cell);
+        Claim updated = targetClaim.withChunks(newChunks);
+        boolean success = d.claimManager.registerClaim(dim, updated);
+        if (success) {
+            d.claimStore.save(d.claimManager, d.claimManager.getDimensions());
+            syncClaimToBook(source.getServer(), dim, updated);
+            source.sendSuccess(() -> Component.literal("§a成功将区块 (" + cell.x() + ", " + cell.z() + ") 划入领地: §f" + targetClaim.name()), true);
+            return 1;
+        } else {
+            dev.herebynamed.claim.ClaimEconomyHelper.refund(player, 1, d.economyConfig.claimCost());
+            source.sendFailure(Component.literal("§c领地扩张失败：区块冲突"));
+            return 0;
+        }
+    }
+
+    private static int claimInfo(CommandSourceStack source) {
+        ServerPlayer player = source.getPlayer();
+        if (player == null) { source.sendFailure(Component.literal("仅玩家可执行此命令")); return 0; }
+        ClaimManager mgr = getClaimManager(source.getServer());
+        if (mgr == null) return 0;
+        String dim = player.serverLevel().dimension().location().toString();
+        ChunkCell cell = new ChunkCell(player.getBlockX() >> 4, player.getBlockZ() >> 4);
+        Claim claim = mgr.getClaimAt(dim, cell);
+        if (claim == null) {
+            source.sendSuccess(() -> Component.literal("§7当前所在位置属于无主荒野 (区块: " + cell.x() + ", " + cell.z() + ")"), false);
+            return 1;
+        }
+        String ownerName = mgr.resolvePlayerName(source.getServer(), claim.owner());
+        source.sendSuccess(() -> Component.literal("§6=== 领地信息 ==="), false);
+        source.sendSuccess(() -> Component.literal("§e名称: §f" + claim.name() + " §7| §e领主: §a" + ownerName), false);
+        source.sendSuccess(() -> Component.literal("§e涵盖区块: §f" + claim.chunks().size() + " §7| §e信任成员: §f" + claim.members().size()), false);
+        source.sendSuccess(() -> Component.literal("§e访客权限: §7" + formatFlags(claim.visitorFlags())), false);
+        source.sendSuccess(() -> Component.literal("§e常加载: §f" + (claim.forceLoaded() ? "§a开启" : "§c关闭")), false);
+        return 1;
+    }
+
+    private static String formatFlags(int flags) {
+        List<String> active = new ArrayList<>();
+        if ((flags & ClaimFlag.BREAK) != 0) active.add("破坏");
+        if ((flags & ClaimFlag.PLACE) != 0) active.add("放置");
+        if ((flags & ClaimFlag.INTERACT) != 0) active.add("交互");
+        if ((flags & ClaimFlag.CONTAINER) != 0) active.add("容器");
+        if ((flags & ClaimFlag.PVP) != 0) active.add("PvP");
+        if ((flags & ClaimFlag.ANIMAL_PROTECT) != 0) active.add("保护动物");
+        if ((flags & ClaimFlag.EXPLOSION_PROOF) != 0) active.add("防爆");
+        if ((flags & ClaimFlag.FIRE_SPREAD) != 0) active.add("防火");
+        if ((flags & ClaimFlag.ENTER) != 0) active.add("允许进入");
+        return active.isEmpty() ? "全禁用" : String.join(", ", active);
+    }
+
+    private static int removeClaim(CommandSourceStack source) {
+        ServerPlayer player = source.getPlayer();
+        if (player == null) { source.sendFailure(Component.literal("仅玩家可执行此命令")); return 0; }
+        ServerData d = data(source.getServer());
+        ClaimManager mgr = d.claimManager;
+        String dim = player.serverLevel().dimension().location().toString();
+        ChunkCell cell = new ChunkCell(player.getBlockX() >> 4, player.getBlockZ() >> 4);
+        Claim claim = mgr.getClaimAt(dim, cell);
+        if (claim == null) { source.sendFailure(Component.literal("§c当前位置没有领地！")); return 0; }
+        if (!player.getUUID().equals(claim.owner()) && !player.hasPermissions(2)) {
+            source.sendFailure(Component.literal("§c只有领主或OP管理员可以解散领地！")); return 0;
+        }
+        for (ChunkCell c : claim.chunks()) {
+            dev.herebynamed.claim.ChunkLoaderManager.setForceLoaded(player.serverLevel(), claim.owner(), c, false);
+        }
+        mgr.evictClaim(claim, dim);
+        removeClaimFromBook(source.getServer(), dim, claim);
+        dev.herebynamed.claim.ClaimEconomyHelper.refund(player, claim.chunks().size(), d.economyConfig.claimCost());
+        d.claimStore.save(mgr, mgr.getDimensions());
+        source.sendSuccess(() -> Component.literal("§a已解散领地: §f" + claim.name()), true);
+        return 1;
+    }
+
+    private static int toggleForceLoad(CommandSourceStack source, String valStr) {
+        ServerPlayer player = source.getPlayer();
+        if (player == null) { source.sendFailure(Component.literal("仅玩家可执行此命令")); return 0; }
+        return toggleForceLoadCoord(source, valStr, player.getBlockX() >> 4, player.getBlockZ() >> 4);
+    }
+
+    private static int toggleForceLoadCoord(CommandSourceStack source, String valStr, int chunkX, int chunkZ) {
+        ServerPlayer player = source.getPlayer();
+        if (player == null) { source.sendFailure(Component.literal("仅玩家可执行此命令")); return 0; }
+        ServerData d = data(source.getServer());
+        String dim = player.serverLevel().dimension().location().toString();
+        ChunkCell cell = new ChunkCell(chunkX, chunkZ);
+        Claim claim = d.claimManager.getClaimAt(dim, cell);
+        if (claim == null) {
+            source.sendFailure(Component.literal("§c该区块 (" + chunkX + ", " + chunkZ + ") 不属于任何领地！"));
+            return 0;
+        }
+        if (!player.getUUID().equals(claim.owner()) && !player.hasPermissions(2)) {
+            source.sendFailure(Component.literal("§c只有领主可以配置常加载！")); return 0;
+        }
+        boolean isCurrentlyLoaded = dev.herebynamed.claim.ChunkLoaderManager.isForceLoaded(player.getUUID(), dim, cell);
+        boolean targetVal = "toggle".equalsIgnoreCase(valStr) ? !isCurrentlyLoaded : Boolean.parseBoolean(valStr);
+
+        if (targetVal == isCurrentlyLoaded) {
+            source.sendSuccess(() -> Component.literal("§7区块 (" + chunkX + ", " + chunkZ + ") 常加载状态未改变"), false);
+            return 1;
+        }
+
+        if (targetVal) {
+            int playerLoaded = dev.herebynamed.claim.ChunkLoaderManager.getPlayerLoadedCount(player.getUUID());
+            if (playerLoaded >= d.economyConfig.limits().maxForceLoadedChunksPerPlayer() && !player.hasPermissions(2)) {
+                source.sendFailure(Component.literal("§c你的常加载区块配额已达上限 (" + d.economyConfig.limits().maxForceLoadedChunksPerPlayer() + ")"));
+                return 0;
+            }
+            int globalLoaded = dev.herebynamed.claim.ChunkLoaderManager.getGlobalLoadedCount();
+            if (globalLoaded >= d.economyConfig.limits().maxGlobalForceLoadedChunks() && !player.hasPermissions(2)) {
+                source.sendFailure(Component.literal("§c全服常加载区块总数已达上限 (" + d.economyConfig.limits().maxGlobalForceLoadedChunks() + ")"));
+                return 0;
+            }
+            if (!dev.herebynamed.claim.ClaimEconomyHelper.checkAndDeduct(player, 1, new dev.herebynamed.claim.model.ClaimEconomyConfig.ClaimCost(
+                    d.economyConfig.forceLoad().enabled(),
+                    d.economyConfig.forceLoad().costItem(),
+                    d.economyConfig.forceLoad().costAmountPerChunk(),
+                    true, false))) {
+                return 0;
+            }
+        }
+        dev.herebynamed.claim.ChunkLoaderManager.setForceLoaded(player.serverLevel(), player.getUUID(), cell, targetVal);
+        Claim updated = claim.withForceLoaded(targetVal);
+        d.claimManager.registerClaim(dim, updated);
+        d.claimStore.save(d.claimManager, d.claimManager.getDimensions());
+        syncClaimToBook(source.getServer(), dim, updated);
+        source.sendSuccess(() -> Component.literal("§a已" + (targetVal ? "开启" : "关闭") + "区块 (" + chunkX + ", " + chunkZ + ") 常加载！"), true);
+        return 1;
+    }
+
+    private static int toggleFlag(CommandSourceStack source, String flagName, boolean value) {
+        ServerPlayer player = source.getPlayer();
+        if (player == null) { source.sendFailure(Component.literal("仅玩家可执行此命令")); return 0; }
+        ServerData d = data(source.getServer());
+        ClaimManager mgr = d.claimManager;
+        String dim = player.serverLevel().dimension().location().toString();
+        ChunkCell cell = new ChunkCell(player.getBlockX() >> 4, player.getBlockZ() >> 4);
+        Claim claim = mgr.getClaimAt(dim, cell);
+        if (claim == null) { source.sendFailure(Component.literal("§c当前位置没有领地！")); return 0; }
+        if (!player.getUUID().equals(claim.owner()) && !player.hasPermissions(2)) {
+            source.sendFailure(Component.literal("§c只有领主可以修改领地标志位！")); return 0;
+        }
+        int bit = ClaimFlag.parseFlag(flagName);
+        if (bit == 0) {
+            source.sendFailure(Component.literal("§c未知标志位！可用：break, place, interact, container, pvp, animal, explosion, fire, enter"));
+            return 0;
+        }
+        int cur = claim.visitorFlags();
+        int next = value ? (cur | bit) : (cur & ~bit);
+        Claim updated = claim.withVisitorFlags(next);
+        if (bit == ClaimFlag.EXPLOSION_PROOF || bit == ClaimFlag.FIRE_SPREAD) {
+            int envCur = claim.environmentFlags();
+            int envNext = value ? (envCur | bit) : (envCur & ~bit);
+            updated = updated.withEnvironmentFlags(envNext);
+        }
+        mgr.registerClaim(dim, updated);
+        d.claimStore.save(mgr, mgr.getDimensions());
+        syncClaimToBook(source.getServer(), dim, updated);
+        source.sendSuccess(() -> Component.literal("§a已更新标志位 §e" + flagName + " §a为 §f" + value), true);
+        return 1;
+    }
+
+    private static int addMember(CommandSourceStack source, String targetName) {
+        ServerPlayer player = source.getPlayer();
+        if (player == null) { source.sendFailure(Component.literal("仅玩家可执行此命令")); return 0; }
+        ServerData d = data(source.getServer());
+        ClaimManager mgr = d.claimManager;
+        String dim = player.serverLevel().dimension().location().toString();
+        ChunkCell cell = new ChunkCell(player.getBlockX() >> 4, player.getBlockZ() >> 4);
+        Claim claim = mgr.getClaimAt(dim, cell);
+        if (claim == null) { source.sendFailure(Component.literal("§c当前位置没有领地！")); return 0; }
+        if (!player.getUUID().equals(claim.owner()) && !player.hasPermissions(2)) {
+            source.sendFailure(Component.literal("§c只有领主可以添加成员！")); return 0;
+        }
+        ServerPlayer target = source.getServer().getPlayerList().getPlayerByName(targetName);
+        if (target == null) { source.sendFailure(Component.literal("§c目标玩家需要在线！")); return 0; }
+        Claim updated = claim.withMember(target.getUUID(), ClaimRole.MEMBER);
+        mgr.registerClaim(dim, updated);
+        d.claimStore.save(mgr, mgr.getDimensions());
+        syncClaimToBook(source.getServer(), dim, updated);
+        source.sendSuccess(() -> Component.literal("§a已将 §f" + targetName + " §a添加为领地信任成员"), true);
+        return 1;
+    }
+
+    private static int removeMember(CommandSourceStack source, String targetName) {
+        ServerPlayer player = source.getPlayer();
+        if (player == null) { source.sendFailure(Component.literal("仅玩家可执行此命令")); return 0; }
+        ServerData d = data(source.getServer());
+        ClaimManager mgr = d.claimManager;
+        String dim = player.serverLevel().dimension().location().toString();
+        ChunkCell cell = new ChunkCell(player.getBlockX() >> 4, player.getBlockZ() >> 4);
+        Claim claim = mgr.getClaimAt(dim, cell);
+        if (claim == null) { source.sendFailure(Component.literal("§c当前位置没有领地！")); return 0; }
+        if (!player.getUUID().equals(claim.owner()) && !player.hasPermissions(2)) {
+            source.sendFailure(Component.literal("§c只有领主可以移除成员！")); return 0;
+        }
+        ServerPlayer target = source.getServer().getPlayerList().getPlayerByName(targetName);
+        UUID targetId = target != null ? target.getUUID() : null;
+        if (targetId == null) {
+            for (UUID id : claim.members().keySet()) {
+                if (mgr.resolvePlayerName(source.getServer(), id).equalsIgnoreCase(targetName)) {
+                    targetId = id;
+                    break;
+                }
+            }
+        }
+        if (targetId == null) { source.sendFailure(Component.literal("§c未找到该成员！")); return 0; }
+        Claim updated = claim.withoutMember(targetId);
+        mgr.registerClaim(dim, updated);
+        d.claimStore.save(mgr, mgr.getDimensions());
+        syncClaimToBook(source.getServer(), dim, updated);
+        source.sendSuccess(() -> Component.literal("§a已将 §f" + targetName + " §a移出领地成员"), true);
+        return 1;
+    }
+
+    public static void syncClaimToBook(MinecraftServer server, String dim, Claim claim) {
+        if (server == null || dim == null || claim == null) return;
+        ServerData d = data(server);
+        try {
+            RegionBook book = d.book(dim);
+            String regionId = "claim-" + claim.id().toString();
+            String ownerName = d.claimManager.resolvePlayerName(server, claim.owner());
+            String title = claim.name() + " [领主: " + ownerName + "]";
+            var existing = book.region(regionId);
+            if (existing.isPresent()) {
+                book.renameRegion(regionId, title, claim.color());
+                book.paint(regionId, claim.chunks(), true);
+            } else {
+                List<RegionBook.Region> regs = new ArrayList<>(book.regions());
+                regs.add(new RegionBook.Region(regionId, 1, title, claim.color(), claim.chunks(), null));
+                book.replace(new RegionBook.State(book.state().highestLayer(), book.state().layers(), regs, book.state().suppressed()));
+            }
+            d.revisions.put(dim, d.revisions.getOrDefault(dim, 0L) + 1);
+            broadcast(server, dim);
+        } catch (Exception ex) {
+            LOG.error("Failed to sync claim to book", ex);
+        }
+    }
+
+    public static void removeClaimFromBook(MinecraftServer server, String dim, Claim claim) {
+        if (server == null || dim == null || claim == null) return;
+        ServerData d = data(server);
+        try {
+            RegionBook book = d.book(dim);
+            String regionId = "claim-" + claim.id().toString();
+            book.deleteRegion(regionId, false);
+            d.revisions.put(dim, d.revisions.getOrDefault(dim, 0L) + 1);
+            broadcast(server, dim);
+        } catch (Exception ex) {
+            LOG.error("Failed to remove claim from book", ex);
+        }
     }
 
     public static void receive(MinecraftServer server, ServerPlayer player, Wire.Fragment fragment) {
@@ -282,7 +657,10 @@ public final class HerebyNamedServer {
     private static final class ServerData {
         final Path root;
         final RegionStore store;
+        final dev.herebynamed.claim.ClaimStore claimStore;
+        final dev.herebynamed.claim.model.ClaimEconomyConfig economyConfig;
         final EditAuthority authority = new EditAuthority();
+        final ClaimManager claimManager = new ClaimManager();
         final Set<UUID> authorized = new HashSet<>();
         final Map<String, RegionBook> books = new HashMap<>();
         final Map<String, Long> revisions = new HashMap<>();
@@ -295,7 +673,11 @@ public final class HerebyNamedServer {
         final Map<UUID, ArrayDeque<Incoming>> incoming = new LinkedHashMap<>();
         boolean stopping, pumping, retryScheduled;
         ServerData(Path root) {
-            this.root = root; store = new RegionStore(root.resolve("regions"));
+            this.root = root;
+            this.store = new RegionStore(root.resolve("regions"));
+            this.claimStore = new dev.herebynamed.claim.ClaimStore(root);
+            this.claimStore.load(this.claimManager);
+            this.economyConfig = this.claimStore.loadConfig();
             Path file = root.resolve("editors.txt");
             if (Files.exists(file)) try { for (String line : Files.readAllLines(file)) authorized.add(UUID.fromString(line)); }
             catch (Exception ex) { LOG.error("Cannot read region editor grants", ex); }
