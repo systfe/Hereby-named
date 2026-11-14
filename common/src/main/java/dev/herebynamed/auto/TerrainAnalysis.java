@@ -71,9 +71,10 @@ public final class TerrainAnalysis {
 
         analyzeLandPatches(patches, cellToPatch, samples, candidates, config);
 
-        candidates.sort(Comparator.comparing(c -> c.cells().stream().min(Comparator.comparingInt(ChunkCell::x).thenComparingInt(ChunkCell::z)).orElseThrow(),
+        List<Candidate> finalCandidates = new ArrayList<>(fillEnclosedRecordedHoles(candidates, samples, config));
+        finalCandidates.sort(Comparator.comparing(c -> c.cells().stream().min(Comparator.comparingInt(ChunkCell::x).thenComparingInt(ChunkCell::z)).orElseThrow(),
                 Comparator.comparingInt(ChunkCell::x).thenComparingInt(ChunkCell::z)));
-        return new Result(true, fillEnclosedRecordedHoles(candidates, samples));
+        return new Result(true, finalCandidates);
     }
 
     private static List<BiomePatch> clusterPatches(Map<ChunkCell, TerrainSample> samples, Map<ChunkCell, BiomePatch> cellToPatch) {
@@ -174,31 +175,44 @@ public final class TerrainAnalysis {
             }
         }
 
-        // River bridge connectivity
+        // River bridge connectivity (local cross-river neighborhood search)
         Map<Integer, Set<ChunkCell>> bridgedRiverCells = new HashMap<>();
+        Set<ChunkCell> riverCells = new HashSet<>();
         for (BiomePatch river : patches) {
-            if (river.cells.isEmpty() || river.kind != TerrainKind.RIVER) continue;
-            if (river.span() > 16 * MAX_RIVER_BRIDGE_CHUNKS && river.cells.size() > MAX_RIVER_BRIDGE_CHUNKS * 4) continue;
-            Set<BiomePatch> touchingLand = new HashSet<>();
-            for (ChunkCell c : river.cells) {
-                for (ChunkCell n : neighbors(c)) {
-                    BiomePatch p = cellToPatch.get(n);
-                    if (p != null && patchById.containsKey(p.id)) touchingLand.add(p);
-                }
+            if (river.kind == TerrainKind.RIVER && !river.cells.isEmpty()) {
+                riverCells.addAll(river.cells);
             }
-            Map<TerrainKind, List<BiomePatch>> byKind = new HashMap<>();
-            for (BiomePatch p : touchingLand) byKind.computeIfAbsent(p.kind, k -> new ArrayList<>()).add(p);
-            for (var entry : byKind.entrySet()) {
-                List<BiomePatch> list = entry.getValue();
-                if (list.size() >= 2) {
-                    for (int i = 0; i < list.size(); i++) {
-                        for (int j = i + 1; j < list.size(); j++) {
-                            BiomePatch a = list.get(i), b = list.get(j);
-                            if (a.climate() * b.climate() != -1) {
-                                adj.get(a.id).add(b.id);
-                                adj.get(b.id).add(a.id);
-                                bridgedRiverCells.computeIfAbsent(a.id, k -> new HashSet<>()).addAll(river.cells);
-                                bridgedRiverCells.computeIfAbsent(b.id, k -> new HashSet<>()).addAll(river.cells);
+        }
+
+        if (!riverCells.isEmpty()) {
+            for (BiomePatch landPatch : landPatches) {
+                Set<ChunkCell> boundary = new HashSet<>();
+                for (ChunkCell c : landPatch.cells) {
+                    for (ChunkCell n : neighbors(c)) {
+                        if (!landPatch.cells.contains(n) && riverCells.contains(n)) {
+                            boundary.add(c);
+                            break;
+                        }
+                    }
+                }
+
+                for (ChunkCell edgeCell : boundary) {
+                    for (int[] dir : new int[][]{{1,0}, {-1,0}, {0,1}, {0,-1}}) {
+                        List<ChunkCell> steps = new ArrayList<>();
+                        for (int dist = 1; dist <= MAX_RIVER_BRIDGE_CHUNKS; dist++) {
+                            ChunkCell step = new ChunkCell(edgeCell.x() + dir[0] * dist, edgeCell.z() + dir[1] * dist);
+                            if (riverCells.contains(step)) {
+                                steps.add(step);
+                            } else {
+                                BiomePatch opp = cellToPatch.get(step);
+                                if (opp != null && opp != landPatch && opp.kind == landPatch.kind
+                                        && landPatch.climate() * opp.climate() != -1 && patchById.containsKey(opp.id)) {
+                                    adj.get(landPatch.id).add(opp.id);
+                                    adj.get(opp.id).add(landPatch.id);
+                                    bridgedRiverCells.computeIfAbsent(landPatch.id, k -> new HashSet<>()).addAll(steps);
+                                    bridgedRiverCells.computeIfAbsent(opp.id, k -> new HashSet<>()).addAll(steps);
+                                }
+                                break;
                             }
                         }
                     }
@@ -400,50 +414,183 @@ public final class TerrainAnalysis {
         return result.isEmpty() ? List.of(cells) : result;
     }
 
-    private static List<Candidate> fillEnclosedRecordedHoles(List<Candidate> candidates, Map<ChunkCell, TerrainSample> samples) {
+    private static List<Candidate> fillEnclosedRecordedHoles(
+            List<Candidate> candidates,
+            Map<ChunkCell, TerrainSample> samples,
+            AutoConfig config) {
         Set<ChunkCell> claimed = new HashSet<>();
         for (Candidate candidate : candidates) claimed.addAll(candidate.cells());
         List<Candidate> result = new ArrayList<>(candidates.size());
-        for (Candidate candidate : candidates) {
+        List<Candidate> promotedHoles = new ArrayList<>();
+        boolean useAnnulus = "ANNULUS_RATIO".equalsIgnoreCase(config.holePreservationFormula);
+
+        for (Candidate host : candidates) {
             int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE, minZ = minX, maxZ = maxX;
-            for (ChunkCell cell : candidate.cells()) {
+            for (ChunkCell cell : host.cells()) {
                 minX = Math.min(minX, cell.x());
                 maxX = Math.max(maxX, cell.x());
                 minZ = Math.min(minZ, cell.z());
                 maxZ = Math.max(maxZ, cell.z());
             }
             long width = (long)maxX - minX + 1, height = (long)maxZ - minZ + 1;
-            if (width * height > 1_000_000L) { result.add(candidate); continue; }
-            Set<ChunkCell> visited = new HashSet<>(), holes = new HashSet<>();
-            ArrayDeque<ChunkCell> pending = new ArrayDeque<>();
-            for (int z = minZ; z <= maxZ; z++) for (int x = minX; x <= maxX; x++) {
-                ChunkCell cell = new ChunkCell(x, z);
-                if (candidate.cells().contains(cell) || claimed.contains(cell) || visited.contains(cell)) continue;
-                Set<ChunkCell> component = new HashSet<>();
-                pending.add(cell);
-                visited.add(cell);
-                boolean touchesEdge = false, unknown = false;
-                while (!pending.isEmpty()) {
-                    ChunkCell current = pending.removeFirst();
-                    component.add(current);
-                    if (current.x() == minX || current.x() == maxX || current.z() == minZ || current.z() == maxZ) touchesEdge = true;
-                    if (!samples.containsKey(current)) unknown = true;
-                    for (ChunkCell neighbor : neighbors(current)) {
-                        if (neighbor.x() < minX || neighbor.x() > maxX || neighbor.z() < minZ || neighbor.z() > maxZ
-                                || candidate.cells().contains(neighbor) || claimed.contains(neighbor) || !visited.add(neighbor)) continue;
-                        pending.addLast(neighbor);
+            if (width * height > 1_000_000L) { result.add(host); continue; }
+
+            int bMinX = minX - 1, bMaxX = maxX + 1;
+            int bMinZ = minZ - 1, bMaxZ = maxZ + 1;
+
+            Set<ChunkCell> exterior = new HashSet<>();
+            ArrayDeque<ChunkCell> extQueue = new ArrayDeque<>();
+            for (int x = bMinX; x <= bMaxX; x++) {
+                ChunkCell c1 = new ChunkCell(x, bMinZ), c2 = new ChunkCell(x, bMaxZ);
+                if (exterior.add(c1)) extQueue.add(c1);
+                if (exterior.add(c2)) extQueue.add(c2);
+            }
+            for (int z = bMinZ + 1; z < bMaxZ; z++) {
+                ChunkCell c1 = new ChunkCell(bMinX, z), c2 = new ChunkCell(bMaxX, z);
+                if (exterior.add(c1)) extQueue.add(c1);
+                if (exterior.add(c2)) extQueue.add(c2);
+            }
+
+            while (!extQueue.isEmpty()) {
+                ChunkCell cur = extQueue.removeFirst();
+                for (ChunkCell n : neighbors8(cur)) {
+                    if (n.x() < bMinX || n.x() > bMaxX || n.z() < bMinZ || n.z() > bMaxZ) continue;
+                    if (!host.cells().contains(n) && exterior.add(n)) {
+                        extQueue.add(n);
                     }
                 }
-                if (!touchesEdge && !unknown) holes.addAll(component);
             }
-            if (holes.isEmpty()) { result.add(candidate); continue; }
-            Set<ChunkCell> filled = new HashSet<>(candidate.cells());
-            filled.addAll(holes);
-            double temperature = 0;
-            for (ChunkCell cell : filled) temperature += samples.get(cell).temperature();
-            result.add(new Candidate(candidate.kind(), filled, (float)(temperature / filled.size()), candidate.span()));
+
+            Set<ChunkCell> visited = new HashSet<>();
+            List<Set<ChunkCell>> enclosedHoles = new ArrayList<>();
+
+            for (int z = minZ; z <= maxZ; z++) {
+                for (int x = minX; x <= maxX; x++) {
+                    ChunkCell cell = new ChunkCell(x, z);
+                    if (host.cells().contains(cell) || exterior.contains(cell) || claimed.contains(cell) || visited.contains(cell)) {
+                        continue;
+                    }
+
+                    Set<ChunkCell> holeComp = new HashSet<>();
+                    ArrayDeque<ChunkCell> hQueue = new ArrayDeque<>();
+                    hQueue.add(cell);
+                    visited.add(cell);
+                    boolean containsUnknown = false;
+
+                    while (!hQueue.isEmpty()) {
+                        ChunkCell cur = hQueue.removeFirst();
+                        holeComp.add(cur);
+                        if (!samples.containsKey(cur)) containsUnknown = true;
+                        for (ChunkCell n : neighbors8(cur)) {
+                            if (n.x() < minX || n.x() > maxX || n.z() < minZ || n.z() > maxZ) continue;
+                            if (host.cells().contains(n) || exterior.contains(n) || claimed.contains(n)) continue;
+                            if (visited.add(n)) {
+                                hQueue.add(n);
+                            }
+                        }
+                    }
+
+                    if (!containsUnknown) {
+                        enclosedHoles.add(holeComp);
+                    }
+                }
+            }
+
+            if (enclosedHoles.isEmpty()) {
+                result.add(host);
+                continue;
+            }
+
+            Set<ChunkCell> cellsToSwallow = new HashSet<>();
+            long hostArea = host.cells().size();
+            long maxSwallowBudget = hostArea / 3L;
+            long currentSwallowed = 0;
+
+            enclosedHoles.sort(Comparator.comparingInt(Set::size));
+
+            for (Set<ChunkCell> hole : enclosedHoles) {
+                long holeArea = hole.size();
+
+                boolean containsWater = hole.stream().anyMatch(c -> {
+                    TerrainSample s = samples.get(c);
+                    return s != null && (s.kind().water() || s.kind() == TerrainKind.RIVER);
+                });
+                if (containsWater) {
+                    continue;
+                }
+
+                boolean shouldPreserve = useAnnulus ? (holeArea * 3L >= hostArea) : (holeArea * 2L >= hostArea);
+
+                if (shouldPreserve) {
+                    Candidate promoted = tryPromoteHole(hole, samples, config);
+                    if (promoted != null) {
+                        promotedHoles.add(promoted);
+                        claimed.addAll(promoted.cells());
+                    }
+                } else if (holeArea <= 3) {
+                    cellsToSwallow.addAll(hole);
+                    currentSwallowed += holeArea;
+                } else if (currentSwallowed + holeArea <= maxSwallowBudget) {
+                    cellsToSwallow.addAll(hole);
+                    currentSwallowed += holeArea;
+                }
+            }
+
+            if (cellsToSwallow.isEmpty()) {
+                result.add(host);
+            } else {
+                Set<ChunkCell> filled = new HashSet<>(host.cells());
+                filled.addAll(cellsToSwallow);
+                double temperature = 0;
+                for (ChunkCell cell : filled) {
+                    TerrainSample s = samples.get(cell);
+                    if (s != null) temperature += s.temperature();
+                }
+                result.add(new Candidate(host.kind(), filled, (float)(temperature / filled.size()), host.span()));
+            }
         }
+
+        result.addAll(promotedHoles);
         return List.copyOf(result);
+    }
+
+    private static Candidate tryPromoteHole(
+            Set<ChunkCell> hole,
+            Map<ChunkCell, TerrainSample> samples,
+            AutoConfig config) {
+        if (hole.isEmpty()) return null;
+
+        Map<TerrainKind, Integer> kindCounts = new HashMap<>();
+        for (ChunkCell c : hole) {
+            TerrainSample s = samples.get(c);
+            if (s != null) {
+                kindCounts.merge(s.kind(), 1, Integer::sum);
+            }
+        }
+
+        TerrainKind dominant = kindCounts.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(TerrainKind.OTHER);
+
+        if (dominant.water() || dominant == TerrainKind.OTHER || dominant == TerrainKind.RIVER) {
+            return null;
+        }
+
+        Candidate c = candidate(dominant, hole, samples);
+        if (config.qualifies(dominant, c.span())) {
+            return c;
+        }
+        return null;
+    }
+
+    static List<ChunkCell> neighbors8(ChunkCell c) {
+        return List.of(
+                new ChunkCell(c.x() - 1, c.z()),     new ChunkCell(c.x() + 1, c.z()),
+                new ChunkCell(c.x(), c.z() - 1),     new ChunkCell(c.x(), c.z() + 1),
+                new ChunkCell(c.x() - 1, c.z() - 1), new ChunkCell(c.x() + 1, c.z() - 1),
+                new ChunkCell(c.x() - 1, c.z() + 1), new ChunkCell(c.x() + 1, c.z() + 1)
+        );
     }
 
     private static boolean enclosed(Set<ChunkCell> cells, Map<ChunkCell, TerrainSample> samples) {

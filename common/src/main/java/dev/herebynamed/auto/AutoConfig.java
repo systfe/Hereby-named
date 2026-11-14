@@ -64,6 +64,7 @@ public final class AutoConfig {
     public int mountainRangeSpan = 2000;
     public int mountainMassifChunks = 4096;
     public int mountainRidgeRatioPercent = 180;
+    public String holePreservationFormula = "FOOTPRINT_RATIO";
     public List<BiomeRule> biomeRules=new ArrayList<>();
     public Map<String,String> biomeOverrides=new LinkedHashMap<>(Map.of(
             "biomesoplenty:pumpkin_patch","FLOWER",
@@ -225,6 +226,8 @@ public final class AutoConfig {
         if(mountainRangeSpan<16 || mountainRangeSpan>1_000_000 || mountainMassifChunks<1 || mountainMassifChunks>500_000
                 || mountainRidgeRatioPercent<110 || mountainRidgeRatioPercent>1000)
             throw new IllegalArgumentException("山地形态参数超出范围");
+        if(holePreservationFormula!=null && !Set.of("FOOTPRINT_RATIO","ANNULUS_RATIO").contains(holePreservationFormula.toUpperCase(Locale.ROOT)))
+            throw new IllegalArgumentException("孔洞保留公式无效："+holePreservationFormula);
         for(BiomeRule r:biomeRules) if(r==null || r.kind()==null || r.biome()==null || !r.biome().matches("[a-z0-9_.-]+:[a-z0-9_./*-]+")) throw new IllegalArgumentException("群系覆盖规则无效");
         if(biomeOverrides!=null) {
             if(biomeOverrides.size()>8192) throw new IllegalArgumentException("群系覆盖数量超出范围");

@@ -95,8 +95,8 @@ class AutoRegionsTest {
         config.thresholds.plain=new AutoConfig.Threshold(500,0);
         Map<ChunkCell,TerrainSample> map=new HashMap<>();
         for(int x=0;x<20;x++) for(int z=0;z<20;z++) {
-            boolean edge=x==0 || z==0 || x==19 || z==19;
-            map.put(new ChunkCell(x,z),sample(edge?"test:forest":"test:plains",edge?TerrainKind.FOREST:TerrainKind.PLAIN));
+            boolean hole = (x==10 && z==10);
+            map.put(new ChunkCell(x,z),sample(hole?"test:plains":"test:forest",hole?TerrainKind.PLAIN:TerrainKind.FOREST));
         }
 
         var filled=new TerrainAnalysis().analyze(map,config).candidates().stream()
@@ -107,6 +107,53 @@ class AutoRegionsTest {
         var conservative=new TerrainAnalysis().analyze(map,config).candidates().stream()
                 .filter(c -> c.kind()==TerrainKind.FOREST).findFirst().orElseThrow();
         assertFalse(conservative.cells().contains(new ChunkCell(10,10)));
+    }
+
+    @Test void largeEnclosedHoleAboveOneThirdAreaIsNotSwallowed() {
+        AutoConfig config=new AutoConfig();config.unlockSpan=256;
+        config.thresholds.forest=new AutoConfig.Threshold(300,0);
+        config.thresholds.plain=new AutoConfig.Threshold(200,0);
+        Map<ChunkCell,TerrainSample> map=new HashMap<>();
+        for(int x=0;x<20;x++) for(int z=0;z<20;z++) {
+            boolean edge=x==0 || z==0 || x==19 || z==19;
+            map.put(new ChunkCell(x,z),sample(edge?"test:forest":"test:plains",edge?TerrainKind.FOREST:TerrainKind.PLAIN));
+        }
+
+        var candidates=new TerrainAnalysis().analyze(map,config).candidates();
+        var forest=candidates.stream().filter(c -> c.kind()==TerrainKind.FOREST).findFirst().orElseThrow();
+        // 76 border cells must NOT swallow the 324 center cells (area ratio >= 1/3)
+        assertEquals(76, forest.cells().size());
+
+        var plain=candidates.stream().filter(c -> c.kind()==TerrainKind.PLAIN).findFirst().orElseThrow();
+        // Center plains is preserved and promoted as its own region
+        assertEquals(324, plain.cells().size());
+    }
+
+    @Test void unclosedNarrowRiverCrossingBridgesForestAcrossLongDistance() {
+        AutoConfig config=new AutoConfig();config.unlockSpan=256;
+        config.thresholds.forest=new AutoConfig.Threshold(500,0);
+        Map<ChunkCell,TerrainSample> map=new HashMap<>();
+        // River runs vertically from z=-20 to z=40 (61 chunks long, far exceeding old bridge limits)
+        for(int z=-20;z<=40;z++) {
+            map.put(new ChunkCell(15,z), sample("minecraft:river", TerrainKind.RIVER));
+            map.put(new ChunkCell(16,z), sample("minecraft:river", TerrainKind.RIVER));
+        }
+        // Forest on both sides around z=0..20
+        for(int x=0;x<15;x++) for(int z=0;z<20;z++) {
+            map.put(new ChunkCell(x,z), sample("test:forest", TerrainKind.FOREST));
+        }
+        for(int x=17;x<=31;x++) for(int z=0;z<20;z++) {
+            map.put(new ChunkCell(x,z), sample("test:forest", TerrainKind.FOREST));
+        }
+
+        var candidates=new TerrainAnalysis().analyze(map,config).candidates();
+        var forestCandidates=candidates.stream().filter(c -> c.kind()==TerrainKind.FOREST).toList();
+        // The two banks of forest should merge across the narrow 2-chunk river into 1 unified forest
+        assertEquals(1, forestCandidates.size());
+        assertTrue(forestCandidates.get(0).cells().contains(new ChunkCell(0,0)));
+        assertTrue(forestCandidates.get(0).cells().contains(new ChunkCell(30,0)));
+        // River chunks far outside (z=-10) must NOT be swallowed into forest
+        assertFalse(forestCandidates.get(0).cells().contains(new ChunkCell(15,-10)));
     }
 
     @Test void automaticPruneDeletesRegionWithoutSuppressingFutureGeneration() throws Exception {
