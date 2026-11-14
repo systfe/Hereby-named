@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import dev.herebynamed.auto.AutoWork;
+import dev.herebynamed.net.WireWork;
 import dev.herebynamed.claim.ClaimManager;
 import dev.herebynamed.claim.ChunkLoaderManager;
 import dev.herebynamed.claim.PlayerClaimBorderTracker;
@@ -604,12 +605,12 @@ public final class HerebyNamedServer {
         d.pumping = true;
         try {
             for (var entry : List.copyOf(d.incoming.entrySet())) {
-                if (!AutoWork.hasCapacity()) break;
+                if (!WireWork.hasCapacity()) break;
                 var queue = entry.getValue();
                 if (queue.isEmpty()) { d.incoming.remove(entry.getKey()); continue; }
                 Incoming incoming = queue.peekFirst();
-                var decoding = AutoWork.submit(() -> RegionEdit.decode(incoming.bytes()));
-                if (AutoWork.rejected(decoding)) break;
+                var decoding = WireWork.submit(() -> RegionEdit.decode(incoming.bytes()));
+                if (WireWork.rejected(decoding)) break;
                 queue.removeFirst();
                 decoding.whenComplete((edit, error) -> server.execute(() -> {
                     if (SERVERS.get(server) != d || d.stopping) return;
@@ -620,7 +621,7 @@ public final class HerebyNamedServer {
                     pump(server, d);
                 }));
             }
-            for (int count = 0; count < 4 && !d.outgoing.isEmpty() && AutoWork.hasCapacity(); count++) {
+            for (int count = 0; count < 4 && !d.outgoing.isEmpty() && WireWork.hasCapacity(); count++) {
                 var entry = d.outgoing.entrySet().iterator().next();
                 Outgoing outgoing = entry.getValue();
                 d.outgoing.remove(entry.getKey());
@@ -755,7 +756,7 @@ public final class HerebyNamedServer {
         try {
             Snapshot snapshot = new Snapshot(dimension, d.revisions.getOrDefault(dimension, 0L), responseTo,
                     d.authority.holder(dimension), authorized(d, player), message, d.book(dimension).snapshot());
-            AutoWork.submit(snapshot::encode).whenComplete((bytes, error) -> server.execute(() -> {
+            WireWork.submit(snapshot::encode).whenComplete((bytes, error) -> server.execute(() -> {
                 if (SERVERS.get(server) != d) return;
                 if (player.hasDisconnected()) return;
                 if (error != null) {

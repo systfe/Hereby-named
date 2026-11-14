@@ -4,6 +4,7 @@ import dev.herebynamed.HerebyNamed;
 import dev.herebynamed.domain.*;
 import dev.herebynamed.net.*;
 import dev.herebynamed.auto.AutoWork;
+import dev.herebynamed.net.WireWork;
 import dev.herebynamed.platform.PlatformHelper;
 
 import net.minecraft.client.Minecraft;
@@ -91,10 +92,10 @@ public final class ClientRegions {
     }
     public boolean editing(String dimension) { return dimension.equals(editing); }
     public boolean busy() {
-        if(!incoming.isEmpty() && AutoWork.hasCapacity()) {
+        if(!incoming.isEmpty() && WireWork.hasCapacity()) {
             long epoch=session;byte[] bytes=incoming.peekFirst();
-            var decoding=AutoWork.submit(() -> Snapshot.decode(bytes));
-            if(!AutoWork.rejected(decoding)) {
+            var decoding=WireWork.submit(() -> Snapshot.decode(bytes));
+            if(!WireWork.rejected(decoding)) {
                 incoming.removeFirst();
                 decoding.whenComplete((snapshot,error) -> client.execute(() -> {
                     if(epoch!=session) return;
@@ -107,7 +108,7 @@ public final class ClientRegions {
             resync=false;requested.clear();request(client.level.dimension().location().toString());
         }
         if(automaticSaving) return true;
-        if (pendingSince != 0 && System.nanoTime() - pendingSince > 10_000_000_000L) {
+        if (pendingSince != 0 && System.nanoTime() - pendingSince > 15_000_000_000L) {
             pending.cancel(); pendingSince = 0;
             String canceled = acquiring; acquiring = null;
             // Release follows ACQUIRE on the ordered connection, including when its ACK arrives late.
@@ -126,7 +127,7 @@ public final class ClientRegions {
     }
     public Path surfaceCachePath() { return store().directory().resolve("automatic-surface.bin.gz"); }
     public boolean automatic(RegionEdit proposal) {
-        if(!automaticAllowed() || !AutoWork.hasCapacity()) return false;
+        if(!automaticAllowed() || !WireWork.hasCapacity()) return false;
         String dim="minecraft:overworld";
         if(!proposal.dimension().equals(dim)) return false;
         Snapshot snapshot=shared.get(dim);
@@ -176,7 +177,7 @@ public final class ClientRegions {
         edit = new RegionEdit(edit.dimension(), edit.revision(), id, edit.action(), edit.layer(), edit.region(), edit.name(), edit.color(), edit.cells());
         if(edit.action()==RegionEdit.Action.AUTO_APPLY || edit.action()==RegionEdit.Action.AUTO_ALLOW_AGAIN || edit.action()==RegionEdit.Action.AUTO_PRUNE) {
             RegionEdit automatic=edit;long epoch=session;
-            AutoWork.submit(automatic::encode).whenComplete((bytes,error) -> client.execute(() -> {
+            WireWork.submit(automatic::encode).whenComplete((bytes,error) -> client.execute(() -> {
                 if(epoch!=session) return;
                 if(error!=null) { pending.cancel();pendingSince=0;HerebyNamed.LOG.warn("Cannot encode automatic request",error);return; }
                 try { Wire.send(bytes,PlatformHelper.get()::sendToServer); }
