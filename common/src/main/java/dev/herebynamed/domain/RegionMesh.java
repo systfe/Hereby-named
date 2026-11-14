@@ -23,9 +23,13 @@ public final class RegionMesh {
     interface Shape { int x1(); int z1(); int x2(); int z2(); }
     public record Fill(int x1,int z1,int x2,int z2,int color) implements Shape {}
     public record Edge(int x1,int z1,int x2,int z2,int color) implements Shape {}
-    public record Label(String name,double x,double z,double span) {
-        public float textScale(int textWidth,double pixelsPerChunk,int viewportWidth) {
-            return (float)Math.max(0,Math.min(3,Math.min(span*pixelsPerChunk,viewportWidth*0.8)/Math.max(1,textWidth)));
+    public record GlyphPlacement(char ch, double x, double z, float angleRad) {}
+    public record Label(String name, double x, double z, double span, float angleRad, List<GlyphPlacement> glyphs) {
+        public Label(String name, double x, double z, double span) {
+            this(name, x, z, span, 0f, List.of());
+        }
+        public float textScale(int textWidth, double pixelsPerChunk, int viewportWidth) {
+            return (float)Math.max(0, Math.min(3, Math.min(span * pixelsPerChunk, viewportWidth * 0.8) / Math.max(1, textWidth)));
         }
     }
     public static RegionMesh build(List<RegionBook.Region> regions,Integer layer) {
@@ -92,17 +96,109 @@ public final class RegionMesh {
     private record EdgeKey(String region,boolean horizontal,int fixed,int color) {}
     private static final class Area {
         final String name;
-        long sumX,sumZ;
-        int count,minX=Integer.MAX_VALUE,maxX=Integer.MIN_VALUE;
-        double anchorX,anchorZ,distance=Double.POSITIVE_INFINITY;
-        Area(String name) { this.name=name; }
-        void include(int x,int z) { sumX+=x; sumZ+=z; count++; minX=Math.min(minX,x); maxX=Math.max(maxX,x); }
-        void anchor(int x,int z) {
-            double dx=x-(double)sumX/count, dz=z-(double)sumZ/count, next=dx*dx+dz*dz;
-            if(next<distance || (next==distance && (x<anchorX-0.5 || (x==anchorX-0.5 && z<anchorZ-0.5)))) {
-                distance=next; anchorX=x+0.5; anchorZ=z+0.5;
+        long sumX, sumZ;
+        int count, minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE, minZ = Integer.MAX_VALUE, maxZ = Integer.MIN_VALUE;
+        double anchorX, anchorZ, distance = Double.POSITIVE_INFINITY;
+        final List<ChunkCell> cells = new ArrayList<>();
+        Area(String name) { this.name = name; }
+        void include(int x, int z) {
+            sumX += x; sumZ += z; count++;
+            minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+            minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
+            cells.add(new ChunkCell(x, z));
+        }
+        void anchor(int x, int z) {
+            double dx = x - (double)sumX / count, dz = z - (double)sumZ / count, next = dx * dx + dz * dz;
+            if (next < distance || (next == distance && (x < anchorX - 0.5 || (x == anchorX - 0.5 && z < anchorZ - 0.5)))) {
+                distance = next; anchorX = x + 0.5; anchorZ = z + 0.5;
             }
         }
-        Label label() { return new Label(name,anchorX,anchorZ,Math.min(Math.sqrt(count)*0.9,(maxX-minX+1)*0.85)); }
+        Label label() {
+            double defaultSpan = Math.min(Math.sqrt(count) * 0.9, (maxX - minX + 1) * 0.85);
+            if (name.isEmpty() || count <= 1) {
+                return new Label(name, anchorX, anchorZ, defaultSpan, 0f,
+                        name.isEmpty() ? List.of() : List.of(new GlyphPlacement(name.charAt(0), anchorX, anchorZ, 0f)));
+            }
+
+            double meanX = (double) sumX / count + 0.5;
+            double meanZ = (double) sumZ / count + 0.5;
+            double varX = 0, varZ = 0, covXZ = 0;
+            for (ChunkCell c : cells) {
+                double dx = (c.x() + 0.5) - meanX;
+                double dz = (c.z() + 0.5) - meanZ;
+                varX += dx * dx;
+                varZ += dz * dz;
+                covXZ += dx * dz;
+            }
+            varX /= count; varZ /= count; covXZ /= count;
+
+            double theta = 0.5 * Math.atan2(2.0 * covXZ, varX - varZ);
+            while (theta > Math.PI / 2.0) theta -= Math.PI;
+            while (theta < -Math.PI / 2.0) theta += Math.PI;
+            if (Math.abs(theta) < 0.04) theta = 0.0;
+
+            double cos = Math.cos(theta), sin = Math.sin(theta);
+            double minU = Double.POSITIVE_INFINITY, maxU = Double.NEGATIVE_INFINITY;
+            for (ChunkCell c : cells) {
+                double dx = (c.x() + 0.5) - meanX;
+                double dz = (c.z() + 0.5) - meanZ;
+                double u = dx * cos + dz * sin;
+                minU = Math.min(minU, u);
+                maxU = Math.max(maxU, u);
+            }
+            double longSpan = Math.max(1.0, maxU - minU);
+            double span = Math.max(defaultSpan, longSpan * 0.75);
+
+            int n = name.length();
+            if (n == 1) {
+                return new Label(name, anchorX, anchorZ, span, (float)theta,
+                        List.of(new GlyphPlacement(name.charAt(0), anchorX, anchorZ, (float)theta)));
+            }
+
+            double maxCharSpread = Character.UnicodeScript.of(name.charAt(0)) == Character.UnicodeScript.HAN ? 2.0 : 3.2;
+            double targetLength = Math.max(1.0, Math.min(longSpan * 0.70, (n - 1) * maxCharSpread));
+            double stepU = targetLength / (n - 1);
+
+            double[] gx = new double[n];
+            double[] gz = new double[n];
+            for (int i = 0; i < n; i++) {
+                double u = (i - (n - 1) / 2.0) * stepU;
+                double sumV = 0;
+                int countV = 0;
+                for (ChunkCell c : cells) {
+                    double dx = (c.x() + 0.5) - meanX;
+                    double dz = (c.z() + 0.5) - meanZ;
+                    double cu = dx * cos + dz * sin;
+                    if (Math.abs(cu - u) <= Math.max(1.0, stepU * 0.75)) {
+                        double cv = -dx * sin + dz * cos;
+                        sumV += cv;
+                        countV++;
+                    }
+                }
+                double v = countV > 0 ? (sumV / countV) : 0.0;
+                gx[i] = anchorX + (u * cos - v * sin);
+                gz[i] = anchorZ + (u * sin + v * cos);
+            }
+
+            List<GlyphPlacement> glyphs = new ArrayList<>(n);
+            for (int i = 0; i < n; i++) {
+                double glyphAngle;
+                if (i == 0) {
+                    glyphAngle = Math.atan2(gz[1] - gz[0], gx[1] - gx[0]);
+                } else if (i == n - 1) {
+                    glyphAngle = Math.atan2(gz[n - 1] - gz[n - 2], gx[n - 1] - gx[n - 2]);
+                } else {
+                    glyphAngle = Math.atan2(gz[i + 1] - gz[i - 1], gx[i + 1] - gx[i - 1]);
+                }
+                while (glyphAngle > Math.PI / 2.0) glyphAngle -= Math.PI;
+                while (glyphAngle < -Math.PI / 2.0) glyphAngle += Math.PI;
+                if (Math.abs(glyphAngle - theta) > 0.45) {
+                    glyphAngle = 0.5 * glyphAngle + 0.5 * theta;
+                }
+                glyphs.add(new GlyphPlacement(name.charAt(i), gx[i], gz[i], (float)glyphAngle));
+            }
+
+            return new Label(name, anchorX, anchorZ, span, (float)theta, List.copyOf(glyphs));
+        }
     }
 }

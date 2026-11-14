@@ -47,6 +47,7 @@ public final class AutomaticRegions {
     public int unnamedCount() { return unnamed; }
     public boolean enabled() { return config!=null && config.enabled; }
     public Path configDirectory() { return configDirectory; }
+    public AutoConfig config() { return config; }
     public boolean ready() { return config!=null && loadingConfig==null && !savingSettings; }
     public AutoConfig settingsDraft() { return config.copy(); }
     public void saveSettings(AutoConfig draft,java.util.function.Consumer<String> completed) {

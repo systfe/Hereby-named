@@ -56,4 +56,25 @@ class RegionMeshTest {
         assertTrue(large.textScale(30,8,400)>large.textScale(30,4,400));
         assertTrue(large.textScale(30,800,100)*30<=80);
     }
+    @Test void elongatedDiagonalRegionProducesRotatedGlyphPlacements() {
+        Set<ChunkCell> diagonal = new HashSet<>();
+        for (int i = 0; i <= 20; i++) {
+            diagonal.add(new ChunkCell(i, i));
+            diagonal.add(new ChunkCell(i + 1, i));
+        }
+        var mesh = RegionMesh.build(List.of(new RegionBook.Region("diag", 1, "EMPIRE", 1, diagonal)), null);
+        var label = mesh.labels().get(0);
+        assertEquals("EMPIRE", label.name());
+        assertEquals(6, label.glyphs().size());
+        assertEquals(Math.PI / 4.0, label.angleRad(), 0.15);
+        var first = label.glyphs().get(0);
+        var last = label.glyphs().get(5);
+        assertEquals('E', first.ch());
+        assertEquals('E', last.ch());
+        assertTrue(first.x() < last.x());
+        assertTrue(first.z() < last.z());
+        for (var g : label.glyphs()) {
+            assertEquals(Math.PI / 4.0, g.angleRad(), 0.25);
+        }
+    }
 }
