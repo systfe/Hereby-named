@@ -4,7 +4,6 @@
 [![Fabric](https://img.shields.io/badge/Mod%20Loader-Fabric-blue.svg)](https://fabricmc.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> *“天地苍茫，行至此境，此地名曰——”*
 
 **此地名曰 (Hereby Named)** 是一款专为 **Xaero's World Map** 设计的 Minecraft Fabric 附属模组。
 
@@ -57,9 +56,7 @@
   - **全群系分类浏览器**：动态扫描游戏已加载的所有生物群系，支持按 ID 快速搜索、按分类过滤、点击循环修改其地形分类；
   - **增量覆盖持久化**：仅保存玩家自定义修改的群系映射，保持模组版本更新的长期兼容性。
 
-- 👥 **服务端原生支持与权限控制**
-  - 服务端安装后多人联机实时共享区域数据，客户端安装后即可看到；
-  - 拥有严格的并发编辑锁与 OP / 指令授权体系（`/herebynamed grant/revoke <玩家名>`），保护玩家建筑与领地不被误改。
+
 
 ---
 
@@ -76,10 +73,7 @@
 | **1.20.1** | [Fabric Loader](https://fabricmc.net/) $\ge 0.16.0$<br>[Fabric API](https://curseforge.com/minecraft/mc-mods/fabric-api)<br>[Xaero's World Map](https://curseforge.com/minecraft/mc-mods/xaeros-world-map) $\ge 1.47.0$ | [Traveler's Titles](https://curseforge.com/minecraft/mc-mods/travelers-titles) 4.0.2 |
 | **1.21.1** | [Fabric Loader](https://fabricmc.net/) $\ge 0.16.0$<br>[Fabric API](https://curseforge.com/minecraft/mc-mods/fabric-api)<br>[Xaero's World Map](https://curseforge.com/minecraft/mc-mods/xaeros-world-map) $\ge 1.44.2$ | [Traveler's Titles](https://curseforge.com/minecraft/mc-mods/travelers-titles) 5.1.3 |
 
-> [!TIP]
-> **多人联机说明**：
-> - 仅需在服务器上安装 `hereby_named` 和 `Fabric API`，服务器**无需**安装 Xaero's World Map 或任何客户端渲染模组。
-> - 未安装服务端的单人或多人模式下，会自动使用客户端本地存档命名。
+
 
 ---
 
