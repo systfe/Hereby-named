@@ -3,6 +3,7 @@ package dev.herebynamed.client;
 import dev.herebynamed.auto.AutoConfig;
 import dev.herebynamed.platform.PlatformHelper;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -13,7 +14,7 @@ final class FontSettingsScreen extends Screen implements EditorDialog {
     private final Screen parent;
     private final AutomaticRegions automatic;
     private EditBox fontInput;
-    private int opacityPercent = 85;
+    private int opacityPercent = 80;
     private String error = "";
     private int top;
 
@@ -30,7 +31,7 @@ final class FontSettingsScreen extends Screen implements EditorDialog {
         String curFont = (automatic != null && automatic.config() != null && automatic.config().mapFont != null)
                 ? automatic.config().mapFont : "hereby_named:map_font";
         opacityPercent = (automatic != null && automatic.config() != null)
-                ? automatic.config().mapFontOpacityPercent : 85;
+                ? automatic.config().mapFontOpacityPercent : 80;
 
         fontInput = new EditBox(font, x, top + 52, 240, 18, Component.literal("字体标识符"));
         fontInput.setMaxLength(120);
@@ -45,14 +46,18 @@ final class FontSettingsScreen extends Screen implements EditorDialog {
             fontInput.setValue("minecraft:default");
         }).bounds(x, top + 104, 240, 20).build());
 
-        addRenderableWidget(Button.builder(Component.literal("文字不透明度：" + opacityPercent + "% (点击切换)"), b -> {
-            if (opacityPercent >= 100) opacityPercent = 85;
-            else if (opacityPercent >= 85) opacityPercent = 70;
-            else if (opacityPercent >= 70) opacityPercent = 50;
-            else if (opacityPercent >= 50) opacityPercent = 30;
-            else opacityPercent = 100;
-            b.setMessage(Component.literal("文字不透明度：" + opacityPercent + "% (点击切换)"));
-        }).bounds(x, top + 130, 240, 20).build());
+        addRenderableWidget(new AbstractSliderButton(x, top + 130, 240, 20,
+                Component.literal("文字不透明度：" + opacityPercent + "%"), opacityPercent / 100.0) {
+            @Override
+            protected void updateMessage() {
+                setMessage(Component.literal("文字不透明度：" + opacityPercent + "%"));
+            }
+
+            @Override
+            protected void applyValue() {
+                opacityPercent = (int) Math.round(this.value * 100.0);
+            }
+        });
 
         addRenderableWidget(Button.builder(Component.literal("保存并应用"), b -> {
             String val = fontInput.getValue().strip();

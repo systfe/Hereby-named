@@ -4,6 +4,7 @@ import dev.herebynamed.auto.*;
 import dev.herebynamed.platform.PlatformHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -240,13 +241,17 @@ final class AutomaticConfigScreen extends Screen implements EditorDialog {
             }
             if (index == 10) {
                 rowLabels.add("地图字体不透明度");
-                button(x + contentWidth - 96, y, 90, draft.mapFontOpacityPercent + "%", () -> {
-                    if (draft.mapFontOpacityPercent >= 100) draft.mapFontOpacityPercent = 85;
-                    else if (draft.mapFontOpacityPercent >= 85) draft.mapFontOpacityPercent = 70;
-                    else if (draft.mapFontOpacityPercent >= 70) draft.mapFontOpacityPercent = 50;
-                    else if (draft.mapFontOpacityPercent >= 50) draft.mapFontOpacityPercent = 30;
-                    else draft.mapFontOpacityPercent = 100;
-                    rebuildWidgets();
+                addRenderableWidget(new AbstractSliderButton(x + contentWidth - 96, y, 90, 20,
+                        Component.literal(draft.mapFontOpacityPercent + "%"), draft.mapFontOpacityPercent / 100.0) {
+                    @Override
+                    protected void updateMessage() {
+                        setMessage(Component.literal(draft.mapFontOpacityPercent + "%"));
+                    }
+
+                    @Override
+                    protected void applyValue() {
+                        draft.mapFontOpacityPercent = (int) Math.round(this.value * 100.0);
+                    }
                 });
                 continue;
             }

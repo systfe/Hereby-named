@@ -355,14 +355,14 @@ public final class MapController {
         }
         context.pose().pushPose(); context.pose().translate(0,0,10);
         ResourceLocation fontLoc = ResourceLocation.tryParse("hereby_named:map_font");
-        float baseOpacity = 0.85f;
+        float baseOpacity = 0.80f;
         if (HerebyNamedClient.AUTOMATIC != null && HerebyNamedClient.AUTOMATIC.config() != null) {
             String custom = HerebyNamedClient.AUTOMATIC.config().mapFont;
             if (custom != null && !custom.isBlank()) {
                 ResourceLocation parsed = ResourceLocation.tryParse(custom);
                 if (parsed != null) fontLoc = parsed;
             }
-            baseOpacity = Math.max(10, Math.min(100, HerebyNamedClient.AUTOMATIC.config().mapFontOpacityPercent)) / 100.0f;
+            baseOpacity = Math.max(0, Math.min(100, HerebyNamedClient.AUTOMATIC.config().mapFontOpacityPercent)) / 100.0f;
         }
         Style fontStyle = Style.EMPTY.withFont(fontLoc);
 
