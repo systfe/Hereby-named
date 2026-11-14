@@ -72,16 +72,12 @@ public final class MapController {
         }
         icon(0,40,visibilityIcon(),visibilityText(),b -> cycleVisibility());
         icon(0,60,0,editing() ? "退出区域编辑模式" : "切换区域编辑模式", b -> {
-            if (editing()) { job = null; pressed = -1; data.exit(); } else data.enter(dimension);
+            if (editing()) { job = null; pressed = -1; chunkLoaderMode = false; data.exit(); } else data.enter(dimension);
             build();
         });
         if(HerebyNamedClient.AUTOMATIC!=null) icon(0,80,11,"自动创建区域设置",b -> client.setScreen(new AutomaticSettingsScreen(map,HerebyNamedClient.AUTOMATIC)));
-        icon(0,100,chunkLoaderMode ? 1 : 10, chunkLoaderMode ? "常加载模式已激活 (点击区块切换常加载)" : "切换区块常加载模式", b -> {
-            chunkLoaderMode = !chunkLoaderMode;
-            build();
-        });
         if (editing()) {
-            int[] cursor = {Math.max(24,(map.width-299)/2), 48};
+            int[] cursor = {Math.max(24,(map.width-320)/2), 48};
             RegionBook.Region current = book.region(selected).orElse(null);
             select(cursor, current == null ? "新增选区…" : current.name(), 96,
                     "区域选择 · Tab 切换"+(current == null ? "" : " · "+current.name()), current == null ? 0x888888 : current.color(), b -> {
@@ -99,6 +95,10 @@ public final class MapController {
                 client.setScreen(new DeleteDialog(map,"删除图层 "+layer+" 及其 "+count+" 个区域？",() -> edit(RegionEdit.Action.DELETE_LAYER,"",0,Set.of())));
             });
             tool(cursor,visibilityIcon(),visibilityText(),b -> cycleVisibility());
+            tool(cursor, chunkLoaderMode ? 0 : 3, chunkLoaderMode ? "常加载模式已激活 (点击区块切换常加载；再次点击退出)" : "设置为常加载区块 (点击后点击区块切换常加载)", b -> {
+                chunkLoaderMode = !chunkLoaderMode;
+                build();
+            });
             tool(cursor,10,"左键单击选择；左键拖动地图；右键移除；Shift 拖动矩形；Ctrl 原地长按选择连续群系；Tab 切换区域；Ctrl+Z 撤销；Ctrl+Y 重做；Esc 取消选择",b -> {});
         }
         generation = data.generation; rebuildOverlay();

@@ -511,14 +511,6 @@ public final class TerrainAnalysis {
             for (Set<ChunkCell> hole : enclosedHoles) {
                 long holeArea = hole.size();
 
-                boolean containsWater = hole.stream().anyMatch(c -> {
-                    TerrainSample s = samples.get(c);
-                    return s != null && (s.kind().water() || s.kind() == TerrainKind.RIVER);
-                });
-                if (containsWater) {
-                    continue;
-                }
-
                 boolean shouldPreserve = useAnnulus ? (holeArea * 3L >= hostArea) : (holeArea * 2L >= hostArea);
 
                 if (shouldPreserve) {
@@ -527,10 +519,7 @@ public final class TerrainAnalysis {
                         promotedHoles.add(promoted);
                         claimed.addAll(promoted.cells());
                     }
-                } else if (holeArea <= 3) {
-                    cellsToSwallow.addAll(hole);
-                    currentSwallowed += holeArea;
-                } else if (currentSwallowed + holeArea <= maxSwallowBudget) {
+                } else {
                     cellsToSwallow.addAll(hole);
                     currentSwallowed += holeArea;
                 }
@@ -573,7 +562,11 @@ public final class TerrainAnalysis {
                 .map(Map.Entry::getKey)
                 .orElse(TerrainKind.OTHER);
 
-        if (dominant.water() || dominant == TerrainKind.OTHER || dominant == TerrainKind.RIVER) {
+        if (dominant == TerrainKind.OTHER || dominant == TerrainKind.RIVER) {
+            return null;
+        }
+
+        if (dominant.water() && dominant != TerrainKind.LAKE) {
             return null;
         }
 

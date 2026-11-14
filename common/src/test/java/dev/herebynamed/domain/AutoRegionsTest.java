@@ -129,6 +129,24 @@ class AutoRegionsTest {
         assertEquals(324, plain.cells().size());
     }
 
+    @Test void enclosedNarrowRiverHoleUnderOneThirdAreaIsSwallowed() {
+        AutoConfig config=new AutoConfig();config.unlockSpan=256;
+        config.thresholds.forest=new AutoConfig.Threshold(300,0);
+        Map<ChunkCell,TerrainSample> map=new HashMap<>();
+        for(int x=0;x<20;x++) for(int z=0;z<20;z++) {
+            boolean river = (x>=8 && x<=11 && z>=8 && z<=11);
+            map.put(new ChunkCell(x,z), sample(river ? "minecraft:river" : "test:forest", river ? TerrainKind.RIVER : TerrainKind.FOREST));
+        }
+
+        var candidates=new TerrainAnalysis().analyze(map,config).candidates();
+        assertEquals(1, candidates.size());
+        var forest=candidates.get(0);
+        assertEquals(TerrainKind.FOREST, forest.kind());
+        // 16 river cells enclosed by 384 forest cells (< 1/3) are completely swallowed into the forest region!
+        assertEquals(400, forest.cells().size());
+        assertTrue(forest.cells().contains(new ChunkCell(9, 9)));
+    }
+
     @Test void unclosedNarrowRiverCrossingBridgesForestAcrossLongDistance() {
         AutoConfig config=new AutoConfig();config.unlockSpan=256;
         config.thresholds.forest=new AutoConfig.Threshold(500,0);
