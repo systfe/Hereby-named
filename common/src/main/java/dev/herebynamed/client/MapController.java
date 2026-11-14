@@ -355,12 +355,14 @@ public final class MapController {
         }
         context.pose().pushPose(); context.pose().translate(0,0,10);
         ResourceLocation fontLoc = ResourceLocation.tryParse("hereby_named:map_font");
+        float baseOpacity = 0.85f;
         if (HerebyNamedClient.AUTOMATIC != null && HerebyNamedClient.AUTOMATIC.config() != null) {
             String custom = HerebyNamedClient.AUTOMATIC.config().mapFont;
             if (custom != null && !custom.isBlank()) {
                 ResourceLocation parsed = ResourceLocation.tryParse(custom);
                 if (parsed != null) fontLoc = parsed;
             }
+            baseOpacity = Math.max(10, Math.min(100, HerebyNamedClient.AUTOMATIC.config().mapFontOpacityPercent)) / 100.0f;
         }
         Style fontStyle = Style.EMPTY.withFont(fontLoc);
 
@@ -381,7 +383,7 @@ public final class MapController {
             float baseScale = targetSpan / Math.max(1.0f, totalCharWidth * 1.35f);
             float textScale = Math.max(0.0f, Math.min(3.0f, baseScale));
             if (textScale < 0.45f) continue; // LOD culling
-            float alpha = textScale < 0.7f ? Math.max(0.0f, (textScale - 0.45f) / 0.25f) : 1.0f;
+            float alpha = (textScale < 0.7f ? Math.max(0.0f, (textScale - 0.45f) / 0.25f) : 1.0f) * baseOpacity;
             int fgColor = ((int)(0xFF * alpha) << 24) | 0xFFFBF0;
 
             float spacingFactor = (float)Math.max(1.25, Math.min(2.5, (regionScreenSpan * 0.65) / Math.max(1.0, totalCharWidth * textScale)));

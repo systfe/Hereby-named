@@ -13,6 +13,7 @@ final class FontSettingsScreen extends Screen implements EditorDialog {
     private final Screen parent;
     private final AutomaticRegions automatic;
     private EditBox fontInput;
+    private int opacityPercent = 85;
     private String error = "";
     private int top;
 
@@ -24,10 +25,12 @@ final class FontSettingsScreen extends Screen implements EditorDialog {
 
     @Override
     protected void init() {
-        top = Math.max(8, (height - 210) / 2);
+        top = Math.max(8, (height - 230) / 2);
         int x = width / 2 - 120;
         String curFont = (automatic != null && automatic.config() != null && automatic.config().mapFont != null)
                 ? automatic.config().mapFont : "hereby_named:map_font";
+        opacityPercent = (automatic != null && automatic.config() != null)
+                ? automatic.config().mapFontOpacityPercent : 85;
 
         fontInput = new EditBox(font, x, top + 52, 240, 18, Component.literal("字体标识符"));
         fontInput.setMaxLength(120);
@@ -42,6 +45,15 @@ final class FontSettingsScreen extends Screen implements EditorDialog {
             fontInput.setValue("minecraft:default");
         }).bounds(x, top + 104, 240, 20).build());
 
+        addRenderableWidget(Button.builder(Component.literal("文字不透明度：" + opacityPercent + "% (点击切换)"), b -> {
+            if (opacityPercent >= 100) opacityPercent = 85;
+            else if (opacityPercent >= 85) opacityPercent = 70;
+            else if (opacityPercent >= 70) opacityPercent = 50;
+            else if (opacityPercent >= 50) opacityPercent = 30;
+            else opacityPercent = 100;
+            b.setMessage(Component.literal("文字不透明度：" + opacityPercent + "% (点击切换)"));
+        }).bounds(x, top + 130, 240, 20).build());
+
         addRenderableWidget(Button.builder(Component.literal("保存并应用"), b -> {
             String val = fontInput.getValue().strip();
             if (val.isBlank() || ResourceLocation.tryParse(val) == null) {
@@ -51,13 +63,14 @@ final class FontSettingsScreen extends Screen implements EditorDialog {
             if (automatic != null) {
                 AutoConfig draft = automatic.settingsDraft();
                 draft.mapFont = val;
+                draft.mapFontOpacityPercent = opacityPercent;
                 automatic.saveSettings(draft, msg -> {});
             }
             onClose();
-        }).bounds(x, top + 140, 116, 20).build());
+        }).bounds(x, top + 158, 116, 20).build());
 
         addRenderableWidget(Button.builder(Component.literal("取消"), b -> onClose())
-                .bounds(x + 124, top + 140, 116, 20).build());
+                .bounds(x + 124, top + 158, 116, 20).build());
     }
 
     @Override
@@ -65,10 +78,10 @@ final class FontSettingsScreen extends Screen implements EditorDialog {
         PlatformHelper.get().renderBackground(this, context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
         context.drawCenteredString(font, title, width / 2, top + 10, 0xffffff);
-        context.drawCenteredString(font, "配置世界地图上区域名称渲染所使用的字体标识符", width / 2, top + 26, 0xbbbbbb);
+        context.drawCenteredString(font, "配置世界地图上区域名称渲染所使用的字体标识符与透明度", width / 2, top + 26, 0xbbbbbb);
         context.drawString(font, "字体标识符 (ResourceLocation 或资源包字体):", width / 2 - 120, top + 40, 0xdddddd);
         if (!error.isEmpty()) {
-            context.drawCenteredString(font, error, width / 2, top + 172, 0xff6666);
+            context.drawCenteredString(font, error, width / 2, top + 188, 0xff6666);
         }
     }
 
